@@ -1,0 +1,3 @@
+/home/dai/kvstore/build/CMakeFiles/rebuild_cache.dir
+/home/dai/kvstore/build/CMakeFiles/edit_cache.dir
+/home/dai/kvstore/build/CMakeFiles/nty_core.dir

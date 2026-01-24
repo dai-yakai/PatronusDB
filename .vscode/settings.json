@@ -1,0 +1,24 @@
+{
+    "cmake.sourceDirectory": "/home/dai/kvstore/NtyCo/core",
+    "files.associations": {
+        "in.h": "c",
+        "server.h": "c",
+        "nty_coroutine.h": "c",
+        "kvstore.h": "c",
+        "string.h": "c",
+        "stdio.h": "c",
+        "chrono": "c",
+        "algorithm": "c",
+        "stdlib.h": "c",
+        "epoll.h": "c",
+        "inet.h": "c",
+        "liburing.h": "c",
+        "kv_array.h": "c",
+        "kv_handler.h": "c",
+        "socket.h": "c",
+        "kv_rbtree.h": "c",
+        "kv_malloc.h": "c",
+        "kv_hash.h": "c",
+        "threadpool.h": "c"
+    }
+}

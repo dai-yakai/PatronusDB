@@ -1,0 +1,2 @@
+/usr/bin/ar qc libnty_core.a  CMakeFiles/nty_core.dir/nty_coroutine.o CMakeFiles/nty_core.dir/nty_epoll.o CMakeFiles/nty_core.dir/nty_schedule.o CMakeFiles/nty_core.dir/nty_socket.o
+/usr/bin/ranlib libnty_core.a
