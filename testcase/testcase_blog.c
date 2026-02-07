@@ -108,6 +108,7 @@ void testcase_large_blog(int connfd) {
     double throughput;
 
 #if RBTREE
+    printf("############test RBTREE################\n");
     for (i = 0; i < count; i++) {
         char key[64];
         int key_len = sprintf(key, "Blog_Article_%d", i);
@@ -151,16 +152,14 @@ void testcase_large_blog(int connfd) {
     gettimeofday(&tv_end, NULL);
     time_used = TIME_SUB_MS(tv_end, tv_begin);
     
-    total_bytes = (long long)BLOG_CONTENT_SIZE * count;
-    throughput = (double)total_bytes / 1024.0 / 1024.0 / (time_used / 1000.0);
+    // total_bytes = (long long)BLOG_CONTENT_SIZE * count;
+    // throughput = (double)total_bytes / 1024.0 / 1024.0 / (time_used / 1000.0);
 
-    printf("Large Blog testcase (RBTREE)--> time_use: %d ms, Throughput: %.2f MB/s\n", time_used, throughput);
-
-    free(content);
-    free(send_buf);
+    // printf("Large Blog testcase (RBTREE)--> time_use: %d ms, Throughput: %.2f MB/s\n", time_used, throughput);
 #endif
 
 #if HASH
+    printf("############test HASH################\n");
     for (i = 0; i < count; i++) {
         char key[64];
         int key_len = sprintf(key, "Blog_Article_%d", i);
@@ -204,14 +203,13 @@ void testcase_large_blog(int connfd) {
     gettimeofday(&tv_end, NULL);
     time_used = TIME_SUB_MS(tv_end, tv_begin);
     
-    total_bytes = (long long)BLOG_CONTENT_SIZE * count;
-    throughput = (double)total_bytes / 1024.0 / 1024.0 / (time_used / 1000.0);
+    // total_bytes = (long long)BLOG_CONTENT_SIZE * count;
+    // throughput = (double)total_bytes / 1024.0 / 1024.0 / (time_used / 1000.0);
 
-    printf("Large Blog testcase (HASH)--> time_use: %d ms, Throughput: %.2f MB/s\n", time_used, throughput);
-
+    // printf("Large Blog testcase (HASH)--> time_use: %d ms, Throughput: %.2f MB/s\n", time_used, throughput);
+#endif
     free(content);
     free(send_buf);
-#endif
 }
 
 int main(int argc, char* argv[]){

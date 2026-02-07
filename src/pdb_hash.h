@@ -39,19 +39,19 @@ typedef struct hashtable_s {
 
 } hashtable_t;
 
-typedef struct hashtable_s kvs_hash_t;
+typedef struct hashtable_s pdb_hash_t;
 
-extern kvs_hash_t global_hash;
+extern pdb_hash_t global_hash;
 
-int kvs_hash_create(kvs_hash_t *hash);
-void kvs_hash_destory(kvs_hash_t *hash);
-int kvs_hash_set(hashtable_t *hash, char *key, char *value);
-char * kvs_hash_get(kvs_hash_t *hash, char *key);
-int kvs_hash_mod(kvs_hash_t *hash, char *key, char *value);
-int kvs_hash_del(kvs_hash_t *hash, char *key);
-int kvs_hash_exist(kvs_hash_t *hash, char *key);
-void kvs_hash_dump(kvs_hash_t *h, const char *file);
-int kvs_hash_load(kvs_hash_t *arr, const char *file);
-int kvs_hash_mset(kvs_hash_t* arr, char** tokens, int count);
+int pdb_hash_create(pdb_hash_t *hash);
+void pdb_hash_destory(pdb_hash_t *hash);
+int pdb_hash_set(hashtable_t *hash, char *key, char *value);
+char * pdb_hash_get(pdb_hash_t *hash, char *key);
+int pdb_hash_mod(pdb_hash_t *hash, char *key, char *value);
+int pdb_hash_del(pdb_hash_t *hash, char *key);
+int pdb_hash_exist(pdb_hash_t *hash, char *key);
+void pdb_hash_dump(pdb_hash_t *h, const char *file);
+int pdb_hash_load(pdb_hash_t *arr, const char *file);
+int pdb_hash_mset(pdb_hash_t* arr, char** tokens, int count);
 
 #endif

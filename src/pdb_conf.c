@@ -7,16 +7,19 @@ config_entry conf_table[] = {
     {"network_mode", CONF_TYPE_INT, &global_conf.network_mode},
     {"master_port", CONF_TYPE_INT, &global_conf.master_port},
     {"master_ip", CONF_TYPE_STRING, &global_conf.master_ip},
-    {"dump_name", CONF_TYPE_STRING, &global_conf.dump_name},
-    {"dir", CONF_TYPE_STRING, &global_conf.dir},
     {"is_slave", CONF_TYPE_INT, &global_conf.is_slave},
     {"is_replication", CONF_TYPE_BOOL, &global_conf.is_replication},
+    {"array_dump_dir", CONF_TYPE_STRING, &global_conf.array_dump_dir},
+    {"rbtree_dump_dir", CONF_TYPE_STRING, &global_conf.rbtree_dump_dir},
+    {"hash_dump_dir", CONF_TYPE_STRING, &global_conf.hash_dump_dir},
     {NULL, 0, NULL}
 };
 
 static bool stringToBool(char* val){
     if (!strcasecmp(val, "yes")) return true;
     if (!strcasecmp(val, "no"))  return false;
+
+    return false;
 }
 
 int setConfigValue(config_entry* entry, char* value) {
@@ -26,10 +29,11 @@ int setConfigValue(config_entry* entry, char* value) {
             break;
 
         case CONF_TYPE_BOOL:
+        {
             bool val = stringToBool(value);
             *(bool*)entry->data_ptr = val;
             break;
-            
+        }
         case CONF_TYPE_STRING:
             if (*(char**)(entry->data_ptr)) {
                 free(*(char**)(entry->data_ptr));
@@ -62,7 +66,7 @@ void loadServerConfig(const char *filename) {
         for (int i = 0; conf_table[i].name != NULL; i++) {
             if (strcasecmp(key, conf_table[i].name) == 0) {
                 if (setConfigValue(&conf_table[i], val) == PDB_OK) {
-                    printf("[Config] %s set to %s\n", key, val);
+                    // printf("[Config] %s set to %s\n", key, val);
                 } else {
                     fprintf(stderr, "Invalid value for %s\n", key);
                 }

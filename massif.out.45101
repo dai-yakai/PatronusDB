@@ -1,0 +1,689 @@
+desc: --stacks=yes --heap-admin=8
+cmd: ./pdb_server
+time_unit: i
+#-----------
+snapshot=0
+#-----------
+time=0
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=271691
+mem_heap_B=16001166
+mem_heap_extra_B=3082
+mem_stacks_B=480
+heap_tree=detailed
+n2: 16001166 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n2: 16000072 0x1105E7: pdb_malloc (pdb_malloc.c:44)
+  n1: 16000024 0x111EC9: pdb_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10F9F9: init_pdb_engine (pdb_server.c:618)
+    n0: 16000024 0x10FA4B: main (pdb_server.c:637)
+  n0: 48 in 1 place, below massif's threshold (1.00%)
+ n0: 1094 in 3 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=2
+#-----------
+time=16271751
+mem_heap_B=16001166
+mem_heap_extra_B=3082
+mem_stacks_B=352
+heap_tree=empty
+#-----------
+snapshot=3
+#-----------
+time=16302921
+mem_heap_B=16001518
+mem_heap_extra_B=3130
+mem_stacks_B=15008
+heap_tree=empty
+#-----------
+snapshot=4
+#-----------
+time=49858673
+mem_heap_B=49588730
+mem_heap_extra_B=7206
+mem_stacks_B=12880
+heap_tree=empty
+#-----------
+snapshot=5
+#-----------
+time=83413185
+mem_heap_B=83143162
+mem_heap_extra_B=11246
+mem_stacks_B=12880
+heap_tree=empty
+#-----------
+snapshot=6
+#-----------
+time=86678425
+mem_heap_B=136210120
+mem_heap_extra_B=16048
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=7
+#-----------
+time=94623994
+mem_heap_B=177352344
+mem_heap_extra_B=22264
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=99541035
+mem_heap_B=198323928
+mem_heap_extra_B=26320
+mem_stacks_B=21376
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=105591357
+mem_heap_B=198323928
+mem_heap_extra_B=26320
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=10
+#-----------
+time=116251078
+mem_heap_B=220380634
+mem_heap_extra_B=30694
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=126979495
+mem_heap_B=241352218
+mem_heap_extra_B=34750
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=131896676
+mem_heap_B=262323802
+mem_heap_extra_B=38806
+mem_stacks_B=21376
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=137810696
+mem_heap_B=262323802
+mem_heap_extra_B=38806
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=14
+#-----------
+time=142727877
+mem_heap_B=283295386
+mem_heap_extra_B=42862
+mem_stacks_B=21376
+heap_tree=empty
+#-----------
+snapshot=15
+#-----------
+time=148573554
+mem_heap_B=283295386
+mem_heap_extra_B=42862
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=153490805
+mem_heap_B=304266970
+mem_heap_extra_B=46918
+mem_stacks_B=21376
+heap_tree=empty
+#-----------
+snapshot=17
+#-----------
+time=159387821
+mem_heap_B=304266970
+mem_heap_extra_B=46918
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=164306000
+mem_heap_B=325238554
+mem_heap_extra_B=50974
+mem_stacks_B=21200
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=172299684
+mem_heap_B=346210138
+mem_heap_extra_B=55030
+mem_stacks_B=21504
+heap_tree=detailed
+n6: 346210138 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n3: 204761022 0x1105E7: pdb_malloc (pdb_malloc.c:44)
+  n1: 188743689 0x111411: pdb_rbtree_set (pdb_rbtree.c:398)
+   n1: 188743689 0x10EE13: pdb_filter_protocol (pdb_server.c:256)
+    n1: 188743689 0x10F8CD: pdb_protocol (pdb_server.c:559)
+     n1: 188743689 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+      n1: 188743689 0x10B813: recv_cb (pdb_reactor.c:255)
+       n1: 188743689 0x10BE00: reactor_entry (pdb_reactor.c:357)
+        n0: 188743689 0x10FB57: main (pdb_server.c:673)
+  n1: 16000024 0x111EC9: pdb_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10F9F9: init_pdb_engine (pdb_server.c:618)
+    n0: 16000024 0x10FA4B: main (pdb_server.c:637)
+  n0: 17309 in 7 places, all below massif's threshold (1.00%)
+ n1: 53367542 0x110632: pdb_realloc (pdb_malloc.c:65)
+  n1: 53367542 0x114BF3: _pdb_enlarge_sds (pdb_sds.c:42)
+   n1: 53367542 0x114D36: pdb_enlarge_sds_greedy (pdb_sds.c:63)
+    n1: 53367542 0x10B6F9: recv_cb (pdb_reactor.c:241)
+     n1: 53367542 0x10BE00: reactor_entry (pdb_reactor.c:357)
+      n0: 53367542 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B0B5: event_register (pdb_reactor.c:137)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B147: event_register (pdb_reactor.c:142)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 20971568 0x10F668: pdb_protocol (pdb_server.c:513)
+  n1: 20971568 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+   n1: 20971568 0x10B813: recv_cb (pdb_reactor.c:255)
+    n1: 20971568 0x10BE00: reactor_entry (pdb_reactor.c:357)
+     n0: 20971568 0x10FB57: main (pdb_server.c:673)
+ n0: 1142 in 8 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=20
+#-----------
+time=178008047
+mem_heap_B=325238570
+mem_heap_extra_B=51038
+mem_stacks_B=14632
+heap_tree=empty
+#-----------
+snapshot=21
+#-----------
+time=185864833
+mem_heap_B=367181722
+mem_heap_extra_B=59086
+mem_stacks_B=21376
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=196057882
+mem_heap_B=388153282
+mem_heap_extra_B=63150
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=23
+#-----------
+time=217029431
+mem_heap_B=388153282
+mem_heap_extra_B=63150
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=24
+#-----------
+time=222272487
+mem_heap_B=388153282
+mem_heap_extra_B=63150
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=25
+#-----------
+time=232687516
+mem_heap_B=409124842
+mem_heap_extra_B=67214
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=26
+#-----------
+time=253659065
+mem_heap_B=409124842
+mem_heap_extra_B=67214
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=27
+#-----------
+time=258902121
+mem_heap_B=409124842
+mem_heap_extra_B=67214
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=28
+#-----------
+time=268906118
+mem_heap_B=430096402
+mem_heap_extra_B=71278
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=29
+#-----------
+time=289877667
+mem_heap_B=430096402
+mem_heap_extra_B=71278
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=30
+#-----------
+time=295120723
+mem_heap_B=430096402
+mem_heap_extra_B=71278
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=31
+#-----------
+time=305210237
+mem_heap_B=451067962
+mem_heap_extra_B=75342
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=32
+#-----------
+time=326181786
+mem_heap_B=451067962
+mem_heap_extra_B=75342
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=33
+#-----------
+time=331424842
+mem_heap_B=451067962
+mem_heap_extra_B=75342
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=34
+#-----------
+time=341446080
+mem_heap_B=472039522
+mem_heap_extra_B=79406
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=35
+#-----------
+time=362417629
+mem_heap_B=472039522
+mem_heap_extra_B=79406
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=36
+#-----------
+time=370581405
+mem_heap_B=451067954
+mem_heap_extra_B=75414
+mem_stacks_B=12736
+heap_tree=empty
+#-----------
+snapshot=37
+#-----------
+time=377630372
+mem_heap_B=493011082
+mem_heap_extra_B=83470
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=38
+#-----------
+time=398601921
+mem_heap_B=493011082
+mem_heap_extra_B=83470
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=39
+#-----------
+time=403844977
+mem_heap_B=493011082
+mem_heap_extra_B=83470
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=40
+#-----------
+time=413917422
+mem_heap_B=513982642
+mem_heap_extra_B=87534
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=41
+#-----------
+time=434888971
+mem_heap_B=513982642
+mem_heap_extra_B=87534
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=42
+#-----------
+time=440132027
+mem_heap_B=513982642
+mem_heap_extra_B=87534
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=43
+#-----------
+time=450170506
+mem_heap_B=534954202
+mem_heap_extra_B=91598
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=44
+#-----------
+time=471142055
+mem_heap_B=534954202
+mem_heap_extra_B=91598
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=45
+#-----------
+time=476385111
+mem_heap_B=534954202
+mem_heap_extra_B=91598
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=46
+#-----------
+time=484431021
+mem_heap_B=555925762
+mem_heap_extra_B=95662
+mem_stacks_B=21584
+heap_tree=detailed
+n6: 555925762 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 414476646 0x1105E7: pdb_malloc (pdb_malloc.c:44)
+  n1: 209715210 0x111411: pdb_rbtree_set (pdb_rbtree.c:398)
+   n1: 209715210 0x10EE13: pdb_filter_protocol (pdb_server.c:256)
+    n1: 209715210 0x10F8CD: pdb_protocol (pdb_server.c:559)
+     n1: 209715210 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+      n1: 209715210 0x10B813: recv_cb (pdb_reactor.c:255)
+       n1: 209715210 0x10BE00: reactor_entry (pdb_reactor.c:357)
+        n0: 209715210 0x10FB57: main (pdb_server.c:673)
+  n1: 188743689 0x111E2E: _create_node (pdb_hash.c:37)
+   n1: 188743689 0x11210B: pdb_hash_set (pdb_hash.c:128)
+    n1: 188743689 0x10F188: pdb_filter_protocol (pdb_server.c:333)
+     n1: 188743689 0x10F8CD: pdb_protocol (pdb_server.c:559)
+      n1: 188743689 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+       n1: 188743689 0x10B813: recv_cb (pdb_reactor.c:255)
+        n1: 188743689 0x10BE00: reactor_entry (pdb_reactor.c:357)
+         n0: 188743689 0x10FB57: main (pdb_server.c:673)
+  n1: 16000024 0x111EC9: pdb_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10F9F9: init_pdb_engine (pdb_server.c:618)
+    n0: 16000024 0x10FA4B: main (pdb_server.c:637)
+  n0: 17723 in 9 places, all below massif's threshold (1.00%)
+ n1: 53367542 0x110632: pdb_realloc (pdb_malloc.c:65)
+  n1: 53367542 0x114BF3: _pdb_enlarge_sds (pdb_sds.c:42)
+   n1: 53367542 0x114D36: pdb_enlarge_sds_greedy (pdb_sds.c:63)
+    n1: 53367542 0x10B6F9: recv_cb (pdb_reactor.c:241)
+     n1: 53367542 0x10BE00: reactor_entry (pdb_reactor.c:357)
+      n0: 53367542 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B0B5: event_register (pdb_reactor.c:137)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B147: event_register (pdb_reactor.c:142)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 20971568 0x10F668: pdb_protocol (pdb_server.c:513)
+  n1: 20971568 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+   n1: 20971568 0x10B813: recv_cb (pdb_reactor.c:255)
+    n1: 20971568 0x10BE00: reactor_entry (pdb_reactor.c:357)
+     n0: 20971568 0x10FB57: main (pdb_server.c:673)
+ n0: 1142 in 8 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=47
+#-----------
+time=486561002
+mem_heap_B=555925762
+mem_heap_extra_B=95662
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=48
+#-----------
+time=507532551
+mem_heap_B=555925762
+mem_heap_extra_B=95662
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=49
+#-----------
+time=509662524
+mem_heap_B=555925762
+mem_heap_extra_B=95662
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=50
+#-----------
+time=512775607
+mem_heap_B=555925762
+mem_heap_extra_B=95662
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=51
+#-----------
+time=515561733
+mem_heap_B=534954194
+mem_heap_extra_B=91670
+mem_stacks_B=13024
+heap_tree=empty
+#-----------
+snapshot=52
+#-----------
+time=515593569
+mem_heap_B=534954194
+mem_heap_extra_B=91670
+mem_stacks_B=12736
+heap_tree=empty
+#-----------
+snapshot=53
+#-----------
+time=515627707
+mem_heap_B=534954194
+mem_heap_extra_B=91670
+mem_stacks_B=12736
+heap_tree=empty
+#-----------
+snapshot=54
+#-----------
+time=515661845
+mem_heap_B=534954194
+mem_heap_extra_B=91670
+mem_stacks_B=12736
+heap_tree=empty
+#-----------
+snapshot=55
+#-----------
+time=515696155
+mem_heap_B=534954194
+mem_heap_extra_B=91670
+mem_stacks_B=12736
+heap_tree=empty
+#-----------
+snapshot=56
+#-----------
+time=515730637
+mem_heap_B=534954194
+mem_heap_extra_B=91670
+mem_stacks_B=12736
+heap_tree=detailed
+n5: 534954194 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 414476646 0x1105E7: pdb_malloc (pdb_malloc.c:44)
+  n1: 209715210 0x111411: pdb_rbtree_set (pdb_rbtree.c:398)
+   n1: 209715210 0x10EE13: pdb_filter_protocol (pdb_server.c:256)
+    n1: 209715210 0x10F8CD: pdb_protocol (pdb_server.c:559)
+     n1: 209715210 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+      n1: 209715210 0x10B813: recv_cb (pdb_reactor.c:255)
+       n1: 209715210 0x10BE00: reactor_entry (pdb_reactor.c:357)
+        n0: 209715210 0x10FB57: main (pdb_server.c:673)
+  n1: 188743689 0x111E2E: _create_node (pdb_hash.c:37)
+   n1: 188743689 0x11210B: pdb_hash_set (pdb_hash.c:128)
+    n1: 188743689 0x10F188: pdb_filter_protocol (pdb_server.c:333)
+     n1: 188743689 0x10F8CD: pdb_protocol (pdb_server.c:559)
+      n1: 188743689 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+       n1: 188743689 0x10B813: recv_cb (pdb_reactor.c:255)
+        n1: 188743689 0x10BE00: reactor_entry (pdb_reactor.c:357)
+         n0: 188743689 0x10FB57: main (pdb_server.c:673)
+  n1: 16000024 0x111EC9: pdb_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10F9F9: init_pdb_engine (pdb_server.c:618)
+    n0: 16000024 0x10FA4B: main (pdb_server.c:637)
+  n0: 17723 in 9 places, all below massif's threshold (1.00%)
+ n1: 53367542 0x110632: pdb_realloc (pdb_malloc.c:65)
+  n1: 53367542 0x114BF3: _pdb_enlarge_sds (pdb_sds.c:42)
+   n1: 53367542 0x114D36: pdb_enlarge_sds_greedy (pdb_sds.c:63)
+    n1: 53367542 0x10B6F9: recv_cb (pdb_reactor.c:241)
+     n1: 53367542 0x10BE00: reactor_entry (pdb_reactor.c:357)
+      n0: 53367542 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B0B5: event_register (pdb_reactor.c:137)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B147: event_register (pdb_reactor.c:142)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n0: 1142 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=57
+#-----------
+time=518534927
+mem_heap_B=555925762
+mem_heap_extra_B=95662
+mem_stacks_B=21184
+heap_tree=empty
+#-----------
+snapshot=58
+#-----------
+time=520666817
+mem_heap_B=555925801
+mem_heap_extra_B=95687
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=59
+#-----------
+time=520666864
+mem_heap_B=576897322
+mem_heap_extra_B=99726
+mem_stacks_B=21584
+heap_tree=peak
+n6: 576897322 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 435448206 0x1105E7: pdb_malloc (pdb_malloc.c:44)
+  n1: 209715210 0x111411: pdb_rbtree_set (pdb_rbtree.c:398)
+   n1: 209715210 0x10EE13: pdb_filter_protocol (pdb_server.c:256)
+    n1: 209715210 0x10F8CD: pdb_protocol (pdb_server.c:559)
+     n1: 209715210 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+      n1: 209715210 0x10B813: recv_cb (pdb_reactor.c:255)
+       n1: 209715210 0x10BE00: reactor_entry (pdb_reactor.c:357)
+        n0: 209715210 0x10FB57: main (pdb_server.c:673)
+  n1: 209715210 0x111E2E: _create_node (pdb_hash.c:37)
+   n1: 209715210 0x11210B: pdb_hash_set (pdb_hash.c:128)
+    n1: 209715210 0x10F188: pdb_filter_protocol (pdb_server.c:333)
+     n1: 209715210 0x10F8CD: pdb_protocol (pdb_server.c:559)
+      n1: 209715210 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+       n1: 209715210 0x10B813: recv_cb (pdb_reactor.c:255)
+        n1: 209715210 0x10BE00: reactor_entry (pdb_reactor.c:357)
+         n0: 209715210 0x10FB57: main (pdb_server.c:673)
+  n1: 16000024 0x111EC9: pdb_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10F9F9: init_pdb_engine (pdb_server.c:618)
+    n0: 16000024 0x10FA4B: main (pdb_server.c:637)
+  n0: 17762 in 9 places, all below massif's threshold (1.00%)
+ n1: 53367542 0x110632: pdb_realloc (pdb_malloc.c:65)
+  n1: 53367542 0x114BF3: _pdb_enlarge_sds (pdb_sds.c:42)
+   n1: 53367542 0x114D36: pdb_enlarge_sds_greedy (pdb_sds.c:63)
+    n1: 53367542 0x10B6F9: recv_cb (pdb_reactor.c:241)
+     n1: 53367542 0x10BE00: reactor_entry (pdb_reactor.c:357)
+      n0: 53367542 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B0B5: event_register (pdb_reactor.c:137)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 33554432 0x10B147: event_register (pdb_reactor.c:142)
+  n1: 33554432 0x10B3C6: accept_cb (pdb_reactor.c:170)
+   n1: 33554432 0x10BE00: reactor_entry (pdb_reactor.c:357)
+    n0: 33554432 0x10FB57: main (pdb_server.c:673)
+ n1: 20971568 0x10F668: pdb_protocol (pdb_server.c:513)
+  n1: 20971568 0x10B56E: process_read_buffer (pdb_reactor.c:204)
+   n1: 20971568 0x10B813: recv_cb (pdb_reactor.c:255)
+    n1: 20971568 0x10BE00: reactor_entry (pdb_reactor.c:357)
+     n0: 20971568 0x10FB57: main (pdb_server.c:673)
+ n0: 1142 in 8 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=60
+#-----------
+time=522796845
+mem_heap_B=576897322
+mem_heap_extra_B=99726
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=61
+#-----------
+time=543768394
+mem_heap_B=576897322
+mem_heap_extra_B=99726
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=62
+#-----------
+time=545898367
+mem_heap_B=576897322
+mem_heap_extra_B=99726
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=63
+#-----------
+time=549011450
+mem_heap_B=576897322
+mem_heap_extra_B=99726
+mem_stacks_B=21456
+heap_tree=empty
+#-----------
+snapshot=64
+#-----------
+time=551797576
+mem_heap_B=555925754
+mem_heap_extra_B=95734
+mem_stacks_B=13024
+heap_tree=empty
+#-----------
+snapshot=65
+#-----------
+time=551829412
+mem_heap_B=555925754
+mem_heap_extra_B=95734
+mem_stacks_B=12736
+heap_tree=empty

@@ -25,7 +25,7 @@ typedef int KEY_TYPE;
 typedef struct _rbtree_node rbtree_node;
 typedef struct _rbtree rbtree;
 
-typedef rbtree kvs_rbtree_t;
+typedef rbtree pdb_rbtree_t;
 
 struct _rbtree_node {
 	unsigned char color;
@@ -54,20 +54,19 @@ rbtree_node *rbtree_search(rbtree *T, KEY_TYPE key);
 void rbtree_traversal(rbtree *T, rbtree_node *node);
 
 
-int kvs_rbtree_create(kvs_rbtree_t* inst);
-void kvs_rbtree_destroy(kvs_rbtree_t* inst);
-int kvs_rbtree_set(kvs_rbtree_t* inst, char* key, char* value);
-int kvs_rbtree_mset(kvs_rbtree_t *arr, char** tokens, int count);
-char* kvs_rbtree_get(kvs_rbtree_t* inst, char* key);
-int kvs_rbtree_del(kvs_rbtree_t* inst, char* key);
-int kvs_rbtree_mod(kvs_rbtree_t* inst, char* key, char* value);
-int kvs_rbtree_exist(kvs_rbtree_t* inst, char* key);
-void kvs_print_rbtree(kvs_rbtree_t* inst);
+int pdb_rbtree_create(pdb_rbtree_t* inst);
+void pdb_rbtree_destroy(pdb_rbtree_t* inst);
+int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, char* value);
+int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count);
+char* pdb_rbtree_get(pdb_rbtree_t* inst, char* key);
+int pdb_rbtree_del(pdb_rbtree_t* inst, char* key);
+int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value);
+int pdb_rbtree_exist(pdb_rbtree_t* inst, char* key);
+void pdb_print_rbtree(pdb_rbtree_t* inst);
 
-static void rbtree_dump_node(rbtree_node *node, const char *file);
-void kvs_rbtree_dump(kvs_rbtree_t *tree, const char *file);
-int kvs_rbtree_load(kvs_rbtree_t *arr, const char *file);
+void pdb_rbtree_dump(pdb_rbtree_t *tree, const char *file);
+int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file);
 
-extern kvs_rbtree_t global_rbtree;
+extern pdb_rbtree_t global_rbtree;
 
 #endif

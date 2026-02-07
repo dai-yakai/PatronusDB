@@ -2,12 +2,8 @@
 
 
 /**
- * @brief 查找下一个\r\n的位置
- * 
- * @param start 传入数组的起始指针
- * @param remaining_len 待搜索数组的长度
- * 
- * @return 找到，返回指向\r\n的指针；未找到，返回NULL
+ * Locate the first occurrence of crlf(\r\n) within the given `remaining_len`.
+ * Return Pointer to the start of crlf if found; NULL otherwise.
  */
 static char* find_crlf(char* start, int remaining_len){
     char* p;
@@ -20,36 +16,31 @@ static char* find_crlf(char* start, int remaining_len){
         remaining_len--;
     }
     
-    // 未找到返回NULL
     return NULL;
 }
 
-int kvs_split_token(char* msg, int len, char* tokens[]){
-    if (msg == NULL || tokens == NULL || len < 0){
-        printf("kvs_split_token: parameter error\n");
-        return -1;
-    }
+int pdb_split_token(char* msg, int len, char* tokens[]){
+    assert(msg != NULL && len > 0 && tokens != NULL);
 
     int idx = 0;
     char* curr = msg;
     char* endptr = msg + len;
 
     if (*curr != '*'){
-        // 不符合协议格式
-        printf("kvs_split_token: protocal error\n");
+        // validate the RESP protocal
+        pdb_log_error("protocal error\n");
         return -1;
     }
 
     curr++;
 
-    // 找到共有多少个token（SET key value，count = 3）
     char* crlf = find_crlf(curr, endptr - curr);
     if (crlf == NULL){
-        printf("kvs_split_token: crlf == NULL\n");
+        pdb_log_debug("crlf == NULL\n");
         return -1;
     }
     *crlf = '\0';
-    int count = atoi(curr); // 
+    int count = atoi(curr); 
     *crlf = '\r';
 
     curr = crlf + 2;
@@ -57,12 +48,12 @@ int kvs_split_token(char* msg, int len, char* tokens[]){
     int i;
     int token_len;
     for (i = 0; i < count; i++){
-        curr++;     //跳过$
+        curr++;     // skip $
 
         crlf = find_crlf(curr, endptr-curr);
         if (crlf == NULL){
-            // 信息没收全
-            printf("value is too long\n");
+            // receive half package
+            pdb_log_debug("value is too long\n");
             return -1;
         }
         *crlf = '\0';
@@ -79,98 +70,86 @@ int kvs_split_token(char* msg, int len, char* tokens[]){
     return count;
 }
 
-static int kvs_parser_cmd(const char* cmd_str) {
+static int pdb_parser_cmd(const char* cmd_str) {
     if (!cmd_str) return -1;
 
-    // 利用首字母进行第一轮 O(1) 过滤
     switch (cmd_str[0]) {
         case 'A':
-            if (strcmp(cmd_str, "ASAVE") == 0) return KVS_CMD_ASAVE;
+            if (strcmp(cmd_str, "ASAVE") == 0) return PDB_CMD_ASAVE;
             break;
 
         case 'D':
 #if ENABLE_ARRAY
-            if (strcmp(cmd_str, "DEL") == 0) return KVS_CMD_DEL;
+            if (strcmp(cmd_str, "DEL") == 0) return PDB_CMD_DEL;
 #endif
             break;
 
         case 'E':
-            if (strcmp(cmd_str, "EXIT") == 0) return KVS_CMD_EXIT;
+            if (strcmp(cmd_str, "EXIT") == 0) return PDB_CMD_EXIT;
 #if ENABLE_ARRAY
-            if (strcmp(cmd_str, "EXIST") == 0) return KVS_CMD_EXIST;
+            if (strcmp(cmd_str, "EXIST") == 0) return PDB_CMD_EXIST;
 #endif
             break;
 
         case 'G':
 #if ENABLE_ARRAY
-            if (strcmp(cmd_str, "GET") == 0) return KVS_CMD_GET;
+            if (strcmp(cmd_str, "GET") == 0) return PDB_CMD_GET;
 #endif
             break;
 
         case 'H':
-            // 按照你提供的数组，HMSET/HMGET 是无条件开启的
-            if (strcmp(cmd_str, "HMSET") == 0) return KVS_CMD_HMSET;
-            if (strcmp(cmd_str, "HMGET") == 0) return KVS_CMD_HMGET;
+            if (strcmp(cmd_str, "HMSET") == 0) return PDB_CMD_HMSET;
+            if (strcmp(cmd_str, "HMGET") == 0) return PDB_CMD_HMGET;
 #if ENABLE_HASH
-            if (strcmp(cmd_str, "HSET") == 0) return KVS_CMD_HSET;
-            if (strcmp(cmd_str, "HGET") == 0) return KVS_CMD_HGET;
-            if (strcmp(cmd_str, "HDEL") == 0) return KVS_CMD_HDEL;
-            if (strcmp(cmd_str, "HMOD") == 0) return KVS_CMD_HMOD;
-            if (strcmp(cmd_str, "HEXIST") == 0) return KVS_CMD_HEXIST;
+            if (strcmp(cmd_str, "HSET") == 0) return PDB_CMD_HSET;
+            if (strcmp(cmd_str, "HGET") == 0) return PDB_CMD_HGET;
+            if (strcmp(cmd_str, "HDEL") == 0) return PDB_CMD_HDEL;
+            if (strcmp(cmd_str, "HMOD") == 0) return PDB_CMD_HMOD;
+            if (strcmp(cmd_str, "HEXIST") == 0) return PDB_CMD_HEXIST;
 #endif
             break;
 
         case 'M':
-            // MSET/MGET 是无条件开启的
-            if (strcmp(cmd_str, "MSET") == 0) return KVS_CMD_MSET;
-            if (strcmp(cmd_str, "MGET") == 0) return KVS_CMD_MGET;
 #if ENABLE_ARRAY
-            if (strcmp(cmd_str, "MOD") == 0) return KVS_CMD_MOD;
+            if (strcmp(cmd_str, "MSET") == 0) return PDB_CMD_MSET;
+            if (strcmp(cmd_str, "MGET") == 0) return PDB_CMD_MGET;
+
+            if (strcmp(cmd_str, "MOD") == 0) return PDB_CMD_MOD;
 #endif
             break;
 
         case 'R':
-            // 按照你提供的数组，RMSET/RMGET 是无条件开启的
-            if (strcmp(cmd_str, "RMSET") == 0) return KVS_CMD_RMSET;
-            if (strcmp(cmd_str, "RMGET") == 0) return KVS_CMD_RMGET;
+            if (strcmp(cmd_str, "RMSET") == 0) return PDB_CMD_RMSET;
+            if (strcmp(cmd_str, "RMGET") == 0) return PDB_CMD_RMGET;
 #if ENABLE_RBTREE
-            if (strcmp(cmd_str, "RSET") == 0) return KVS_CMD_RSET;
-            if (strcmp(cmd_str, "RGET") == 0) return KVS_CMD_RGET;
-            if (strcmp(cmd_str, "RDEL") == 0) return KVS_CMD_RDEL;
-            if (strcmp(cmd_str, "RMOD") == 0) return KVS_CMD_RMOD;
-            if (strcmp(cmd_str, "REXIST") == 0) return KVS_CMD_REXIST;
+            if (strcmp(cmd_str, "RSET") == 0) return PDB_CMD_RSET;
+            if (strcmp(cmd_str, "RGET") == 0) return PDB_CMD_RGET;
+            if (strcmp(cmd_str, "RDEL") == 0) return PDB_CMD_RDEL;
+            if (strcmp(cmd_str, "RMOD") == 0) return PDB_CMD_RMOD;
+            if (strcmp(cmd_str, "REXIST") == 0) return PDB_CMD_REXIST;
 #endif
             break;
 
         case 'S':
-            if (strcmp(cmd_str, "SAVE") == 0) return KVS_CMD_SAVE;
-            if (strcmp(cmd_str, "SYN") == 0) return KVS_CMD_SYN;
+            if (strcmp(cmd_str, "SAVE") == 0) return PDB_CMD_SAVE;
+            if (strcmp(cmd_str, "SYN") == 0) return PDB_CMD_SYN;
 #if ENABLE_ARRAY
-            if (strcmp(cmd_str, "SET") == 0) return KVS_CMD_SET;
+            if (strcmp(cmd_str, "SET") == 0) return PDB_CMD_SET;
 #endif
             break;
     }
 
-    return -1; // 未找到命令
+    return -1; // can not find the command
 }
 
-int kvs_filter_protocol(char** tokens, int count, char* response){
+int pdb_filter_protocol(char** tokens, int count, char* response){
     if (tokens == NULL || count == 0 || response == NULL){
-        printf("kvs_filter_protocol: parameter error\n");
+        printf("pdb_filter_protocol: parameter error\n");
         return -1;
     }
 
-    // int cmd = KVS_CMD_START;
-    // for (cmd = KVS_CMD_START; cmd < KVS_CMD_COUNT; cmd++){
-    //     if (strcmp(tokens[0], command[cmd]) == 0){
-    //         break;
-    //     }
-    // }
+    int cmd = pdb_parser_cmd(tokens[0]);
 
-    int cmd = kvs_parser_cmd(tokens[0]);
-#if ENABLE_PRINT_KV
-    printf("token: %s\n, cmd: %s\n", tokens[0], command[cmd]);
-#endif
     int i;
     int len = 0;
     int ret = 0;
@@ -182,9 +161,9 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
     pid_t pid;
 
     switch(cmd){
-#ifdef ENABLE_ARRAY
-        case KVS_CMD_SET:
-            ret = kvs_array_set(&global_array, key, value);
+#if ENABLE_ARRAY
+        case PDB_CMD_SET:
+            ret = pdb_array_set(&global_array, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -194,19 +173,19 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_GET:
-            value_get = kvs_array_get(&global_array, key);
+        case PDB_CMD_GET:
+            value_get = pdb_array_get(&global_array, key);
             if (value_get == NULL){
                 len = sprintf(response, "NO EXIST\r\n");
             }else {
                 len = sprintf(response, "%s\r\n", value_get);
             }
             break;
-        case KVS_CMD_MGET:
+        case PDB_CMD_MGET:
             len = 0;
             for (i = 1; i < count; i++){
                 char* key = tokens[i];
-                char* val = kvs_rbtree_get(&global_rbtree, key);
+                char* val = pdb_rbtree_get(&global_rbtree, key);
 
                 if (val == NULL) {
                     len += sprintf(response + len, "ERROR\r\n");
@@ -216,8 +195,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_MSET:
-            ret = kvs_array_mset(&global_array, tokens, count - 1);
+        case PDB_CMD_MSET:
+            ret = pdb_array_mset(&global_array, tokens, count - 1);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -225,30 +204,30 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_DEL:
-            ret = kvs_array_del(&global_array, key);
+        case PDB_CMD_DEL:
+            ret = pdb_array_del(&global_array, key);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
-                len = len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "OK\r\n");
             } else{
                 len = sprintf(response, "NO EXIST\r\n");
             }
             break;
 
-        case KVS_CMD_MOD:
-            ret = kvs_array_mod(&global_array, key, value);
+        case PDB_CMD_MOD:
+            ret = pdb_array_mod(&global_array, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
-                len = len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "OK\r\n");
             } else{
                 len = sprintf(response, "NO EXIST\r\n");
             }
             break;
 
-        case KVS_CMD_EXIST:
-            ret = kvs_array_exist(&global_array, key);
+        case PDB_CMD_EXIST:
+            ret = pdb_array_exist(&global_array, key);
             if (ret == 0){
                 len = sprintf(response, "EXIST\r\n");
             } else{
@@ -258,8 +237,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
 #endif
             
 #ifdef ENABLE_RBTREE
-        case KVS_CMD_RSET:
-            ret = kvs_rbtree_set(&global_rbtree, key, value);
+        case PDB_CMD_RSET:
+            ret = pdb_rbtree_set(&global_rbtree, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -269,8 +248,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_RGET:
-            value_get = kvs_rbtree_get(&global_rbtree, key);
+        case PDB_CMD_RGET:
+            value_get = pdb_rbtree_get(&global_rbtree, key);
             if (value_get == NULL){
                 len = sprintf(response, "NO EXIST\r\n");
             }else {
@@ -278,8 +257,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_RMSET:
-            ret = kvs_rbtree_mset(&global_rbtree, tokens, count - 1);
+        case PDB_CMD_RMSET:
+            ret = pdb_rbtree_mset(&global_rbtree, tokens, count - 1);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -287,11 +266,11 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_RMGET:
+        case PDB_CMD_RMGET:
             len = 0;
             for (i = 1; i < count; i++){
                 char* key = tokens[i];
-                char* val = kvs_rbtree_get(&global_rbtree, key);
+                char* val = pdb_rbtree_get(&global_rbtree, key);
 
                 if (val == NULL) {
                     len += sprintf(response + len, "NO EXIST\r\n");
@@ -302,30 +281,30 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             
             break;
 
-        case KVS_CMD_RDEL:
-            ret = kvs_rbtree_del(&global_rbtree, key);
+        case PDB_CMD_RDEL:
+            ret = pdb_rbtree_del(&global_rbtree, key);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
-                len = len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "OK\r\n");
             } else{
                 len = sprintf(response, "NO EXIST\r\n");
             }
             break;
 
-        case KVS_CMD_RMOD:
-            ret = kvs_rbtree_mod(&global_rbtree, key, value);
+        case PDB_CMD_RMOD:
+            ret = pdb_rbtree_mod(&global_rbtree, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
-                len = len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "OK\r\n");
             } else{
                 len = sprintf(response, "NO EXIST\r\n");
             }
             break;
 
-        case KVS_CMD_REXIST:
-            ret = kvs_rbtree_exist(&global_rbtree, key);
+        case PDB_CMD_REXIST:
+            ret = pdb_rbtree_exist(&global_rbtree, key);
             if (ret == 0){
                 len = sprintf(response, "EXIST\r\n");
             } else{
@@ -335,8 +314,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
 #endif
 
 #if ENABLE_HASH
-        case KVS_CMD_HSET:
-            ret = kvs_hash_set(&global_hash, key, value);
+        case PDB_CMD_HSET:
+            ret = pdb_hash_set(&global_hash, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -346,8 +325,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_HGET:
-            value_get = kvs_hash_get(&global_hash, key);
+        case PDB_CMD_HGET:
+            value_get = pdb_hash_get(&global_hash, key);
             if (value_get == NULL){
                 len = sprintf(response, "NO EXIST\r\n");
             }else {
@@ -355,12 +334,12 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_HMGET:
+        case PDB_CMD_HMGET:
             len = 0;
             for (i = 1; i < count; i++){   
                 char* key = tokens[i];
-                char* val = kvs_hash_get(&global_hash, key);
-                // printf("key: %s\n", key);
+                char* val = pdb_hash_get(&global_hash, key);
+
                 if (val == NULL) {
                     len += sprintf(response + len, "NO EXIST\r\n");
                 } else {
@@ -369,8 +348,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_HMSET:
-            ret = kvs_hash_mset(&global_hash, tokens, count - 1);
+        case PDB_CMD_HMSET:
+            ret = pdb_hash_mset(&global_hash, tokens, count - 1);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -379,30 +358,30 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             break;
             break;
 
-        case KVS_CMD_HDEL:
-            ret = kvs_hash_del(&global_hash, key);
+        case PDB_CMD_HDEL:
+            ret = pdb_hash_del(&global_hash, key);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
-                len = len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "OK\r\n");
             } else{
                 len = sprintf(response, "NO EXIST\r\n");
             }
             break;
 
-        case KVS_CMD_HMOD:
-            ret = kvs_hash_mod(&global_hash, key, value);
+        case PDB_CMD_HMOD:
+            ret = pdb_hash_mod(&global_hash, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
-                len = len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "OK\r\n");
             } else{
                 len = sprintf(response, "NO EXIST\r\n");
             }
             break;
 
-        case KVS_CMD_HEXIST:
-            ret = kvs_hash_exist(&global_hash, key);
+        case PDB_CMD_HEXIST:
+            ret = pdb_hash_exist(&global_hash, key);
             if (ret == 0){
                 len = sprintf(response, "EXIST\r\n");
             } else{
@@ -411,26 +390,26 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             break;   
 
 #endif
-        case KVS_CMD_SAVE:
+        case PDB_CMD_SAVE:
             pid = fork();
             if (pid == 0){
-                // 子进程
+                // child thread
                 printf("save\n");
                 printf("child pid: %d\n", pid);
 #if ENABLE_ARRAY
-                kvs_array_dump(&global_array, "array.dump");
+                pdb_array_dump(&global_array, "array.dump");
 #endif
 #if ENABLE_RBTREE
-                kvs_rbtree_dump(&global_rbtree, "rbtree.dump");
+                pdb_rbtree_dump(&global_rbtree, "rbtree.dump");
 #endif
 #if ENABLE_HASH
-                kvs_hash_dump(&global_hash, "hash.dump");
+                pdb_hash_dump(&global_hash, "hash.dump");
 #endif
                 len = sprintf(response, "OK\r\n");
                 
                 _exit(0);
             }else if (pid > 0){
-                // 父进程
+                // father thread
                 len = sprintf(response, "OK\r\n");
             }else{
                 perror("fork failed");
@@ -439,13 +418,13 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
 
             break;
 
-        case KVS_CMD_ASAVE:
+        case PDB_CMD_ASAVE:
         
             break;
         
 #if ENABLE_SKIPTABLE
-        case KVS_CMD_SKSET:
-            ret = kvs_rbtree_set(&global_rbtree, key, value);
+        case PDB_CMD_SKSET:
+            ret = pdb_rbtree_set(&global_rbtree, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -455,8 +434,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_SKGET:
-            value_get = kvs_rbtree_get(&global_rbtree, key);
+        case PDB_CMD_SKGET:
+            value_get = pdb_rbtree_get(&global_rbtree, key);
             if (value_get == NULL){
                 len = sprintf(response, "NO EXIST\r\n");
             }else {
@@ -464,8 +443,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_SKDEL:
-            ret = kvs_rbtree_del(&global_rbtree, key);
+        case PDB_CMD_SKDEL:
+            ret = pdb_rbtree_del(&global_rbtree, key);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -475,8 +454,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_SKMOD:
-            ret = kvs_rbtree_mod(&global_rbtree, key, value);
+        case PDB_CMD_SKMOD:
+            ret = pdb_rbtree_mod(&global_rbtree, key, value);
             if (ret < 0){
                 len = sprintf(response, "ERROR\r\n");
             } else if (ret == 0){
@@ -486,8 +465,8 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             }
             break;
 
-        case KVS_CMD_SKEXIST:
-            ret = kvs_rbtree_exist(&global_rbtree, key);
+        case PDB_CMD_SKEXIST:
+            ret = pdb_rbtree_exist(&global_rbtree, key);
             if (ret == 0){
                 len = sprintf(response, "EXIST\r\n");
             } else{
@@ -496,10 +475,10 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
             break;   
 
 #endif
-        case KVS_CMD_SYN:
+        case PDB_CMD_SYN:
             return -9999;
 
-        case KVS_CMD_EXIT:
+        case PDB_CMD_EXIT:
             return -99;
         default:
             ret = sprintf(response, "cmd error\r\n");
@@ -511,25 +490,31 @@ int kvs_filter_protocol(char** tokens, int count, char* response){
 }
 
 
-int kvs_protocol(char* rmsg, int length, char* out){
-    if (rmsg == NULL || length < 0 || out == NULL){
-        printf("kvs_protocol: parameter error\n");
-        return -1;
-    }
+int pdb_protocol(char* msg, int length, char* out){
+    assert(msg != NULL && length > 0 && out != NULL);
 
-    // 获取token的数量
+    char* rmsg = (char*)malloc(length);
+    if (rmsg == NULL){
+        pdb_log_error("malloc error\n");
+    }
+    memcpy(rmsg, msg, length);
+
+    // Geting the num of tokens
     if (rmsg[0] != '*') {
-        printf("Protocol Error: Not a RESP Array\n");
+        free(rmsg);
+        pdb_log_debug("Protocol Error: Valilate RESP protocal\n");
         return -1;
     }
     char *crlf = strstr(rmsg, "\r\n");
     if (crlf == NULL) {
-        printf("kvs_protocol: crlf == NULL\n");
+        pdb_log_debug("crlf == NULL\n");
+        free(rmsg);
         return -1;
     }
     int count = atoi(rmsg + 1);
     if (count <= 0) {
-        printf("count <= 0\n");
+        pdb_log_debug("count <= 0\n");
+        free(rmsg);
         return -1;
     }
     char** tokens;
@@ -541,111 +526,93 @@ int kvs_protocol(char* rmsg, int length, char* out){
     }
 
     if (tokens == NULL) {
-        perror("kvs_protocol: malloc tokens failed");
+        perror("malloc tokens failed");
         return -1;
     }
     memset(tokens, 0, sizeof(char*) * count);
-    // char* tokens[KVS_MAX_TOKENS] = {0};
 
-    count = kvs_split_token(rmsg, length, tokens);
+    count = pdb_split_token(rmsg, length, tokens);
     if (count == -1){
-        printf("kvs_protocol: kvs_split_token return -1\n");
+        pdb_log_debug("pdb_split_token return -1\n");
         free(tokens);
         return -1;
     }
 
-    int ret = kvs_filter_protocol(tokens, count, out);
+    int ret = pdb_filter_protocol(tokens, count, out);
 
     if (count >= 1024){
         free(tokens);
     }
-    
+
+    free(rmsg);
     return ret;
 }
 
 
-int kvs_response_handler(char* rmsg, int length, char* out){
+int pdb_response_handler(char* rmsg, int length, char* out){
     printf("rmgs: %lu, length: %d, out: %lu", strlen(rmsg), length, strlen(out));
     memcpy(out, rmsg, length);
 
     return strlen(out);
 }
 
-void dest_kvengine(void){
+void dest_pdb_engine(void){
 #if ENABLE_ARRAY
-    // kvs_array_dump(&global_array, "array.dump");
-    kvs_array_destroy(&global_array);
+    // pdb_array_dump(&global_array, "array.dump");
+    pdb_array_destroy(&global_array);
     printf("array suucess\n");
 #endif
 
 #if ENABLE_RBTREE
-    // kvs_rbtree_dump(&global_rbtree, "rbtree.dump");
-    kvs_rbtree_destroy(&global_rbtree);
+    // pdb_rbtree_dump(&global_rbtree, "rbtree.dump");
+    pdb_rbtree_destroy(&global_rbtree);
     printf("rbtree suucess\n");
 #endif
 
 #if ENABLE_HASH
-    // kvs_hash_dump(&global_hash, "hash.dump");
-    kvs_hash_destory(&global_hash);
-#endif
-
-#if ENABLE_THREADPOOL
-    destroyPool(&g_kv_pool);
+    // pdb_hash_dump(&global_hash, "hash.dump");
+    pdb_hash_destory(&global_hash);
 #endif
 
 #if ENABLE_MEMPOOL
-    kvs_mem_destroy();
+    pdb_mem_destroy();
 #endif
 
 }
 
 
-int init_kvengine(void){
-#if ENABLE_THREADPOOL
-    createThreadPool(&g_kv_pool, KV_WORKER_NUM);
-#endif
-
+int init_pdb_engine(){
 #if ENABLE_MEMPOOL
-    kvs_mem_init(1024 * 512);
+    pdb_mem_init(1024 * 512);
 #endif
 
 #if ENABLE_ARRAY
-    kvs_array_create(&global_array);
-    kvs_array_load(&global_array, "array.dump");
+    pdb_array_create(&global_array);
+    pdb_array_load(&global_array, global_conf.array_dump_dir);
 #endif
 
 #if ENABLE_RBTREE
-    kvs_rbtree_create(&global_rbtree);
-    kvs_rbtree_load(&global_rbtree, "rbtree.dump");
+    pdb_rbtree_create(&global_rbtree);
+    pdb_rbtree_load(&global_rbtree, global_conf.rbtree_dump_dir);
 #endif
 
 #if ENABLE_HASH
-    kvs_hash_create(&global_hash);
-    kvs_hash_load(&global_hash, "hash.dump");
+    pdb_hash_create(&global_hash);
+    pdb_hash_load(&global_hash, global_conf.hash_dump_dir);
 #endif
 
     return 0;
 }
 
 
-// port, kvs_protocal
-// ./kvstore 9001 3          (Master)
-// ./kvstore 9002 3 127.0.0.1 9001 (Slave)
 int main(int argc, char* argv[]){
-    printf("############## Hello kv store #############\n");
-    if (argc != 3 && argc != 5){
-        return -1;
-    }
+    printf("############## Hello PDB #############\n");
 
-    // int port = atoi(argv[1]);
-    // int mode = atoi(argv[2]);
+    loadServerConfig("/home/dai/PatronusDB/PatronusDB.conf");
+    init_pdb_engine();
 
     int port = global_conf.port;
     int mode = global_conf.network_mode;
-    
-    init_kvengine();
-    loadServerConfig("../PatronusDB.conf");
-    // printf("load dump success\n");
 
     if (global_conf.is_replication){
         // 为slave节点
@@ -678,16 +645,17 @@ int main(int argc, char* argv[]){
 
     if (mode == 1){
         printf("newtork mode: %s\n", "reactor");
-        reactor_entry(port, kvs_protocol, kvs_response_handler);
+        int ret = reactor_entry(port, pdb_protocol, pdb_response_handler);
+        printf("ret: %d\n", ret);
     }else if (mode == 2){
         printf("newtork mode: %s\n", "ntyco");
-        ntyco_entry(port, kvs_protocol, kvs_response_handler);
+        ntyco_entry(port, pdb_protocol, pdb_response_handler);
     }else if (mode == 3){
         printf("newtork mode: %s\n", "io_uring");
-        uring_entry(port, kvs_protocol, kvs_response_handler);
+        uring_entry(port, pdb_protocol, pdb_response_handler);
     }
 
-    dest_kvengine();
+    dest_pdb_engine();
     
     return 0;
 }

@@ -12,7 +12,7 @@ void* mp_memalign(size_t alignment, size_t size){
     return memalign(alignment, size);
 }
 
-struct mp_pool_s* kv_mp_create_pool(size_t size){
+struct mp_pool_s* pdb_mp_create_pool(size_t size){
     struct mp_pool_s* p;
 
     p = (struct mp_pool_s*)mp_memalign(MP_ALIGNMENT, size);
@@ -142,7 +142,7 @@ static void* mp_alloc_large(struct mp_pool_s* pool, size_t size){
     return ptr;
 }
 
-void* kv_mp_alloc(struct mp_pool_s* pool, size_t size){
+void* pdb_mp_alloc(struct mp_pool_s* pool, size_t size){
     if (size < pool->max){
         // 1: 进行内存对齐   0: 不进行内存对齐
         return mp_alloc_small(pool, size, 1);
@@ -152,7 +152,7 @@ void* kv_mp_alloc(struct mp_pool_s* pool, size_t size){
 }
 
 // 仅供释放大块内存
-void kv_mp_free(struct mp_pool_s* pool, void* p){
+void pdb_mp_free(struct mp_pool_s* pool, void* p){
     struct mp_large_s* large;
 
     for (large = pool->large; large; large = large->next){
@@ -163,7 +163,7 @@ void kv_mp_free(struct mp_pool_s* pool, void* p){
     }
 }
 
-void kv_mp_reset_pool(struct mp_pool_s* pool){
+void pdb_mp_reset_pool(struct mp_pool_s* pool){
     struct mp_large_s* large;
     struct mp_pool_s* p;
 
@@ -190,7 +190,7 @@ void kv_mp_reset_pool(struct mp_pool_s* pool){
     pool->current = pool;
 }
 
-void kv_mp_destory_pool(struct mp_pool_s* pool){
+void pdb_mp_destory_pool(struct mp_pool_s* pool){
     struct mp_large_s* large;
     struct mp_pool_s* p;
 

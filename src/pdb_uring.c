@@ -411,7 +411,7 @@ int uring_entry(unsigned short port, msg_handler request_handler,
     bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
     listen(sockfd, 128);
 
-    printf("io_uring kvstore listening on %d ...\n", port);
+    // printf("io_uring kvstore listening on %d ...\n", port);
 
     /************** 创建 io_uring 队列 **************/
     struct io_uring ring;

@@ -2,7 +2,7 @@
 // Key, Value --> 
 // Modify 
 
-kvs_hash_t global_hash;
+pdb_hash_t global_hash;
 
 
 //Connection 
@@ -23,20 +23,20 @@ static int _hash(char *key, int size) {
 
 hashnode_t *_create_node(char *key, char *value) {
 
-	hashnode_t *node = (hashnode_t*)kvs_malloc(sizeof(hashnode_t));
+	hashnode_t *node = (hashnode_t*)pdb_malloc(sizeof(hashnode_t));
 	if (!node) return NULL;
 	
 #if ENABLE_KEY_POINTER
-	char *kcopy = kvs_malloc(strlen(key) + 1);
+	char *kcopy = pdb_malloc(strlen(key) + 1);
 	if (kcopy == NULL) return NULL;
 	memset(kcopy, 0, strlen(key) + 1);
 	strncpy(kcopy, key, strlen(key));
 
 	node->key = kcopy;
 
-	char *kvalue = kvs_malloc(strlen(value) + 1);
+	char *kvalue = pdb_malloc(strlen(value) + 1);
 	if (kvalue == NULL) { 
-		// kvs_free(kvalue);
+		// pdb_free(kvalue);
 		return NULL;
 	}
 	memset(kvalue, 0, strlen(value) + 1);
@@ -55,11 +55,11 @@ hashnode_t *_create_node(char *key, char *value) {
 
 
 //
-int kvs_hash_create(kvs_hash_t *hash) {
+int pdb_hash_create(pdb_hash_t *hash) {
 
 	if (!hash) return -1;
 
-	hash->nodes = (hashnode_t**)kvs_malloc(sizeof(hashnode_t*) * MAX_TABLE_SIZE);
+	hash->nodes = (hashnode_t**)pdb_malloc(sizeof(hashnode_t*) * MAX_TABLE_SIZE);
 	if (!hash->nodes) return -1;
 
 	memset(hash->nodes, 0, sizeof(hashnode_t*) * MAX_TABLE_SIZE);
@@ -71,7 +71,7 @@ int kvs_hash_create(kvs_hash_t *hash) {
 }
 
 // 
-void kvs_hash_destory(kvs_hash_t *hash) {
+void pdb_hash_destory(pdb_hash_t *hash) {
 
 	if (!hash) return;
 
@@ -85,19 +85,19 @@ void kvs_hash_destory(kvs_hash_t *hash) {
 			node = node->next;
 			hash->nodes[i] = node;
 			
-			kvs_free(tmp, sizeof(hashnode_t));
+			pdb_free(tmp, sizeof(hashnode_t));
 			
 		}
 	}
 
-	kvs_free(hash->nodes, sizeof(hashnode_t));
+	pdb_free(hash->nodes, sizeof(hashnode_t));
 	
 }
 
 // 5 + 2
 
 // mp
-int kvs_hash_set(kvs_hash_t *hash, char *key, char *value) {
+int pdb_hash_set(pdb_hash_t *hash, char *key, char *value) {
 	if (!hash || !key || !value) return -1;
 
 	int idx = _hash(key, MAX_TABLE_SIZE);
@@ -109,10 +109,10 @@ int kvs_hash_set(kvs_hash_t *hash, char *key, char *value) {
         if (strcmp(node->key, key) == 0) { 
 #if ENABLE_KEY_POINTER
             if (node->value) {
-                kvs_free(node->value, strlen(node->value) + 1); 
+                pdb_free(node->value, strlen(node->value) + 1); 
             }
             
-            char *new_value = kvs_malloc(strlen(value) + 1);
+            char *new_value = pdb_malloc(strlen(value) + 1);
             if (!new_value) return -1;
             strcpy(new_value, value);
             node->value = new_value;
@@ -135,7 +135,7 @@ int kvs_hash_set(kvs_hash_t *hash, char *key, char *value) {
 }
 
 
-char * kvs_hash_get(kvs_hash_t *hash, char *key) {
+char * pdb_hash_get(pdb_hash_t *hash, char *key) {
 
 	if (!hash || !key) return NULL;
 
@@ -157,7 +157,7 @@ char * kvs_hash_get(kvs_hash_t *hash, char *key) {
 }
 
 
-int kvs_hash_mod(kvs_hash_t *hash, char *key, char *value) {
+int pdb_hash_mod(pdb_hash_t *hash, char *key, char *value) {
 
 	if (!hash || !key) return -1;
 
@@ -179,9 +179,9 @@ int kvs_hash_mod(kvs_hash_t *hash, char *key, char *value) {
 	}
 
 	// node --> 
-	kvs_free(node->value, sizeof(char));
+	pdb_free(node->value, sizeof(char));
 
-	char *kvalue = kvs_malloc(strlen(value) + 1);
+	char *kvalue = pdb_malloc(strlen(value) + 1);
 	if (kvalue == NULL) return -2;
 	memset(kvalue, 0, strlen(value) + 1);
 	strncpy(kvalue, value, strlen(value));
@@ -191,11 +191,11 @@ int kvs_hash_mod(kvs_hash_t *hash, char *key, char *value) {
 	return 0;
 }
 
-int kvs_hash_count(kvs_hash_t *hash) {
+int pdb_hash_count(pdb_hash_t *hash) {
 	return hash->count;
 }
 
-int kvs_hash_del(kvs_hash_t *hash, char *key) {
+int pdb_hash_del(pdb_hash_t *hash, char *key) {
 	if (!hash || !key) return -2;
 
 	int idx = _hash(key, MAX_TABLE_SIZE);
@@ -207,7 +207,7 @@ int kvs_hash_del(kvs_hash_t *hash, char *key) {
 		hashnode_t *tmp = head->next;
 		hash->nodes[idx] = tmp;
 		
-		kvs_free(head, sizeof(hashnode_t));
+		pdb_free(head, sizeof(hashnode_t));
 		hash->count --;
 		
 		return 0;
@@ -228,10 +228,10 @@ int kvs_hash_del(kvs_hash_t *hash, char *key) {
 	hashnode_t *tmp = cur->next;
 	cur->next = tmp->next;
 #if ENABLE_KEY_POINTER
-	kvs_free(tmp->key, sizeof(char));
-	kvs_free(tmp->value, sizeof(char));
+	pdb_free(tmp->key, sizeof(char));
+	pdb_free(tmp->value, sizeof(char));
 #endif
-	kvs_free(tmp, sizeof(hashnode_t));
+	pdb_free(tmp, sizeof(hashnode_t));
 	
 	hash->count --;
 
@@ -239,16 +239,16 @@ int kvs_hash_del(kvs_hash_t *hash, char *key) {
 }
 
 
-int kvs_hash_exist(kvs_hash_t *hash, char *key) {
+int pdb_hash_exist(pdb_hash_t *hash, char *key) {
 
-	char *value = kvs_hash_get(hash, key);
+	char *value = pdb_hash_get(hash, key);
 	if (!value) return 1;
 
 	return 0;
 	
 }
 
-void kvs_hash_dump(kvs_hash_t *h, const char *file) {
+void pdb_hash_dump(pdb_hash_t *h, const char *file) {
     if (h == NULL || file == NULL) {
         return;
     }
@@ -299,7 +299,8 @@ static int read_resp_bulk_string(FILE *fp, char *buffer, size_t max_len) {
     return len;
 }
 
-int kvs_hash_load(kvs_hash_t *arr, const char *file) {
+int pdb_hash_load(pdb_hash_t *arr, const char *file) {
+	printf("file name: %s\n", file);
     if (!arr || !file) return -1;
 
     FILE *fp = fopen(file, "r");
@@ -337,7 +338,7 @@ int kvs_hash_load(kvs_hash_t *arr, const char *file) {
         if (read_resp_bulk_string(fp, val_buf, HASH_BUFFER_LENGTH) < 0) break;
 
         if (strcmp(cmd_buf, "HSET") == 0) {
-            kvs_hash_set(arr, key_buf, val_buf);
+            pdb_hash_set(arr, key_buf, val_buf);
         }
     }
 
@@ -349,13 +350,13 @@ int kvs_hash_load(kvs_hash_t *arr, const char *file) {
     return ret;
 }
 
-int kvs_hash_mset(kvs_hash_t* arr, char** tokens, int count){
+int pdb_hash_mset(pdb_hash_t* arr, char** tokens, int count){
 	int i;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];
 		char* value = tokens[i + 1];
 
-		int ret = kvs_hash_set(arr, key, value);
+		int ret = pdb_hash_set(arr, key, value);
 		if (ret != 0){
 			return ret;
 		}
@@ -368,30 +369,30 @@ int kvs_hash_mset(kvs_hash_t* arr, char** tokens, int count){
 #if 0
 int main() {
 
-	kvs_hash_create(&hash);
+	pdb_hash_create(&hash);
 
-	kvs_hash_set(&hash, "Teacher1", "King");
-	kvs_hash_set(&hash, "Teacher2", "Darren");
-	kvs_hash_set(&hash, "Teacher3", "Mark");
-	kvs_hash_set(&hash, "Teacher4", "Vico");
-	kvs_hash_set(&hash, "Teacher5", "Nick");
+	pdb_hash_set(&hash, "Teacher1", "King");
+	pdb_hash_set(&hash, "Teacher2", "Darren");
+	pdb_hash_set(&hash, "Teacher3", "Mark");
+	pdb_hash_set(&hash, "Teacher4", "Vico");
+	pdb_hash_set(&hash, "Teacher5", "Nick");
 
-	char *value1 = kvs_hash_get(&hash, "Teacher1");
+	char *value1 = pdb_hash_get(&hash, "Teacher1");
 	printf("Teacher1 : %s\n", value1);
 
-	int ret = kvs_hash_mod(&hash, "Teacher1", "King1");
+	int ret = pdb_hash_mod(&hash, "Teacher1", "King1");
 	printf("mode Teacher1 ret : %d\n", ret);
 	
-	char *value2 = kvs_hash_get(&hash, "Teacher1");
+	char *value2 = pdb_hash_get(&hash, "Teacher1");
 	printf("Teacher2 : %s\n", value1);
 
-	ret = kvs_hash_del(&hash, "Teacher1");
+	ret = pdb_hash_del(&hash, "Teacher1");
 	printf("delete Teacher1 ret : %d\n", ret);
 
-	ret = kvs_hash_exist(&hash, "Teacher1");
+	ret = pdb_hash_exist(&hash, "Teacher1");
 	printf("Exist Teacher1 ret : %d\n", ret);
 
-	kvs_hash_destory(&hash);
+	pdb_hash_destory(&hash);
 
 	return 0;
 }

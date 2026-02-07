@@ -290,7 +290,7 @@ void perform_rbtree_full_sync_raw(int fd) {
 //*************************************************** */
 //*************************************************** */
 //*************************************************** */
-static void hash_sync_traverse(kvs_hash_t *h, int fd, char *big_buf, int *pos) {
+static void hash_sync_traverse(pdb_hash_t *h, int fd, char *big_buf, int *pos) {
 
     for (int i = 0; i < h->max_slots; i++) {
         hashnode_t *node = h->nodes[i];
@@ -354,7 +354,7 @@ void perform_hash_full_sync(int fd){
 /**
  * @brief 供协程子进程使用，功能同hash_sync_traverse
  */
-static void hash_sync_traverse_raw(kvs_hash_t *h, int fd, char *big_buf, int *pos) {
+static void hash_sync_traverse_raw(pdb_hash_t *h, int fd, char *big_buf, int *pos) {
 
     for (int i = 0; i < h->max_slots; i++) {
         hashnode_t *node = h->nodes[i];

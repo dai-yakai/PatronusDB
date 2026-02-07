@@ -2,6 +2,7 @@
 #define __PDB_CONF_H__
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
 
@@ -16,8 +17,9 @@ typedef struct server_config_s{
     char* master_ip;
     int is_slave;
 
-    char* dump_name;
-    char* dir;
+    char* array_dump_dir;
+    char* rbtree_dump_dir;
+    char* hash_dump_dir;
 }server_config;
 
 extern struct server_config_s global_conf;

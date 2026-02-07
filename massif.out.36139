@@ -1,0 +1,1062 @@
+desc: --stacks=yes --heap-admin=8
+cmd: ./pdb_server
+time_unit: i
+#-----------
+snapshot=0
+#-----------
+time=0
+mem_heap_B=0
+mem_heap_extra_B=0
+mem_stacks_B=0
+heap_tree=empty
+#-----------
+snapshot=1
+#-----------
+time=1487514054
+mem_heap_B=358313990
+mem_heap_extra_B=3877330
+mem_stacks_B=23272
+heap_tree=detailed
+n4: 358313990 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n3: 288111059 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n0: 3675579 in 5 places, all below massif's threshold (1.00%)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 3094067 in 10 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=2
+#-----------
+time=2673365101
+mem_heap_B=365387076
+mem_heap_extra_B=7779756
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 365387076 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 291952484 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 5748576 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 5748576 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 5748576 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 5748576 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 5748576 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 5748576 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 5748576 0x11012F: main (pdb_server.c:679)
+  n0: 1768428 in 4 places, all below massif's threshold (1.00%)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 6291808 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 6291808 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 6291808 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 6291808 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 6291808 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=3
+#-----------
+time=4359461515
+mem_heap_B=375170311
+mem_heap_extra_B=13149873
+mem_stacks_B=23272
+heap_tree=detailed
+n5: 375170311 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 297264033 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 9789456 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 9789456 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 9789456 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 9789456 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 9789456 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 9789456 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 9789456 0x11012F: main (pdb_server.c:679)
+  n0: 3039097 in 4 places, all below massif's threshold (1.00%)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 10763494 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 10763494 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 10763494 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 10763494 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 10763494 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=4
+#-----------
+time=5661795182
+mem_heap_B=383047772
+mem_heap_extra_B=17039604
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 383047772 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 301513278 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 12927360 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 12927360 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 12927360 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 12927360 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 12927360 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 12927360 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 12927360 0x11012F: main (pdb_server.c:679)
+  n0: 4150438 in 4 places, all below massif's threshold (1.00%)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 14391710 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 14391710 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 14391710 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 14391710 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 14391710 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=5
+#-----------
+time=7469761558
+mem_heap_B=393923726
+mem_heap_extra_B=22409922
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 393923726 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n4: 307379983 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 17259696 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 17259696 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 17259696 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 17259696 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 17259696 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 17259696 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 17259696 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n0: 5684807 in 4 places, all below massif's threshold (1.00%)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 19400959 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 19400959 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 19400959 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 19400959 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 19400959 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=6
+#-----------
+time=8669583100
+mem_heap_B=401132036
+mem_heap_extra_B=25969244
+mem_stacks_B=12976
+heap_tree=empty
+#-----------
+snapshot=7
+#-----------
+time=10587284171
+mem_heap_B=412577367
+mem_heap_extra_B=31620705
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=8
+#-----------
+time=11586017902
+mem_heap_B=418518981
+mem_heap_extra_B=34554563
+mem_stacks_B=21424
+heap_tree=empty
+#-----------
+snapshot=9
+#-----------
+time=12860248473
+mem_heap_B=426163848
+mem_heap_extra_B=38329432
+mem_stacks_B=23272
+heap_tree=detailed
+n5: 426163848 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n5: 324770928 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 30102240 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 30102240 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 30102240 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 30102240 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 30102240 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 30102240 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 30102240 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 6049080 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 6049080 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 6049080 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 6049080 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 6049080 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 6049080 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 6049080 0x11012F: main (pdb_server.c:679)
+  n0: 4184128 in 3 places, all below massif's threshold (1.00%)
+ n1: 34250136 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 34250136 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 34250136 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 34250136 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 34250136 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=10
+#-----------
+time=13882555309
+mem_heap_B=432236595
+mem_heap_extra_B=41328037
+mem_stacks_B=12976
+heap_tree=empty
+#-----------
+snapshot=11
+#-----------
+time=15287546910
+mem_heap_B=440564215
+mem_heap_extra_B=45440049
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=12
+#-----------
+time=16264545739
+mem_heap_B=446306216
+mem_heap_extra_B=48275320
+mem_stacks_B=21432
+heap_tree=empty
+#-----------
+snapshot=13
+#-----------
+time=17746411559
+mem_heap_B=455013264
+mem_heap_extra_B=52574688
+mem_stacks_B=12976
+heap_tree=empty
+#-----------
+snapshot=14
+#-----------
+time=18725492660
+mem_heap_B=460750751
+mem_heap_extra_B=55407737
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=15
+#-----------
+time=20079138212
+mem_heap_B=468635519
+mem_heap_extra_B=59301097
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=16
+#-----------
+time=21288666551
+mem_heap_B=475722259
+mem_heap_extra_B=62800373
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=17
+#-----------
+time=23097116777
+mem_heap_B=486365889
+mem_heap_extra_B=68055991
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=18
+#-----------
+time=24105107526
+mem_heap_B=492321481
+mem_heap_extra_B=70996719
+mem_stacks_B=12984
+heap_tree=empty
+#-----------
+snapshot=19
+#-----------
+time=25396678653
+mem_heap_B=499867461
+mem_heap_extra_B=74722771
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=20
+#-----------
+time=26712567289
+mem_heap_B=507545451
+mem_heap_extra_B=78514013
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=21
+#-----------
+time=28744054957
+mem_heap_B=519396520
+mem_heap_extra_B=84365832
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=22
+#-----------
+time=30388921395
+mem_heap_B=528879323
+mem_heap_extra_B=89048237
+mem_stacks_B=21424
+heap_tree=empty
+#-----------
+snapshot=23
+#-----------
+time=31828678996
+mem_heap_B=537156398
+mem_heap_extra_B=93135298
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=24
+#-----------
+time=32794830005
+mem_heap_B=542759060
+mem_heap_extra_B=95901772
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 542759060 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n6: 387664603 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 76546800 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 76546800 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 76546800 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 76546800 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 76546800 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 76546800 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 76546800 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 15725030 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 15725030 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 15725030 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 15725030 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 15725030 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 15725030 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 15725030 0x11012F: main (pdb_server.c:679)
+  n1: 10940855 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 10940855 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 10940855 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 10940855 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 10940855 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 10940855 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 10940855 0x11012F: main (pdb_server.c:679)
+  n0: 16438 in 2 places, all below massif's threshold (1.00%)
+ n1: 87951673 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 87951673 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 87951673 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 87951673 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 87951673 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=25
+#-----------
+time=34282016238
+mem_heap_B=551353120
+mem_heap_extra_B=100145344
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 551353120 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n6: 392300403 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 79970160 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 79970160 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 79970160 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 79970160 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 79970160 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 79970160 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 79970160 0x11012F: main (pdb_server.c:679)
+  n1: 16438230 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 16438230 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 16438230 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 16438230 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 16438230 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 16438230 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 16438230 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 11440095 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 11440095 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 11440095 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 11440095 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 11440095 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 11440095 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 11440095 0x11012F: main (pdb_server.c:679)
+  n0: 16438 in 2 places, all below massif's threshold (1.00%)
+ n1: 91909933 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 91909933 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 91909933 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 91909933 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 91909933 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=26
+#-----------
+time=35422708908
+mem_heap_B=557956867
+mem_heap_extra_B=103406149
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=27
+#-----------
+time=36963143494
+mem_heap_B=566789893
+mem_heap_extra_B=107767699
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=28
+#-----------
+time=38541610623
+mem_heap_B=575819681
+mem_heap_extra_B=112226439
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=29
+#-----------
+time=40578660857
+mem_heap_B=587491899
+mem_heap_extra_B=117989933
+mem_stacks_B=23272
+heap_tree=detailed
+n5: 587491899 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n6: 411794358 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 94365696 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 94365696 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 94365696 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 94365696 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 94365696 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 94365696 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 94365696 0x11012F: main (pdb_server.c:679)
+  n1: 19437300 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19437300 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19437300 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19437300 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19437300 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19437300 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19437300 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13539444 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13539444 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13539444 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13539444 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13539444 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13539444 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13539444 0x11012F: main (pdb_server.c:679)
+  n0: 16438 in 2 places, all below massif's threshold (1.00%)
+ n1: 108554757 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 108554757 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 108554757 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 108554757 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 108554757 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=30
+#-----------
+time=42080261556
+mem_heap_B=596011893
+mem_heap_extra_B=123650643
+mem_stacks_B=23272
+heap_tree=detailed
+n5: 596011893 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n6: 415877932 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 96000048 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 96000048 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 96000048 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 96000048 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 96000048 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 96000048 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 96000048 0x11012F: main (pdb_server.c:679)
+  n1: 19777790 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19777790 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19777790 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19777790 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19777790 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19777790 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19777790 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13777787 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13777787 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13777787 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13777787 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13777787 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13777787 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13777787 0x11012F: main (pdb_server.c:679)
+  n0: 1886827 in 6 places, all below massif's threshold (1.00%)
+ n1: 112991177 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 112991177 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 112991177 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 112991177 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 112991177 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=31
+#-----------
+time=43149626668
+mem_heap_B=602331741
+mem_heap_extra_B=128596611
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=32
+#-----------
+time=44532182005
+mem_heap_B=610603601
+mem_heap_extra_B=135011319
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=33
+#-----------
+time=45935313807
+mem_heap_B=619369123
+mem_heap_extra_B=141142629
+mem_stacks_B=21272
+heap_tree=empty
+#-----------
+snapshot=34
+#-----------
+time=47367729925
+mem_heap_B=628292326
+mem_heap_extra_B=147384266
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=35
+#-----------
+time=49187291557
+mem_heap_B=639637720
+mem_heap_extra_B=155320168
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 639637720 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n7: 434399966 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 96000048 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 96000048 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 96000048 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 96000048 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 96000048 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 96000048 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 96000048 0x11012F: main (pdb_server.c:679)
+  n1: 19777790 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19777790 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19777790 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19777790 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19777790 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19777790 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19777790 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13777787 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13777787 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13777787 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13777787 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13777787 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13777787 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13777787 0x11012F: main (pdb_server.c:679)
+  n1: 12197184 0x112318: _create_node (pdb_hash.c:26)
+   n1: 12197184 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 12197184 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 12197184 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 12197184 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 12197184 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 12197184 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 12197184 0x11012F: main (pdb_server.c:679)
+  n0: 8211677 in 5 places, all below massif's threshold (1.00%)
+ n1: 138094970 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 138094970 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 138094970 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 138094970 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 138094970 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=36
+#-----------
+time=51265887714
+mem_heap_B=652614958
+mem_heap_extra_B=164397506
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=37
+#-----------
+time=53005006957
+mem_heap_B=663499275
+mem_heap_extra_B=172010893
+mem_stacks_B=23272
+heap_tree=detailed
+n5: 663499275 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n7: 444538036 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 96000048 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 96000048 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 96000048 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 96000048 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 96000048 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 96000048 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 96000048 0x11012F: main (pdb_server.c:679)
+  n1: 19777790 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19777790 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19777790 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19777790 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19777790 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19777790 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19777790 0x11012F: main (pdb_server.c:679)
+  n1: 18131664 0x112318: _create_node (pdb_hash.c:26)
+   n1: 18131664 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 18131664 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 18131664 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 18131664 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 18131664 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 18131664 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 18131664 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13777787 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13777787 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13777787 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13777787 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13777787 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13777787 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13777787 0x11012F: main (pdb_server.c:679)
+  n0: 12415267 in 5 places, all below massif's threshold (1.00%)
+ n1: 151818455 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 151818455 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 151818455 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 151818455 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 151818455 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=38
+#-----------
+time=53784584038
+mem_heap_B=668415675
+mem_heap_extra_B=175449821
+mem_stacks_B=23344
+heap_tree=detailed
+n5: 668415675 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n7: 446626863 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 96000048 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 96000048 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 96000048 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 96000048 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 96000048 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 96000048 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 96000048 0x11012F: main (pdb_server.c:679)
+  n1: 19777790 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19777790 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19777790 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19777790 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19777790 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19777790 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19777790 0x11012F: main (pdb_server.c:679)
+  n1: 19354392 0x112318: _create_node (pdb_hash.c:26)
+   n1: 19354392 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 19354392 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 19354392 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 19354392 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 19354392 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 19354392 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 19354392 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13777787 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13777787 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13777787 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13777787 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13777787 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13777787 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13777787 0x11012F: main (pdb_server.c:679)
+  n0: 13281366 in 5 places, all below massif's threshold (1.00%)
+ n1: 154646028 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 154646028 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 154646028 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 154646028 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 154646028 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=39
+#-----------
+time=55154192718
+mem_heap_B=676960861
+mem_heap_extra_B=181427019
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=40
+#-----------
+time=56769860762
+mem_heap_B=687059475
+mem_heap_extra_B=188490821
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=41
+#-----------
+time=58418265923
+mem_heap_B=697330274
+mem_heap_extra_B=195675054
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=42
+#-----------
+time=60099892045
+mem_heap_B=707793465
+mem_heap_extra_B=202993871
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=43
+#-----------
+time=61813150178
+mem_heap_B=718497520
+mem_heap_extra_B=210481168
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=44
+#-----------
+time=63562138342
+mem_heap_B=729420963
+mem_heap_extra_B=218121909
+mem_stacks_B=21336
+heap_tree=empty
+#-----------
+snapshot=45
+#-----------
+time=65346559930
+mem_heap_B=740539886
+mem_heap_extra_B=225899394
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=46
+#-----------
+time=67172126357
+mem_heap_B=751918435
+mem_heap_extra_B=233858469
+mem_stacks_B=21400
+heap_tree=empty
+#-----------
+snapshot=47
+#-----------
+time=69032577125
+mem_heap_B=763481878
+mem_heap_extra_B=241946906
+mem_stacks_B=13008
+heap_tree=empty
+#-----------
+snapshot=48
+#-----------
+time=70358414657
+mem_heap_B=771754051
+mem_heap_extra_B=247733141
+mem_stacks_B=23272
+heap_tree=detailed
+n5: 771754051 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n9: 490532287 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 96000048 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 96000048 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 96000048 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 96000048 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 96000048 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 96000048 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 96000048 0x11012F: main (pdb_server.c:679)
+  n1: 45055128 0x112318: _create_node (pdb_hash.c:26)
+   n1: 45055128 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 45055128 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 45055128 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 45055128 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 45055128 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 45055128 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 45055128 0x11012F: main (pdb_server.c:679)
+  n1: 19777790 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19777790 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19777790 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19777790 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19777790 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19777790 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19777790 0x11012F: main (pdb_server.c:679)
+  n1: 18550750 0x112345: _create_node (pdb_hash.c:30)
+   n1: 18550750 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 18550750 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 18550750 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 18550750 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 18550750 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 18550750 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 18550750 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13777787 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13777787 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13777787 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13777787 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13777787 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13777787 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13777787 0x11012F: main (pdb_server.c:679)
+  n1: 12918859 0x1123C0: _create_node (pdb_hash.c:37)
+   n1: 12918859 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 12918859 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 12918859 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 12918859 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 12918859 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 12918859 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 12918859 0x11012F: main (pdb_server.c:679)
+  n0: 16445 in 3 places, all below massif's threshold (1.00%)
+ n1: 214078980 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 214078980 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 214078980 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 214078980 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 214078980 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=49
+#-----------
+time=70930581034
+mem_heap_B=775336903
+mem_heap_extra_B=250239281
+mem_stacks_B=13048
+heap_tree=empty
+#-----------
+snapshot=50
+#-----------
+time=71315765541
+mem_heap_B=777752959
+mem_heap_extra_B=251929273
+mem_stacks_B=23344
+heap_tree=peak
+n5: 777752959 (heap allocation functions) malloc/new/new[], --alloc-fns, etc.
+ n9: 493081052 0x110B79: kvs_malloc (pdb_malloc.c:44)
+  n1: 268435456 0x110214: kvs_array_create (pdb_array.c:26)
+   n1: 268435456 0x10FF8D: init_kvengine (pdb_server.c:614)
+    n0: 268435456 0x110023: main (pdb_server.c:643)
+  n1: 96000048 0x111917: kvs_rbtree_set (pdb_rbtree.c:388)
+   n1: 96000048 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 96000048 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 96000048 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 96000048 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 96000048 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 96000048 0x11012F: main (pdb_server.c:679)
+  n1: 46547088 0x112318: _create_node (pdb_hash.c:26)
+   n1: 46547088 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 46547088 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 46547088 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 46547088 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 46547088 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 46547088 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 46547088 0x11012F: main (pdb_server.c:679)
+  n1: 19777790 0x111944: kvs_rbtree_set (pdb_rbtree.c:391)
+   n1: 19777790 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 19777790 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 19777790 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 19777790 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 19777790 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 19777790 0x11012F: main (pdb_server.c:679)
+  n1: 19172400 0x112345: _create_node (pdb_hash.c:30)
+   n1: 19172400 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 19172400 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 19172400 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 19172400 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 19172400 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 19172400 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 19172400 0x11012F: main (pdb_server.c:679)
+  n1: 16000024 0x11245B: kvs_hash_create (pdb_hash.c:62)
+   n1: 16000024 0x10FFD1: init_kvengine (pdb_server.c:624)
+    n0: 16000024 0x110023: main (pdb_server.c:643)
+  n1: 13777787 0x1119A3: kvs_rbtree_set (pdb_rbtree.c:398)
+   n1: 13777787 0x10F3D0: kvs_filter_protocol (pdb_server.c:262)
+    n1: 13777787 0x10FE7A: kvs_protocol (pdb_server.c:562)
+     n1: 13777787 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+      n1: 13777787 0x10B947: recv_cb (pdb_reactor.c:256)
+       n1: 13777787 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+        n0: 13777787 0x11012F: main (pdb_server.c:679)
+  n1: 13354014 0x1123C0: _create_node (pdb_hash.c:37)
+   n1: 13354014 0x11269D: kvs_hash_set (pdb_hash.c:128)
+    n1: 13354014 0x10F745: kvs_filter_protocol (pdb_server.c:339)
+     n1: 13354014 0x10FE7A: kvs_protocol (pdb_server.c:562)
+      n1: 13354014 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+       n1: 13354014 0x10B947: recv_cb (pdb_reactor.c:256)
+        n1: 13354014 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+         n0: 13354014 0x11012F: main (pdb_server.c:679)
+  n0: 16445 in 3 places, all below massif's threshold (1.00%)
+ n1: 217529123 0x10FC42: kvs_protocol (pdb_server.c:519)
+  n1: 217529123 0x10B67A: process_read_buffer (pdb_reactor.c:204)
+   n1: 217529123 0x10B947: recv_cb (pdb_reactor.c:256)
+    n1: 217529123 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+     n0: 217529123 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B192: event_register (pdb_reactor.c:140)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n1: 33554432 0x10B257: event_register (pdb_reactor.c:145)
+  n1: 33554432 0x10B4C6: accept_cb (pdb_reactor.c:169)
+   n1: 33554432 0x10BFCE: reactor_entry (pdb_reactor.c:360)
+    n0: 33554432 0x11012F: main (pdb_server.c:679)
+ n0: 33920 in 9 places, all below massif's threshold (1.00%)
+#-----------
+snapshot=51
+#-----------
+time=72095350736
+mem_heap_B=782616202
+mem_heap_extra_B=255331014
+mem_stacks_B=13008
+heap_tree=empty

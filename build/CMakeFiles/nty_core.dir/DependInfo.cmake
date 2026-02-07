@@ -4,10 +4,10 @@ set(CMAKE_DEPENDS_LANGUAGES
   )
 # The set of files for implicit dependencies of each language:
 set(CMAKE_DEPENDS_CHECK_C
-  "/home/dai/kvstore/NtyCo/core/nty_coroutine.c" "/home/dai/kvstore/build/CMakeFiles/nty_core.dir/nty_coroutine.o"
-  "/home/dai/kvstore/NtyCo/core/nty_epoll.c" "/home/dai/kvstore/build/CMakeFiles/nty_core.dir/nty_epoll.o"
-  "/home/dai/kvstore/NtyCo/core/nty_schedule.c" "/home/dai/kvstore/build/CMakeFiles/nty_core.dir/nty_schedule.o"
-  "/home/dai/kvstore/NtyCo/core/nty_socket.c" "/home/dai/kvstore/build/CMakeFiles/nty_core.dir/nty_socket.o"
+  "/home/dai/kvstore/NtyCo/core/nty_coroutine.c" "/home/dai/PatronusDB/build/CMakeFiles/nty_core.dir/nty_coroutine.o"
+  "/home/dai/kvstore/NtyCo/core/nty_epoll.c" "/home/dai/PatronusDB/build/CMakeFiles/nty_core.dir/nty_epoll.o"
+  "/home/dai/kvstore/NtyCo/core/nty_schedule.c" "/home/dai/PatronusDB/build/CMakeFiles/nty_core.dir/nty_schedule.o"
+  "/home/dai/kvstore/NtyCo/core/nty_socket.c" "/home/dai/PatronusDB/build/CMakeFiles/nty_core.dir/nty_socket.o"
   )
 set(CMAKE_C_COMPILER_ID "GNU")
 

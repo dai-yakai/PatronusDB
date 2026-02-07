@@ -8,19 +8,28 @@
 #include "pdb_list.h"
 
 #define REPLICATION_BUFFER_LENGTH   1024*1024
-#define WRITE_BUFFER_LENGTH     16*1024*1024
+#define WRITE_BUFFER_LENGTH         16*1024*1024    // 16M
+#define PDB_PROTO_IO_BUFFER_LENGTH  16*1024         // 16k     
 
 typedef int (*RCALLBACK)(int fd, msg_handler handler);
 
 typedef struct conn_info {
     int fd;
     int event;
+    char* client_ip;
+    unsigned short client_port;
 
     pdb_sds read_buffer;
     size_t read_pos;
 
-    char write_buffer[WRITE_BUFFER_LENGTH];
-    list* list_write_buffer;
+    int is_big_package;
+    int bulk_length;
+
+    // char write_buffer[WRITE_BUFFER_LENGTH];
+    pdb_sds write_buffer;
+    size_t write_pos;
+    int write_length;
+    // list* list_write_buffer;
 
     char* buffer;                                   // 可读 环形缓冲区
     unsigned int rtail;                             // 尾指针

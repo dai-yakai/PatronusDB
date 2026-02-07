@@ -44,7 +44,7 @@
 	"kind" : "codemodel",
 	"paths" : 
 	{
-		"build" : "/home/dai/kvstore/build",
+		"build" : "/home/dai/PatronusDB/build",
 		"source" : "/home/dai/kvstore/NtyCo/core"
 	},
 	"version" : 

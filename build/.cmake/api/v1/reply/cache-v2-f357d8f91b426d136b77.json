@@ -67,7 +67,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/dai/kvstore/build"
+			"value" : "/home/dai/PatronusDB/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -1167,7 +1167,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/dai/kvstore/build"
+			"value" : "/home/dai/PatronusDB/build"
 		},
 		{
 			"name" : "Project_SOURCE_DIR",

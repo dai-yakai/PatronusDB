@@ -12,7 +12,7 @@ BIN = nty_server nty_client nty_bench nty_server_mulcore hook_tcpserver nty_http
 
 LIB = libntyco.a
 
-FLAG = -lpthread -O3 -ldl -I $(ROOT_DIR)/core 
+FLAG = -fPIC -lpthread -O3 -ldl -I $(ROOT_DIR)/core 
 
 THIRDFLAG = -lcrypto -lssl -lmysqlclient -lhiredis -I /usr/include/mysql/ -I /usr/local/include/hiredis/
 

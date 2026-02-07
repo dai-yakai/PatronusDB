@@ -1,6 +1,6 @@
 #include "pdb_rbtree.h"
 
-kvs_rbtree_t global_rbtree;
+pdb_rbtree_t global_rbtree;
 rbtree_node *rbtree_mini(rbtree *T, rbtree_node *x) {
 	// printf("rbtree_mini: %d\n",  x == NULL);
 	while (x->left != T->nil) {
@@ -270,8 +270,8 @@ rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
 
 	if (y != z) {
 #if ENABLE_KEY_CHAR
-		// if (z->key) kvs_free(z->key, strlen(z->key) + 1);
-        // if (z->value) kvs_free(z->value, strlen(z->value) + 1);
+		// if (z->key) pdb_free(z->key, strlen(z->key) + 1);
+        // if (z->value) pdb_free(z->value, strlen(z->value) + 1);
 
 		void *tmp = z->key;
 		z->key = y->key;
@@ -334,17 +334,17 @@ void rbtree_traversal(rbtree *T, rbtree_node *node) {
 }
 
 
-int kvs_rbtree_create(kvs_rbtree_t* inst){
+int pdb_rbtree_create(pdb_rbtree_t* inst){
 	if (inst == NULL)	return 1;
 
-	inst->nil = (rbtree_node*)kvs_malloc(sizeof(rbtree_node));
+	inst->nil = (rbtree_node*)pdb_malloc(sizeof(rbtree_node));
 	inst->nil->color = BLACK;
 	inst->root = inst->nil;
 
 	return 0;
 }
 
-void kvs_rbtree_destroy(kvs_rbtree_t* inst){
+void pdb_rbtree_destroy(pdb_rbtree_t* inst){
 	if (inst == NULL) return ;
 
 	rbtree_node *node = NULL;
@@ -355,50 +355,50 @@ void kvs_rbtree_destroy(kvs_rbtree_t* inst){
 		
 		rbtree_node *cur = rbtree_delete(inst, mini);
 		
-		if (cur->key) kvs_free(cur->key, strlen(cur->key) + 1);
-        if (cur->value) kvs_free(cur->value, strlen(cur->value) + 1);
+		if (cur->key) pdb_free(cur->key, strlen(cur->key) + 1);
+        if (cur->value) pdb_free(cur->value, strlen(cur->value) + 1);
 
-		kvs_free(cur, sizeof(rbtree_node));
+		pdb_free(cur, sizeof(rbtree_node));
 		
 	}
 
-	kvs_free(inst->nil, sizeof(rbtree_node));
+	pdb_free(inst->nil, sizeof(rbtree_node));
 
 	return ;
 
 }
 
-int kvs_rbtree_set(kvs_rbtree_t* inst, char* key, char* value){
-	// printf("kvs_rbtree_set: %s, %s\n", key, value);
+int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, char* value){
+	// printf("pdb_rbtree_set: %s, %s\n", key, value);
     if (!inst || !key || !value) return -1;
 
     rbtree_node *exist_node = rbtree_search(inst, key);
 	// 已经存在该节点，直接对该节点的value进行更新
     if (exist_node != inst->nil) {
         if (exist_node->value) {
-            kvs_free(exist_node->value, strlen(exist_node->value) + 1);
+            pdb_free(exist_node->value, strlen(exist_node->value) + 1);
         }
-        exist_node->value = kvs_malloc(strlen(value) + 1);
+        exist_node->value = pdb_malloc(strlen(value) + 1);
         if (!exist_node->value) return -2;
         strcpy(exist_node->value, value);
         
         return 0; 
     }
 
-    rbtree_node *node = (rbtree_node*)kvs_malloc(sizeof(rbtree_node));
+    rbtree_node *node = (rbtree_node*)pdb_malloc(sizeof(rbtree_node));
     if (!node) return -2; 
         
-    node->key = kvs_malloc(strlen(key) + 1);
+    node->key = pdb_malloc(strlen(key) + 1);
     if (!node->key) {
-        kvs_free(node, sizeof(rbtree_node)); 
+        pdb_free(node, sizeof(rbtree_node)); 
         return -2;
     }
     strcpy(node->key, key);
     
-    node->value = kvs_malloc(strlen(value) + 1);
+    node->value = pdb_malloc(strlen(value) + 1);
     if (!node->value) {
-        kvs_free(node->key, strlen(key) + 1); 
-        kvs_free(node, sizeof(rbtree_node));
+        pdb_free(node->key, strlen(key) + 1); 
+        pdb_free(node, sizeof(rbtree_node));
         return -2;
     }
     strcpy(node->value, value);
@@ -408,7 +408,7 @@ int kvs_rbtree_set(kvs_rbtree_t* inst, char* key, char* value){
     return 0;
 }
 
-char* kvs_rbtree_get(kvs_rbtree_t* inst, char* key){
+char* pdb_rbtree_get(pdb_rbtree_t* inst, char* key){
 	if (!inst || !key) return NULL;
 	rbtree_node *node = rbtree_search(inst, key);
 	if (!node) return NULL; // no exist
@@ -417,8 +417,8 @@ char* kvs_rbtree_get(kvs_rbtree_t* inst, char* key){
 	return node->value;
 }
 
-int kvs_rbtree_del(kvs_rbtree_t* inst, char* key){
-	// printf("kvs_rbtree_del: %s\n", key);
+int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
+	// printf("pdb_rbtree_del: %s\n", key);
 	if (!inst || !key) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
@@ -426,22 +426,22 @@ int kvs_rbtree_del(kvs_rbtree_t* inst, char* key){
 	
 	rbtree_node *cur = rbtree_delete(inst, node);
 	if (cur->key) {
-        kvs_free(cur->key, strlen(cur->key) + 1);
+        pdb_free(cur->key, strlen(cur->key) + 1);
     }
     if (cur->value) {
-        kvs_free(cur->value, strlen(cur->value) + 1);
+        pdb_free(cur->value, strlen(cur->value) + 1);
     }
 
-	kvs_free(cur, sizeof(rbtree_node));
+	pdb_free(cur, sizeof(rbtree_node));
 
 #if ENABLE_PRINT_RB
-	kvs_print_rbtree(inst);
+	pdb_print_rbtree(inst);
 #endif
 
 	return 0;
 }
 
-int kvs_rbtree_mod(kvs_rbtree_t* inst, char* key, char* value){
+int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value){
 	if (!inst || !key || !value) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
@@ -449,23 +449,23 @@ int kvs_rbtree_mod(kvs_rbtree_t* inst, char* key, char* value){
 	if (node == inst->nil) return 1;
 	
 	if (node->value) {
-        kvs_free(node->value, strlen(node->value) + 1);
+        pdb_free(node->value, strlen(node->value) + 1);
     }
 
-	node->value = kvs_malloc(strlen(value) + 1);
+	node->value = pdb_malloc(strlen(value) + 1);
 	if (!node->value) return -2;
 	
 	// memset(node->value, 0, strlen(value) + 1);
 	strcpy(node->value, value);
 
 #if ENABLE_PRINT_RB
-	kvs_print_rbtree(inst);
+	pdb_print_rbtree(inst);
 #endif
 
 	return 0;
 }
 
-int kvs_rbtree_exist(kvs_rbtree_t* inst, char* key){
+int pdb_rbtree_exist(pdb_rbtree_t* inst, char* key){
 	if (!inst || !key) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
@@ -475,7 +475,7 @@ int kvs_rbtree_exist(kvs_rbtree_t* inst, char* key){
 	return 0;
 }
 
-void kvs_print_rbtree(kvs_rbtree_t* inst){
+void pdb_print_rbtree(pdb_rbtree_t* inst){
 	rbtree_traversal(inst, inst->root);
 }
 
@@ -489,9 +489,9 @@ static void rbtree_dump_dfs(FILE *fp, rbtree_node *node, rbtree_node *nil)
     rbtree_dump_dfs(fp, node->right, nil);
 }
 
-void kvs_rbtree_dump(kvs_rbtree_t *tree, const char *file)
+void pdb_rbtree_dump(pdb_rbtree_t *tree, const char *file)
 {
-	printf("kvs_rbtree_dump\n");
+	printf("pdb_rbtree_dump\n");
     if (!tree || !file) return;
 
     FILE *fp = fopen(file, "w");
@@ -504,7 +504,7 @@ void kvs_rbtree_dump(kvs_rbtree_t *tree, const char *file)
     fclose(fp);
 }
 
-// int kvs_rbtree_load(kvs_rbtree_t *arr, const char *file){
+// int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file){
 //     if (!arr || !file) return -1;
 
 //     FILE *fp = fopen(file, "r");
@@ -519,17 +519,17 @@ void kvs_rbtree_dump(kvs_rbtree_t *tree, const char *file)
 
 //     while (fscanf(fp, "%15s %127s %511s", cmd, key, value) == 3) {
 //         if (strcmp(cmd, "RSET") == 0) {
-//             kvs_rbtree_set(arr, key, value);
+//             pdb_rbtree_set(arr, key, value);
 //         }
 //     }
 
-// 	// kvs_print_rbtree(arr);
+// 	// pdb_print_rbtree(arr);
 
 //     fclose(fp);
 //     return 0;
 // }
 
-int kvs_rbtree_load(kvs_rbtree_t *arr, const char *file) {
+int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file) {
     if (!arr || !file) return -1;
 
     // 使用 "rb" 模式打开，防止 Windows/Linux 换行符自动转换干扰字节计数
@@ -590,7 +590,7 @@ int kvs_rbtree_load(kvs_rbtree_t *arr, const char *file) {
         CONSUME_CRLF(fp);
 
         if (strcmp(cmd, "RSET") == 0) {
-            kvs_rbtree_set(arr, key, value);
+            pdb_rbtree_set(arr, key, value);
         }
     }
 
@@ -606,13 +606,13 @@ int kvs_rbtree_load(kvs_rbtree_t *arr, const char *file) {
  * 
  * @return 0:操作成功(已经存在会自动更新value); < 0: ERROR
  */
-int kvs_rbtree_mset(kvs_rbtree_t *arr, char** tokens, int count){
+int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count){
 	int i;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];
 		char* value = tokens[i + 1];
 
-		int ret = kvs_rbtree_set(arr, key, value);
+		int ret = pdb_rbtree_set(arr, key, value);
 		if (ret != 0){
 			return ret;
 		}

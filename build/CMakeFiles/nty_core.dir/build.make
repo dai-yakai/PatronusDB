@@ -46,7 +46,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /home/dai/kvstore/NtyCo/core
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/dai/kvstore/build
+CMAKE_BINARY_DIR = /home/dai/PatronusDB/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/nty_core.dir/depend.make
@@ -59,7 +59,7 @@ include CMakeFiles/nty_core.dir/flags.make
 
 CMakeFiles/nty_core.dir/nty_coroutine.o: CMakeFiles/nty_core.dir/flags.make
 CMakeFiles/nty_core.dir/nty_coroutine.o: /home/dai/kvstore/NtyCo/core/nty_coroutine.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/kvstore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/nty_core.dir/nty_coroutine.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/PatronusDB/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building C object CMakeFiles/nty_core.dir/nty_coroutine.o"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/nty_core.dir/nty_coroutine.o   -c /home/dai/kvstore/NtyCo/core/nty_coroutine.c
 
 CMakeFiles/nty_core.dir/nty_coroutine.i: cmake_force
@@ -72,7 +72,7 @@ CMakeFiles/nty_core.dir/nty_coroutine.s: cmake_force
 
 CMakeFiles/nty_core.dir/nty_epoll.o: CMakeFiles/nty_core.dir/flags.make
 CMakeFiles/nty_core.dir/nty_epoll.o: /home/dai/kvstore/NtyCo/core/nty_epoll.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/kvstore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/nty_core.dir/nty_epoll.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/PatronusDB/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building C object CMakeFiles/nty_core.dir/nty_epoll.o"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/nty_core.dir/nty_epoll.o   -c /home/dai/kvstore/NtyCo/core/nty_epoll.c
 
 CMakeFiles/nty_core.dir/nty_epoll.i: cmake_force
@@ -85,7 +85,7 @@ CMakeFiles/nty_core.dir/nty_epoll.s: cmake_force
 
 CMakeFiles/nty_core.dir/nty_schedule.o: CMakeFiles/nty_core.dir/flags.make
 CMakeFiles/nty_core.dir/nty_schedule.o: /home/dai/kvstore/NtyCo/core/nty_schedule.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/kvstore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/nty_core.dir/nty_schedule.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/PatronusDB/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building C object CMakeFiles/nty_core.dir/nty_schedule.o"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/nty_core.dir/nty_schedule.o   -c /home/dai/kvstore/NtyCo/core/nty_schedule.c
 
 CMakeFiles/nty_core.dir/nty_schedule.i: cmake_force
@@ -98,7 +98,7 @@ CMakeFiles/nty_core.dir/nty_schedule.s: cmake_force
 
 CMakeFiles/nty_core.dir/nty_socket.o: CMakeFiles/nty_core.dir/flags.make
 CMakeFiles/nty_core.dir/nty_socket.o: /home/dai/kvstore/NtyCo/core/nty_socket.c
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/kvstore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/nty_core.dir/nty_socket.o"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --progress-dir=/home/dai/PatronusDB/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Building C object CMakeFiles/nty_core.dir/nty_socket.o"
 	/usr/bin/gcc $(C_DEFINES) $(C_INCLUDES) $(C_FLAGS) -o CMakeFiles/nty_core.dir/nty_socket.o   -c /home/dai/kvstore/NtyCo/core/nty_socket.c
 
 CMakeFiles/nty_core.dir/nty_socket.i: cmake_force
@@ -125,7 +125,7 @@ libnty_core.a: CMakeFiles/nty_core.dir/nty_schedule.o
 libnty_core.a: CMakeFiles/nty_core.dir/nty_socket.o
 libnty_core.a: CMakeFiles/nty_core.dir/build.make
 libnty_core.a: CMakeFiles/nty_core.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/dai/kvstore/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C static library libnty_core.a"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/home/dai/PatronusDB/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_5) "Linking C static library libnty_core.a"
 	$(CMAKE_COMMAND) -P CMakeFiles/nty_core.dir/cmake_clean_target.cmake
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/nty_core.dir/link.txt --verbose=$(VERBOSE)
 
@@ -139,6 +139,6 @@ CMakeFiles/nty_core.dir/clean:
 .PHONY : CMakeFiles/nty_core.dir/clean
 
 CMakeFiles/nty_core.dir/depend:
-	cd /home/dai/kvstore/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dai/kvstore/NtyCo/core /home/dai/kvstore/NtyCo/core /home/dai/kvstore/build /home/dai/kvstore/build /home/dai/kvstore/build/CMakeFiles/nty_core.dir/DependInfo.cmake --color=$(COLOR)
+	cd /home/dai/PatronusDB/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/dai/kvstore/NtyCo/core /home/dai/kvstore/NtyCo/core /home/dai/PatronusDB/build /home/dai/PatronusDB/build /home/dai/PatronusDB/build/CMakeFiles/nty_core.dir/DependInfo.cmake --color=$(COLOR)
 .PHONY : CMakeFiles/nty_core.dir/depend
 

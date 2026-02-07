@@ -42,11 +42,11 @@ struct mp_pool_s {
     struct mp_large_s* large;
 };
 
-struct mp_pool_s* kv_mp_create_pool(size_t size);
-void kv_mp_destory_pool(struct mp_pool_s* pool);
-void* kv_mp_alloc(struct mp_pool_s* pool, size_t size);
-void kv_mp_free(struct mp_pool_s* pool, void* p);
-void kv_mp_reset_pool(struct mp_pool_s* pool);
+struct mp_pool_s* pdb_mp_create_pool(size_t size);
+void pdb_mp_destory_pool(struct mp_pool_s* pool);
+void* pdb_mp_alloc(struct mp_pool_s* pool, size_t size);
+void pdb_mp_free(struct mp_pool_s* pool, void* p);
+void pdb_mp_reset_pool(struct mp_pool_s* pool);
 
 
 #endif

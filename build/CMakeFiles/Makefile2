@@ -47,7 +47,7 @@ EQUALS = =
 CMAKE_SOURCE_DIR = /home/dai/kvstore/NtyCo/core
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/dai/kvstore/build
+CMAKE_BINARY_DIR = /home/dai/PatronusDB/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -74,14 +74,14 @@ clean: CMakeFiles/nty_core.dir/clean
 CMakeFiles/nty_core.dir/all:
 	$(MAKE) -f CMakeFiles/nty_core.dir/build.make CMakeFiles/nty_core.dir/depend
 	$(MAKE) -f CMakeFiles/nty_core.dir/build.make CMakeFiles/nty_core.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dai/kvstore/build/CMakeFiles --progress-num=1,2,3,4,5 "Built target nty_core"
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/dai/PatronusDB/build/CMakeFiles --progress-num=1,2,3,4,5 "Built target nty_core"
 .PHONY : CMakeFiles/nty_core.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/nty_core.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dai/kvstore/build/CMakeFiles 5
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dai/PatronusDB/build/CMakeFiles 5
 	$(MAKE) -f CMakeFiles/Makefile2 CMakeFiles/nty_core.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/dai/kvstore/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/dai/PatronusDB/build/CMakeFiles 0
 .PHONY : CMakeFiles/nty_core.dir/rule
 
 # Convenience name for target.
