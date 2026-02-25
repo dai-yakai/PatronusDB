@@ -338,10 +338,13 @@ int pdb_rbtree_create(pdb_rbtree_t* inst){
 	if (inst == NULL)	return 1;
 
 	inst->nil = (rbtree_node*)pdb_malloc(sizeof(rbtree_node));
+	if (inst->nil == NULL){
+		return PDB_MALLOC_NULL;
+	}
 	inst->nil->color = BLACK;
 	inst->root = inst->nil;
 
-	return 0;
+	return PDB_OK;
 }
 
 void pdb_rbtree_destroy(pdb_rbtree_t* inst){
@@ -355,14 +358,14 @@ void pdb_rbtree_destroy(pdb_rbtree_t* inst){
 		
 		rbtree_node *cur = rbtree_delete(inst, mini);
 		
-		if (cur->key) pdb_free(cur->key, strlen(cur->key) + 1);
-        if (cur->value) pdb_free(cur->value, strlen(cur->value) + 1);
+		if (cur->key) pdb_free(cur->key, -1);
+        if (cur->value) pdb_free(cur->value, -1);
 
-		pdb_free(cur, sizeof(rbtree_node));
+		pdb_free(cur, -1);
 		
 	}
 
-	pdb_free(inst->nil, sizeof(rbtree_node));
+	pdb_free(inst->nil, -1);
 
 	return ;
 
@@ -376,30 +379,30 @@ int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, char* value){
 	// 已经存在该节点，直接对该节点的value进行更新
     if (exist_node != inst->nil) {
         if (exist_node->value) {
-            pdb_free(exist_node->value, strlen(exist_node->value) + 1);
+            pdb_free(exist_node->value, -1);
         }
         exist_node->value = pdb_malloc(strlen(value) + 1);
-        if (!exist_node->value) return -2;
+        if (!exist_node->value) return PDB_MALLOC_NULL;
         strcpy(exist_node->value, value);
         
         return 0; 
     }
 
     rbtree_node *node = (rbtree_node*)pdb_malloc(sizeof(rbtree_node));
-    if (!node) return -2; 
+    if (!node) return PDB_MALLOC_NULL; 
         
     node->key = pdb_malloc(strlen(key) + 1);
     if (!node->key) {
-        pdb_free(node, sizeof(rbtree_node)); 
-        return -2;
+        pdb_free(node, -1); 
+        return PDB_MALLOC_NULL;
     }
     strcpy(node->key, key);
     
     node->value = pdb_malloc(strlen(value) + 1);
     if (!node->value) {
-        pdb_free(node->key, strlen(key) + 1); 
-        pdb_free(node, sizeof(rbtree_node));
-        return -2;
+        pdb_free(node->key, -1); 
+        pdb_free(node, -1);
+        return PDB_MALLOC_NULL;
     }
     strcpy(node->value, value);
 
@@ -426,13 +429,13 @@ int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
 	
 	rbtree_node *cur = rbtree_delete(inst, node);
 	if (cur->key) {
-        pdb_free(cur->key, strlen(cur->key) + 1);
+        pdb_free(cur->key, -1);
     }
     if (cur->value) {
-        pdb_free(cur->value, strlen(cur->value) + 1);
+        pdb_free(cur->value, -1);
     }
 
-	pdb_free(cur, sizeof(rbtree_node));
+	pdb_free(cur, -1);
 
 #if ENABLE_PRINT_RB
 	pdb_print_rbtree(inst);
@@ -449,11 +452,11 @@ int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value){
 	if (node == inst->nil) return 1;
 	
 	if (node->value) {
-        pdb_free(node->value, strlen(node->value) + 1);
+        pdb_free(node->value, -1);
     }
 
 	node->value = pdb_malloc(strlen(value) + 1);
-	if (!node->value) return -2;
+	if (!node->value) return PDB_MALLOC_NULL;
 	
 	// memset(node->value, 0, strlen(value) + 1);
 	strcpy(node->value, value);
@@ -479,125 +482,6 @@ void pdb_print_rbtree(pdb_rbtree_t* inst){
 	rbtree_traversal(inst, inst->root);
 }
 
-static void rbtree_dump_dfs(FILE *fp, rbtree_node *node, rbtree_node *nil)
-{
-	printf("rbtree_dump_dfs\n");
-    if (node == nil) return;
-	fprintf(fp, "*3\r\n$4\r\nRSET\r\n$%lu\r\n%s\r\n$%lu\r\n%s\r\n", strlen((char*)node->key), (char*)node->key, strlen((char*)node->value), (char*)node->value);
-	fflush(fp);
-    rbtree_dump_dfs(fp, node->left, nil);
-    rbtree_dump_dfs(fp, node->right, nil);
-}
-
-void pdb_rbtree_dump(pdb_rbtree_t *tree, const char *file)
-{
-	printf("pdb_rbtree_dump\n");
-    if (!tree || !file) return;
-
-    FILE *fp = fopen(file, "w");
-    if (!fp) {
-        perror("fopen dump");
-        return;
-    }
-
-    rbtree_dump_dfs(fp, tree->root, tree->nil);
-    fclose(fp);
-}
-
-// int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file){
-//     if (!arr || !file) return -1;
-
-//     FILE *fp = fopen(file, "r");
-//     if (!fp) {
-//         perror("fopen load");
-//         return -2;
-//     }
-
-//     char cmd[16];
-//     char key[1024];
-//     char value[1024];
-
-//     while (fscanf(fp, "%15s %127s %511s", cmd, key, value) == 3) {
-//         if (strcmp(cmd, "RSET") == 0) {
-//             pdb_rbtree_set(arr, key, value);
-//         }
-//     }
-
-// 	// pdb_print_rbtree(arr);
-
-//     fclose(fp);
-//     return 0;
-// }
-
-int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file) {
-    if (!arr || !file) return -1;
-
-    // 使用 "rb" 模式打开，防止 Windows/Linux 换行符自动转换干扰字节计数
-    FILE *fp = fopen(file, "rb"); 
-    if (!fp) {
-        perror("fopen load");
-        return -2;
-    }
-
-    char line_buf[128]; // 用于读取 *3\r\n 或 $4\r\n 这种头信息
-    char cmd[128];
-    char key[4096];     // 假设 key 最大长度，生产环境可动态分配
-    char value[4096];   // 假设 value 最大长度
-    
-    int array_len;
-    size_t data_len;
-
-    // 循环读取每一条 RESP 消息
-    while (fgets(line_buf, sizeof(line_buf), fp) != NULL) {
-        
-        // 检查是否以*开头 (例如: *3\r\n)
-        if (line_buf[0] != '*') {
-            continue; // 跳过非法行或空行
-        }
-        
-        // 解析参数个数
-        array_len = atoi(line_buf + 1);
-        if (array_len < 3) {
-            continue; 
-        }
-
-        // 解析CMD ($4\r\nRSET\r\n)
-        if (fgets(line_buf, sizeof(line_buf), fp) == NULL) break;
-        if (line_buf[0] != '$') break;
-        data_len = atoi(line_buf + 1); // 获取长度
-
-        if (data_len >= sizeof(cmd)) data_len = sizeof(cmd) - 1; // 保护缓冲区
-        fread(cmd, 1, data_len, fp); // 读取内容
-        cmd[data_len] = '\0';        // 添加字符串结束符
-        CONSUME_CRLF(fp);            // 吃掉\r\n
-
-        // 解析KEY
-        if (fgets(line_buf, sizeof(line_buf), fp) == NULL) break;
-        data_len = atoi(line_buf + 1);
-
-        if (data_len >= sizeof(key)) data_len = sizeof(key) - 1;
-        fread(key, 1, data_len, fp);
-        key[data_len] = '\0';
-        CONSUME_CRLF(fp);
-
-        // 解析value
-        if (fgets(line_buf, sizeof(line_buf), fp) == NULL) break;
-        data_len = atoi(line_buf + 1);
-
-        if (data_len >= sizeof(value)) data_len = sizeof(value) - 1;
-        fread(value, 1, data_len, fp);
-        value[data_len] = '\0';
-        CONSUME_CRLF(fp);
-
-        if (strcmp(cmd, "RSET") == 0) {
-            pdb_rbtree_set(arr, key, value);
-        }
-    }
-
-    fclose(fp);
-    return 0;
-}
-
 /**
  * @brief 批量处理插入操作
  * 
@@ -620,49 +504,3 @@ int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count){
 
 	return 0;
 }
-
-
-#if 0
-int main() {
-
-	int keyArray[20] = {24,25,13,35,23, 26,67,47,38,98, 20,19,17,49,12, 21,9,18,14,15};
-
-	rbtree *T = (rbtree *)malloc(sizeof(rbtree));
-	if (T == NULL) {
-		printf("malloc failed\n");
-		return -1;
-	}
-	
-	T->nil = (rbtree_node*)malloc(sizeof(rbtree_node));
-	T->nil->color = BLACK;
-	T->root = T->nil;
-
-	rbtree_node *node = T->nil;
-	int i = 0;
-	for (i = 0;i < 20;i ++) {
-		node = (rbtree_node*)malloc(sizeof(rbtree_node));
-		node->key = keyArray[i];
-		node->value = NULL;
-
-		rbtree_insert(T, node);
-		
-	}
-
-	rbtree_traversal(T, T->root);
-	printf("----------------------------------------\n");
-
-	for (i = 0;i < 20;i ++) {
-
-		rbtree_node *node = rbtree_search(T, keyArray[i]);
-		rbtree_node *cur = rbtree_delete(T, node);
-		free(cur);
-
-		rbtree_traversal(T, T->root);
-		printf("----------------------------------------\n");
-	}
-	
-
-	
-}
-#endif
-

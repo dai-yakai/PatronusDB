@@ -6,6 +6,7 @@
 #include <stdio.h>
 
 #include "pdb_core.h"
+#include "pdb_log.h"
 
 
 #define MP_ALIGN 8

@@ -64,8 +64,8 @@ int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value);
 int pdb_rbtree_exist(pdb_rbtree_t* inst, char* key);
 void pdb_print_rbtree(pdb_rbtree_t* inst);
 
-void pdb_rbtree_dump(pdb_rbtree_t *tree, const char *file);
-int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file);
+// void pdb_rbtree_dump(pdb_rbtree_t *tree, const char *file);
+// int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file);
 
 extern pdb_rbtree_t global_rbtree;
 

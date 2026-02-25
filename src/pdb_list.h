@@ -6,20 +6,22 @@
     双向链表
 */
 
-typedef struct listNode_s{
-    struct listNode_s* prev;
-    struct listNode_s* next;
+typedef struct pdb_listNode_s{
+    struct pdb_listNode_s* prev;
+    struct pdb_listNode_s* next;
     void* val;
-} listNode;
+} pdb_listNode;
 
-typedef struct list_s{
-    listNode* head;
-    listNode* tail;
-    int len;
+typedef struct pdb_list_s{
+    pdb_listNode* head;
+    pdb_listNode* tail;
     
-} list;
+} pdb_list;
 
-void pdb_list_insert(list l, void* data);
-int pdb_list_delete(list l, void* data);
+void pdb_list_insert(pdb_list* l, void* data);
+int pdb_list_delete(pdb_list* l, void* data);
+int pdb_list_delete_node(pdb_list* l, struct pdb_listNode_s* node);
+pdb_list* pdb_get_NULL_list();
+int pdb_is_list_NULL(pdb_list* l);
 
 #endif

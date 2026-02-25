@@ -17,9 +17,11 @@ typedef struct server_config_s{
     char* master_ip;
     int is_slave;
 
-    char* array_dump_dir;
-    char* rbtree_dump_dir;
-    char* hash_dump_dir;
+    char* dump_dir;
+    char* persistence;
+    bool is_aof;
+
+    int max_memory;
 }server_config;
 
 extern struct server_config_s global_conf;
@@ -27,7 +29,8 @@ extern struct server_config_s global_conf;
 typedef enum conf_type_e{
     CONF_TYPE_INT,
     CONF_TYPE_STRING,
-    CONF_TYPE_BOOL
+    CONF_TYPE_BOOL,
+    CONF_TYPE_LONG
 } conf_type;
 
 

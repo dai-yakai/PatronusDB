@@ -3,16 +3,17 @@
 server_config global_conf;
 
 config_entry conf_table[] = {
-    {"port", CONF_TYPE_INT, &global_conf.port},
-    {"network_mode", CONF_TYPE_INT, &global_conf.network_mode},
-    {"master_port", CONF_TYPE_INT, &global_conf.master_port},
-    {"master_ip", CONF_TYPE_STRING, &global_conf.master_ip},
-    {"is_slave", CONF_TYPE_INT, &global_conf.is_slave},
-    {"is_replication", CONF_TYPE_BOOL, &global_conf.is_replication},
-    {"array_dump_dir", CONF_TYPE_STRING, &global_conf.array_dump_dir},
-    {"rbtree_dump_dir", CONF_TYPE_STRING, &global_conf.rbtree_dump_dir},
-    {"hash_dump_dir", CONF_TYPE_STRING, &global_conf.hash_dump_dir},
-    {NULL, 0, NULL}
+    {"port",            CONF_TYPE_INT,      &global_conf.port},
+    {"network_mode",    CONF_TYPE_INT,      &global_conf.network_mode},
+    {"master_port",     CONF_TYPE_INT,      &global_conf.master_port},
+    {"master_ip",       CONF_TYPE_STRING,   &global_conf.master_ip},
+    {"is_slave",        CONF_TYPE_INT,      &global_conf.is_slave},
+    {"is_replication",  CONF_TYPE_BOOL,     &global_conf.is_replication},
+    {"dump_dir",        CONF_TYPE_STRING,   &global_conf.dump_dir},
+    {"max_memory",      CONF_TYPE_INT,      &global_conf.max_memory},
+    {"persistence",     CONF_TYPE_STRING,   &global_conf.persistence},
+    {"is_aof",          CONF_TYPE_BOOL,     &global_conf.is_aof},
+    {NULL,              0,                  NULL}
 };
 
 static bool stringToBool(char* val){
@@ -26,6 +27,10 @@ int setConfigValue(config_entry* entry, char* value) {
     switch (entry->type) {
         case CONF_TYPE_INT:
             *(int*)(entry->data_ptr) = atoi(value);
+            break;
+        
+        case CONF_TYPE_LONG:
+            *(long*)(entry->data_ptr) = atol(value);
             break;
 
         case CONF_TYPE_BOOL:
@@ -53,7 +58,6 @@ void loadServerConfig(const char *filename) {
 
     char line[1024];
     while (fgets(line, sizeof(line), fp)) {
-        // 过滤注释和空行
         char *p = strchr(line, '#');
         if (p) *p = '\0';
         
