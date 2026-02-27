@@ -13,6 +13,7 @@
 #include "pdb_core.h"
 #include "pdb_log.h"
 #include "pdb_parse_protocol.h"
+#include "pdb_value.h"
 
 
 int pdb_rdb_load(const char* file);

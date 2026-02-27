@@ -10,7 +10,7 @@ OBJ_DIR := obj
 
 SRCS := pdb_reactor.c pdb_uring.c pdb_ntyco.c pdb_server.c pdb_array.c pdb_malloc.c pdb_rbtree.c pdb_hash.c pdb_mempool.c pdb_mempool_freelist.c pdb_replication.c \
 		pdb_sds.c pdb_conf.c pdb_log.c pdb_parse_protocol.c pdb_rdb.c pdb_aof.c pdb_dump.c pdb_list.c pdb_conninfo.c pdb_intset.c pdb_bitmap.c pdb_skiptable.c pdb_set.c \
-		pdb_sortedSet.c
+		pdb_sortedSet.c pdb_value.c
 
 SRCS_WITH_PATH := $(addprefix $(SRC_DIR)/, $(SRCS))
 

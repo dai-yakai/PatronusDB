@@ -402,6 +402,7 @@ static long long usec(void) {
 }
 
 void pdb_intset_test(){
+    printf("##############pdb_intsert_test###############\n");
     uint8_t success;
     int i;
     struct pdb_intset *is;
@@ -588,6 +589,8 @@ void pdb_intset_test(){
         is3 = pdb_intset_union(is, is2);
         pdb_print_intset(is3);
     }
+
+    printf("\n\n");
 
     return;
 }

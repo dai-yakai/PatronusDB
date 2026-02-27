@@ -69,7 +69,7 @@ static int _pdb_hash_shrink(pdb_hash_t* hash){
 /**
  * Deep copy
  */
-hashnode_t *_create_node(char *key, char *value) {
+hashnode_t *_create_node(char *key, pdb_value* value) {
 	hashnode_t *node = (hashnode_t*)pdb_malloc(sizeof(hashnode_t));
 	assert(node != NULL);
 	
@@ -80,11 +80,13 @@ hashnode_t *_create_node(char *key, char *value) {
 	strncpy(kcopy, key, strlen(key));
 	node->key = kcopy;
 
-	char *kvalue = pdb_malloc(strlen(value) + 1);
-	assert(kvalue != NULL);
-	memset(kvalue, 0, strlen(value) + 1);
-	strncpy(kvalue, value, strlen(value));
-	node->value = kvalue;
+	// char *kvalue = pdb_malloc(strlen(value) + 1);
+	// assert(kvalue != NULL);
+	// memset(kvalue, 0, strlen(value) + 1);
+	// strncpy(kvalue, value, strlen(value));
+	// node->value = kvalue;
+	node->value = value;
+	pdb_incre_value(value);
 	
 	node->next = NULL;
 
@@ -92,7 +94,7 @@ hashnode_t *_create_node(char *key, char *value) {
 }
 
 
-int pdb_hash_create(pdb_hash_t *hash) {
+int pdb_hash_create(pdb_hash_t* hash) {
 	hash->nodes = (hashnode_t**)pdb_malloc(sizeof(hashnode_t*) * INIT_TABLE_SIZE);
 	assert(hash->nodes != NULL);
 	memset(hash->nodes, 0, sizeof(hashnode_t*) * INIT_TABLE_SIZE);
@@ -125,6 +127,8 @@ void pdb_hash_destory(pdb_hash_t *hash) {
 			node = node->next;
 			hash->nodes[i] = node;
 			
+			pdb_free(tmp->key, -1);
+			pdb_decre_value(tmp->value);
 			pdb_free(tmp, -1);
 		}
 	}
@@ -133,32 +137,30 @@ void pdb_hash_destory(pdb_hash_t *hash) {
 }
 
 
-int pdb_hash_set(pdb_hash_t *hash, char *key, char *value) {
+int pdb_hash_set(pdb_hash_t* hash, char* key, pdb_value* value) {
 	_pdb_hash_expand(hash);
 
 	int idx = _hash(key, hash->max_slots);
 	hashnode_t *node = hash->nodes[idx];
     
-#if 1
 	while (node != NULL) {
         if (strcmp(node->key, key) == 0) { 
-#if ENABLE_KEY_POINTER
             if (node->value) {
-                pdb_free(node->value, -1); 
+				// exist
+                // pdb_free(node->value, -1);
+				pdb_decre_value(node->value); 
             }
             
-            char *new_value = pdb_malloc(strlen(value) + 1);
-            if (!new_value) return PDB_MALLOC_NULL;
-            strcpy(new_value, value);
-            node->value = new_value;
-#else
-            strncpy(node->value, value, MAX_VALUE_LEN);
-#endif
+            // char *new_value = pdb_malloc(strlen(value) + 1);
+            // if (!new_value) return PDB_MALLOC_NULL;
+            // strcpy(new_value, value);
+            // node->value = new_value;
+			node->value = value;
+			pdb_incre_value(value);
             return 0;
         }
         node = node->next;
     }
-#endif
 
 	hashnode_t *new_node = _create_node(key, value);
 	if (new_node == NULL){
@@ -173,7 +175,7 @@ int pdb_hash_set(pdb_hash_t *hash, char *key, char *value) {
 }
 
 
-char* pdb_hash_get(pdb_hash_t *hash, char *key) {
+pdb_value* pdb_hash_get(pdb_hash_t *hash, char *key) {
 	if (!hash || !key) return NULL;
 
 	int idx = _hash(key, hash->max_slots);
@@ -189,7 +191,7 @@ char* pdb_hash_get(pdb_hash_t *hash, char *key) {
 }
 
 
-int pdb_hash_mod(pdb_hash_t *hash, char *key, char *value) {
+int pdb_hash_mod(pdb_hash_t* hash, char* key, pdb_value* value) {
 	if (!hash || !key) return -1;
 
 	int idx = _hash(key, hash->max_slots);
@@ -207,14 +209,16 @@ int pdb_hash_mod(pdb_hash_t *hash, char *key, char *value) {
 	}
 
 	// node --> 
-	pdb_free(node->value, -1);
+	// pdb_free(node->value, -1);
+	pdb_decre_value(node->value);
 
-	char *kvalue = pdb_malloc(strlen(value) + 1);
-	if (kvalue == NULL) return PDB_MALLOC_NULL;
-	memset(kvalue, 0, strlen(value) + 1);
-	strncpy(kvalue, value, strlen(value));
+	// char *kvalue = pdb_malloc(strlen(value) + 1);
+	// if (kvalue == NULL) return PDB_MALLOC_NULL;
+	// memset(kvalue, 0, strlen(value) + 1);
+	// strncpy(kvalue, value, strlen(value));
 
-	node->value = kvalue;
+	node->value = value;
+	pdb_incre_value(value);
 	
 	return 0;
 }
@@ -228,15 +232,17 @@ int pdb_hash_del(pdb_hash_t *hash, char *key) {
 
 	int idx = _hash(key, hash->max_slots);
 
-	hashnode_t *head = hash->nodes[idx];
+	hashnode_t* head = hash->nodes[idx];
 	if (head == NULL) return -1; // noexist
 	// head node
 	if (strcmp(head->key, key) == 0) {
 		hashnode_t *tmp = head->next;
 		hash->nodes[idx] = tmp;
 		
+		pdb_free(head->key, -1);
+		pdb_decre_value(head->value);
 		pdb_free(head, -1);
-		hash->count --;
+		hash->count--;
 		
 		return 0;
 	}
@@ -257,7 +263,8 @@ int pdb_hash_del(pdb_hash_t *hash, char *key) {
 	cur->next = tmp->next;
 #if ENABLE_KEY_POINTER
 	pdb_free(tmp->key, -1);
-	pdb_free(tmp->value, -1);
+	pdb_decre_value(tmp->value);
+	// pdb_free(tmp->value, -1);
 #endif
 	pdb_free(tmp, -1);
 	
@@ -272,7 +279,7 @@ int pdb_hash_del(pdb_hash_t *hash, char *key) {
  * Return 1 if not found; otherwise return 0;
  */
 int pdb_hash_exist(pdb_hash_t *hash, char *key) {
-	char *value = pdb_hash_get(hash, key);
+	pdb_value* value = pdb_hash_get(hash, key);
 	// NULL return 1
 	if (!value) return 1;
 
@@ -282,11 +289,15 @@ int pdb_hash_exist(pdb_hash_t *hash, char *key) {
 
 int pdb_hash_mset(pdb_hash_t* arr, char** tokens, int count){
 	int i;
+	int type;
+	long int_value;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];
 		char* value = tokens[i + 1];
 
-		int ret = pdb_hash_set(arr, key, value);
+		pdb_value* v = pdb_create_value(value, PDB_VALUE_TYPE_DEFAULT);
+
+		int ret = pdb_hash_set(arr, key, v);
 		if (ret != 0){
 			return ret;
 		}

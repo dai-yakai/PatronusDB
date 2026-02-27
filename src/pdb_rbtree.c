@@ -371,19 +371,21 @@ void pdb_rbtree_destroy(pdb_rbtree_t* inst){
 
 }
 
-int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, char* value){
-	// printf("pdb_rbtree_set: %s, %s\n", key, value);
+int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value){
     if (!inst || !key || !value) return -1;
 
     rbtree_node *exist_node = rbtree_search(inst, key);
-	// 已经存在该节点，直接对该节点的value进行更新
     if (exist_node != inst->nil) {
         if (exist_node->value) {
-            pdb_free(exist_node->value, -1);
+			pdb_decre_value(exist_node->value);
+			// pdb_de_value();
+            // pdb_free(exist_node->value, -1);
         }
-        exist_node->value = pdb_malloc(strlen(value) + 1);
-        if (!exist_node->value) return PDB_MALLOC_NULL;
-        strcpy(exist_node->value, value);
+        exist_node->value = value;
+		pdb_incre_value(exist_node->value);
+
+        // if (!exist_node->value) return PDB_MALLOC_NULL;
+        // strcpy(exist_node->value, value);
         
         return 0; 
     }
@@ -398,20 +400,22 @@ int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, char* value){
     }
     strcpy(node->key, key);
     
-    node->value = pdb_malloc(strlen(value) + 1);
-    if (!node->value) {
-        pdb_free(node->key, -1); 
-        pdb_free(node, -1);
-        return PDB_MALLOC_NULL;
-    }
-    strcpy(node->value, value);
+    // node->value = pdb_malloc(strlen(value) + 1);
+    // if (!node->value) {
+    //     pdb_free(node->key, -1); 
+    //     pdb_free(node, -1);
+    //     return PDB_MALLOC_NULL;
+    // }
+    // strcpy(node->value, value);
+	node->value = value;
+	pdb_incre_value(value);
 
     rbtree_insert(inst, node);
 
     return 0;
 }
 
-char* pdb_rbtree_get(pdb_rbtree_t* inst, char* key){
+pdb_value* pdb_rbtree_get(pdb_rbtree_t* inst, char* key){
 	if (!inst || !key) return NULL;
 	rbtree_node *node = rbtree_search(inst, key);
 	if (!node) return NULL; // no exist
@@ -421,7 +425,6 @@ char* pdb_rbtree_get(pdb_rbtree_t* inst, char* key){
 }
 
 int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
-	// printf("pdb_rbtree_del: %s\n", key);
 	if (!inst || !key) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
@@ -432,19 +435,15 @@ int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
         pdb_free(cur->key, -1);
     }
     if (cur->value) {
-        pdb_free(cur->value, -1);
+        pdb_decre_value(cur->value);
     }
 
 	pdb_free(cur, -1);
 
-#if ENABLE_PRINT_RB
-	pdb_print_rbtree(inst);
-#endif
-
 	return 0;
 }
 
-int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value){
+int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, pdb_value* value){
 	if (!inst || !key || !value) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
@@ -452,18 +451,17 @@ int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value){
 	if (node == inst->nil) return 1;
 	
 	if (node->value) {
-        pdb_free(node->value, -1);
+        // pdb_free(node->value, -1);
+		pdb_decre_value(node->value);
     }
 
-	node->value = pdb_malloc(strlen(value) + 1);
-	if (!node->value) return PDB_MALLOC_NULL;
+	// node->value = pdb_malloc(strlen(value) + 1);
+	// if (!node->value) return PDB_MALLOC_NULL;
 	
-	// memset(node->value, 0, strlen(value) + 1);
-	strcpy(node->value, value);
+	// strcpy(node->value, value);
 
-#if ENABLE_PRINT_RB
-	pdb_print_rbtree(inst);
-#endif
+	node->value = value;
+	pdb_incre_value(value);
 
 	return 0;
 }
@@ -494,9 +492,11 @@ int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count){
 	int i;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];
-		char* value = tokens[i + 1];
+		char* raw_value = tokens[i + 1];
+		pdb_value* value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
 
 		int ret = pdb_rbtree_set(arr, key, value);
+		pdb_decre_value(value);
 		if (ret != 0){
 			return ret;
 		}

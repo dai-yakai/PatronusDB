@@ -65,7 +65,7 @@ int pdb_rdb_array_dump(pdb_array_t* arr, const char* file){
             continue;
         }
         const char *key = arr->table[i].key;
-        const char *val = arr->table[i].value;
+        const char* val = pdb_parse_value_to_string(arr->table[i].value);
         size_t klen = strlen(key);
         size_t vlen = strlen(val);
 
@@ -101,7 +101,8 @@ int pdb_rdb_hash_dump(pdb_hash_t* h, const char* file){
             }
 #endif
             const char *key = node->key;
-            const char *val = node->value;
+            const char* val = pdb_parse_value_to_string(node->value);
+            // const char *val = node->value;
             size_t klen = strlen(key);
             size_t vlen = strlen(val);
 

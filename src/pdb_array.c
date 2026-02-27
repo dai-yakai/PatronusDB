@@ -42,14 +42,14 @@ void pdb_array_destroy(pdb_array_t* inst){
 
 int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value){
     assert(inst != NULL && key != NULL && value != NULL);
-
+    pdb_value* old_value;
     if (inst->total_count == PDB_ARRAY_SIZE){
         pdb_log_error("out of pdb_array size\n");
         return -1;
     }
 
-    char* str = pdb_array_get(inst, key);
-    if (str){
+    old_value = pdb_array_get(inst, key);
+    if (old_value){
         pdb_log_info("pdb_array_set: key exist\n");
         return PDB_ARRAY_EXIST;
     }
@@ -170,8 +170,9 @@ int pdb_array_mod(pdb_array_t* inst, char* key, pdb_value* value){
  * 1: exist
  */
 int pdb_array_exist(pdb_array_t* inst, char* key){
-    char* str = pdb_array_get(inst, key);
-    if (!str){
+    pdb_value* value;
+    value = pdb_array_get(inst, key);
+    if (!value){
         return 0;
     }
     return 1;
@@ -193,9 +194,11 @@ int pdb_array_mset(pdb_array_t* arr, char** tokens, int count){
 	int i;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];
-		char* value = tokens[i + 1];
+		char* raw_value = tokens[i + 1];
+        pdb_value* value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
 
 		int ret = pdb_array_set(arr, key, value);
+        pdb_decre_value(value);
 		if (ret != 0){
 			return ret;
 		}

@@ -223,5 +223,5 @@ void pdb_test_bitmap(){
     printf("Count  耗时: %lld us \t(统计 %d 万总在线人数极速响应)\n", end - start, total_ones / 10000);
 
     pdb_sds_free(b);
-    printf("========== 测试结束 ==========\n");
+    printf("========== 测试结束 ==========\n\n");
 }

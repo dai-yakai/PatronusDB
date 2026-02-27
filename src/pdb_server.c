@@ -78,12 +78,12 @@ int main(int argc, char* argv[]){
     loadServerConfig("/home/dai/PatronusDB/PatronusDB.conf");
     init_pdb_engine();
 
-    // pdb_intset_test();
-    // pdb_set_test();
+    pdb_intset_test();
+    pdb_set_test();
     test_performance();
     test_correctness();
     pdb_test_bitmap();
-    
+
     int port = global_conf.port;
     int mode = global_conf.network_mode;
 

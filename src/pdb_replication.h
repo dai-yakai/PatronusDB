@@ -15,6 +15,7 @@
 #include "pdb_rbtree.h"
 #include "pdb_array.h"
 #include "pdb_hash.h"
+#include "pdb_value.h"
 
 #define MAX_SLAVES 100
 #define DIRECT_SEND_THRESHOLD 1024*1024*32

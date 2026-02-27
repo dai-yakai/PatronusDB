@@ -1,10 +1,20 @@
 #include "pdb_list.h"
 
+pdb_list global_list;
+
+pdb_kv* pdb_create_list_kv_data(char* key, pdb_value* value){
+    pdb_kv* kv = (pdb_kv*)pdb_malloc(sizeof(pdb_kv));
+    kv->key = key;
+    kv->value = value;
+
+    return kv;
+}
+
 int pdb_is_list_NULL(pdb_list* l){
     return l->head == NULL;
 }
 
-void pdb_list_insert(pdb_list* l, void* data){
+int pdb_list_insert(pdb_list* l, void* data){
     pdb_listNode* node = (pdb_listNode*)pdb_malloc(sizeof(pdb_listNode));
     node->val = data;
     node->prev = NULL;
@@ -12,10 +22,12 @@ void pdb_list_insert(pdb_list* l, void* data){
     if (pdb_is_list_NULL(l)){
         l->head = node;
         l->tail = node;
-        return;
+        return PDB_OK;
     }
     l->head->prev = node;
     l->head = node;
+
+    return PDB_OK;
 }
 
 

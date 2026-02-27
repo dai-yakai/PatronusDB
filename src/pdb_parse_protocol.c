@@ -324,10 +324,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
     switch(cmd){
         // array
         case PDB_CMD_SET:
-            key = tokens[1];
             raw_value = tokens[2];
-            if (count == 4)     value_type_cmd = tokens[3];
-            value = pdb_create_value(value_type_cmd, raw_value);
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
 
             ret = pdb_array_set(&global_array, key, value);         
             if (response != NULL){
@@ -346,7 +344,7 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
         case PDB_CMD_GET:
             value = pdb_array_get(&global_array, key);
             pdb_incre_value(value);
-            value_get = pdb_parse_value_to_string();
+            value_get = pdb_parse_value_to_string(value);
             if (response != NULL){
                 if (value_get == NULL){
                     len = sprintf(response, "NO EXIST\r\n");
@@ -360,13 +358,14 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
         case PDB_CMD_MGET:
             len = 0;
             for (i = 1; i < count; i++){
-                char* key = tokens[i];
-                char* val = pdb_rbtree_get(&global_rbtree, key);
+                key = tokens[i];
+                value = pdb_array_get(&global_array, key);
+                value_get = pdb_parse_value_to_string(value);
                 if (response != NULL){
-                    if (val == NULL) {
+                    if (value == NULL) {
                         len += sprintf(response + len, "ERROR\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", val);
+                        len += sprintf(response + len, "%s\r\n", value_get);
                     }
                 }
             }
@@ -397,6 +396,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
             break;
 
         case PDB_CMD_MOD:
+            raw_value = tokens[2];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
             ret = pdb_array_mod(&global_array, key, value);
             if (response != NULL){
                 if (ret < 0){
@@ -422,6 +423,9 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
         // RBTREE
         case PDB_CMD_RSET:
+            raw_value = tokens[2];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
+
             ret = pdb_rbtree_set(&global_rbtree, key, value);
             if (response != NULL){
                 if (ret == PDB_MALLOC_NULL){
@@ -434,10 +438,13 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "EXIST\r\n");
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_RGET:
-            value_get = pdb_rbtree_get(&global_rbtree, key);
+            value = pdb_rbtree_get(&global_rbtree, key);
+            value_get = pdb_parse_value_to_string(value);
+
             if (response != NULL){
                 if (value_get == NULL){
                     len = sprintf(response, "NO EXIST\r\n");
@@ -445,6 +452,7 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "%s\r\n", value_get);
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_RMSET:
@@ -463,13 +471,14 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
         case PDB_CMD_RMGET:
             len = 0;
             for (i = 1; i < count; i++){
-                char* key = tokens[i];
-                char* val = pdb_rbtree_get(&global_rbtree, key);
+                key = tokens[i];
+                value = pdb_array_get(&global_array, key);
+                value_get = pdb_parse_value_to_string(value);
                 if (response != NULL){
-                    if (val == NULL) {
+                    if (value_get == NULL) {
                         len += sprintf(response + len, "NO EXIST\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", val);
+                        len += sprintf(response + len, "%s\r\n", value_get);
                     }
                 }
             }
@@ -489,6 +498,7 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
             break;
 
         case PDB_CMD_RMOD:
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
             ret = pdb_rbtree_mod(&global_rbtree, key, value);
             if (response != NULL){
                 if (ret == PDB_MALLOC_NULL){
@@ -501,6 +511,7 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "NO EXIST\r\n");
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_REXIST:
@@ -528,11 +539,15 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
             offset = strtoull(tokens[2], &endptr, 10);
             val = atoi(tokens[3]);
-            sds = pdb_hash_get(&global_hash, key);
-            if (sds == NULL){
+            value = pdb_hash_get(&global_hash, key);
+
+            if (value == NULL){
                 sds = pdb_get_new_sds(PDB_INIT_BTIMAP_LENGTH);
-                ret = pdb_hash_set(&global_hash, key, sds);     
+                value = pdb_create_value(sds, PDB_VALUE_TYPE_BITMAP);
+                ret = pdb_hash_set(&global_hash, key, value);
+                pdb_decre_value(value);     
             }
+            sds = pdb_parse_value_to_string(value);
             ret = pdb_bitmap_set(&sds, offset, val, NULL);
             if (ret == PDB_OK){
                 if (response != NULL){
@@ -552,7 +567,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                 break;
             }
             offset = strtoull(tokens[2], &endptr, 10);
-            sds = pdb_hash_get(&global_hash, key);
+            value = pdb_hash_get(&global_hash, key);
+            sds = pdb_parse_value_to_string(value);
             if (sds == NULL){
                 if (response != NULL){
                     len = sprintf(response, "Unavailable key\n");
@@ -569,7 +585,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
         case PDB_CMD_BITMAP_COUNT:
             // BITCOUNT key 
-            sds = pdb_hash_get(&global_hash, key);
+            value = pdb_hash_get(&global_hash, key);
+            sds = pdb_parse_value_to_string(value);
             if (sds == NULL){
                 if (response != NULL){
                     len = sprintf(response, "unavailable key\n");
@@ -584,7 +601,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
         case PDB_CMD_BITMAP_POS:
             // BITPOS key value start
-            sds = pdb_hash_get(&global_hash, key);
+            value = pdb_hash_get(&global_hash, key);
+            sds = pdb_parse_value_to_string(value);
             if (sds == NULL){
                 if (response != NULL){
                     len = sprintf(response, "unavailable key\n");
@@ -619,19 +637,22 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                 option = BITOP_XOR;
             }
 
-            pdb_sds result_sds = pdb_hash_get(&global_hash, result_key);
+            value = pdb_hash_get(&global_hash, result_key);
+            pdb_sds result_sds = pdb_parse_value_to_string(value);
             if (sds == NULL){
                 result_sds = pdb_get_new_sds(PDB_INIT_BTIMAP_LENGTH);
-                ret = pdb_hash_set(&global_hash, result_key, result_sds);     
+                ret = pdb_hash_set(&global_hash, result_key, value);     
             }
-            pdb_sds value1 = pdb_hash_get(&global_hash, key1);
+            value = pdb_hash_get(&global_hash, key1);
+            pdb_sds value1 = pdb_parse_value_to_string(value);
             if (value1 == NULL){
                 if (response != NULL){
                     len = sprintf(response, "unavailable key1\n");
                     break;
                 }
             }
-            pdb_sds value2 = pdb_hash_get(&global_hash, key2);
+            value = pdb_hash_get(&global_hash, key2);
+            pdb_sds value2 = pdb_parse_value_to_string(value);
             if (value2 == NULL){
                 if (response != NULL){
                     len = sprintf(response, "unavailable key2\n");
@@ -646,6 +667,9 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
         // HASH
         case PDB_CMD_HSET:
+            raw_value = tokens[2];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
+
             ret = pdb_hash_set(&global_hash, key, value);
             if (response != NULL){
                 if (ret == PDB_MALLOC_NULL){
@@ -658,10 +682,12 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "EXIST\r\n");
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_HGET:
-            value_get = pdb_hash_get(&global_hash, key);
+            value = pdb_hash_get(&global_hash, key);
+            value_get = pdb_parse_value_to_string(value);
             if (response != NULL){
                 if (value_get == NULL){
                     len = sprintf(response, "NO EXIST\r\n");
@@ -674,13 +700,14 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
         case PDB_CMD_HMGET:
             len = 0;
             for (i = 1; i < count; i++){   
-                char* key = tokens[i];
-                char* val = pdb_hash_get(&global_hash, key);
+                key = tokens[i];
+                value = pdb_hash_get(&global_hash, key);
+                value_get = pdb_parse_value_to_string(value);
                 if (response != NULL){
-                    if (val == NULL) {
+                    if (value_get == NULL) {
                         len += sprintf(response + len, "NO EXIST\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", val);
+                        len += sprintf(response + len, "%s\r\n", value_get);
                     }
                 }
             }
@@ -713,6 +740,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
             break;
 
         case PDB_CMD_HMOD:
+            raw_value = tokens[2];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
             ret = pdb_hash_mod(&global_hash, key, value);
             if (response != NULL){
                 if (ret == PDB_MALLOC_NULL){
@@ -725,6 +754,7 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "NO EXIST\r\n");
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_HEXIST:
@@ -741,6 +771,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
         /************** SKIPTABLE *********************/
         case PDB_CMD_SKSET:
+            raw_value = tokens[2];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
             ret = pdb_skiptable_insert(&global_skiplist, key, value);
             if (response != NULL){
                 if (ret < 0){
@@ -749,10 +781,12 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "OK\r\n");
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_SKGET:
-            value_get = pdb_skiptable_search(&global_skiplist, key);
+            value = pdb_skiptable_search(&global_skiplist, key);
+            value_get = pdb_parse_value_to_string(value);
             if (response != NULL){
                 if (value_get == NULL){
                     len = sprintf(response, "NO EXIST\r\n");
@@ -775,6 +809,8 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
 
         case PDB_CMD_SKMOD:
             // SKMOD key value
+            raw_value = tokens[2];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
             ret = pdb_skiptable_mod(&global_skiplist, key, value);
             if (response != NULL){
                 if (ret == PDB_OK){
@@ -783,6 +819,7 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
                     len = sprintf(response, "NO EXIST\r\n");
                 }
             }
+            pdb_decre_value(value);
             break;
 
         case PDB_CMD_SKEXIST:
@@ -800,12 +837,13 @@ int pdb_filter_protocol(char** tokens, int count, char* response){
             len = 0;
             for (i = 1; i < count; i++){   
                 char* key = tokens[i];
-                char* val = pdb_skiptable_search(&global_skiplist, key);
+                value = pdb_skiptable_search(&global_skiplist, key);
+                value_get = pdb_parse_value_to_string(value);
                 if (response != NULL){
-                    if (val == NULL) {
+                    if (value_get == NULL) {
                         len += sprintf(response + len, "NO EXIST\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", val);
+                        len += sprintf(response + len, "%s\r\n", value_get);
                     }
                 }
             }

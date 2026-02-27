@@ -298,7 +298,7 @@ static void hash_sync_traverse(pdb_hash_t *h, int fd, char *big_buf, int *pos) {
         // 遍历链表
         while (node) {
             if (node->key && node->value) {
-                int value_len = strlen(node->value);
+                int value_len = strlen(node->value->ptr);
                 int key_len = strlen(node->key);
                 int total_len = value_len + key_len + 128;
 
@@ -362,7 +362,7 @@ static void hash_sync_traverse_raw(pdb_hash_t *h, int fd, char *big_buf, int *po
         // 遍历链表
         while (node) {
             if (node->key && node->value) {
-                int value_len = strlen(node->value);
+                int value_len = strlen(node->value->ptr);
                 int key_len = strlen(node->key);
                 int total_len = value_len + key_len + 128;
 

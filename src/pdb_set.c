@@ -27,7 +27,9 @@ static void _pdb_set_convert_to_hashtable(struct pdb_set* set){
         int64_t value = _pdb_intset_get(intset, i);
         snprintf(buf, sizeof(buf), "%" PRId64, value);
 
-        pdb_hash_set(set_hash, buf, "1");
+        pdb_value* value_ = pdb_create_value(NULL, PDB_VALUE_TYPE_NULL);
+        pdb_hash_set(set_hash, buf, value_);
+        pdb_decre_value(value_);
     }
 
     pdb_free(intset, -1);
@@ -47,7 +49,10 @@ struct pdb_set* pdb_set_create(){
 int pdb_set_add(struct pdb_set* set, const char* value){
     if (set->flag == PDB_SET_ENCODING_HASHTABLE){
         pdb_hash_t* set_hash = (pdb_hash_t*)set->ptr;
-        return pdb_hash_set(set_hash, (char*)value, "1");
+        pdb_value* value_ = pdb_create_value(NULL, PDB_VALUE_TYPE_NULL);
+        int ret = pdb_hash_set(set_hash, (char*)value, value_);
+        pdb_decre_value(value_);
+        return ret;
     }
 
     int64_t val;
@@ -65,7 +70,10 @@ int pdb_set_add(struct pdb_set* set, const char* value){
     }else{
         _pdb_set_convert_to_hashtable(set);
         pdb_hash_t* set_hash = (pdb_hash_t*)set->ptr;
-        return pdb_hash_set(set_hash, (char*)value, "1");
+        pdb_value* value_ = pdb_create_value(NULL, PDB_VALUE_TYPE_NULL);
+        int ret = pdb_hash_set(set_hash, (char*)value, value_);
+        pdb_decre_value(value_);
+        return ret;
     }
 
     return 0;
@@ -127,6 +135,7 @@ static void ok(void) {
 }
 
 void pdb_set_test(){
+    printf("#############pdb_set_test#####################\n");
     srand(time(NULL));
     struct pdb_set *set;
     char buf[32];
@@ -208,4 +217,6 @@ void pdb_set_test(){
         pdb_set_destroy(set);
         ok();
     }
+
+    printf("\n\n");
 }

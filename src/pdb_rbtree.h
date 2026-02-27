@@ -7,6 +7,7 @@
 #include <unistd.h>
 
 #include "pdb_malloc.h"
+#include "pdb_value.h"
 
 #define RED				    1
 #define BLACK 			    2
@@ -56,16 +57,14 @@ void rbtree_traversal(rbtree *T, rbtree_node *node);
 
 int pdb_rbtree_create(pdb_rbtree_t* inst);
 void pdb_rbtree_destroy(pdb_rbtree_t* inst);
-int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, char* value);
+int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value);
 int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count);
-char* pdb_rbtree_get(pdb_rbtree_t* inst, char* key);
+pdb_value* pdb_rbtree_get(pdb_rbtree_t* inst, char* key);
 int pdb_rbtree_del(pdb_rbtree_t* inst, char* key);
-int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, char* value);
+int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, pdb_value* value);
 int pdb_rbtree_exist(pdb_rbtree_t* inst, char* key);
 void pdb_print_rbtree(pdb_rbtree_t* inst);
 
-// void pdb_rbtree_dump(pdb_rbtree_t *tree, const char *file);
-// int pdb_rbtree_load(pdb_rbtree_t *arr, const char *file);
 
 extern pdb_rbtree_t global_rbtree;
 

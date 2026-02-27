@@ -228,32 +228,32 @@ static int _pdb_double_to_str(double value, char* buf){
     return len;
 }
 
-int pdb_sortedSet_add(struct pdb_sorted_set* Sset, char* key, double value){
-    char value_buf[64] = {0};
-    _pdb_double_to_str(value, value_buf);
-
-    char* value_hash = pdb_hash_get(Sset->set, key);
-    if (value_hash != NULL){
+int pdb_sortedSet_add(struct pdb_sorted_set* Sset, char* key, double d_new_value){
+    pdb_value* new_value = pdb_create_value(NULL, PDB_VALUE_TYPE_DOUBLE, d_new_value);
+    pdb_value* old_value = pdb_hash_get(Sset->set, key);
+    if (old_value != NULL){
+        double d_old_value = *(double*)(old_value->ptr);
         // exist
-        if (strcmp(value_hash, value_buf) == 0){
+        if (d_new_value == d_old_value){
             return 1;
         }else{
-            double old_value = atof(value_hash);
-
-            pdb_hash_mod(Sset->set, key, value_buf);
-            pdb_skiplist_delete(Sset->list, key, old_value);
-            pdb_skiplist_add(Sset->list, key, value);
+            pdb_hash_mod(Sset->set, key, new_value);
+            pdb_skiplist_delete(Sset->list, key, d_old_value);
+            pdb_skiplist_add(Sset->list, key, d_new_value);
         }
     }else{
-        pdb_hash_set(Sset->set, key, value_buf);
-        pdb_skiplist_add(Sset->list, key, value);
+        pdb_hash_set(Sset->set, key, new_value);
+        pdb_skiplist_add(Sset->list, key, d_new_value);
     }
+
+    pdb_decre_value(new_value);
 
     return 1;
 }
 
 int pdb_sortedSet_delete(struct pdb_sorted_set* Sset, char* key){
-    char* value = pdb_hash_get(Sset->set, key);
+    pdb_value* value_ = pdb_hash_get(Sset->set, key);
+    char* value = pdb_parse_value_to_string(value_);
     if (value == NULL)  return 0;
 
     double skiplist_value = atof(value);
@@ -264,7 +264,7 @@ int pdb_sortedSet_delete(struct pdb_sorted_set* Sset, char* key){
 }
 
 double pdb_sortedSet_search(struct pdb_sorted_set* Sset, char* key, int* success){
-    char* value = pdb_hash_get(Sset->set, key);
+    pdb_value* value = pdb_hash_get(Sset->set, key);
     if (value == NULL){
         if (success != NULL)    *success = 0;
         return 0;
@@ -273,7 +273,7 @@ double pdb_sortedSet_search(struct pdb_sorted_set* Sset, char* key, int* success
     if (success != NULL){
         *success = 1;
     }
-    double skiplist_value = atof(value);
+    double skiplist_value = *((double*)value->ptr);
     return skiplist_value;
 }
 
@@ -361,6 +361,7 @@ char** pdb_sortedSet_topK(struct pdb_sorted_set* Sset, unsigned long k){
 }
 
 void test_correctness() {
+    printf("###########pdb_sortedSet correctness test###############\n");
     struct pdb_sorted_set* zs = pdb_create_sortedSet();
     int success = 0;
     
@@ -419,6 +420,7 @@ static long long usec(void) {
 }
 
 void test_performance() {
+    printf("###########pdb_sortedSet performance test###############\n");
     struct pdb_sorted_set* zs = pdb_create_sortedSet();
     
     char** keys = malloc(STRESS_COUNT * sizeof(char*));
@@ -472,4 +474,6 @@ void test_performance() {
     free(keys);
     free(scores);
     pdb_destroy_sortedSet(zs);
+
+    printf("\n\n");
 }

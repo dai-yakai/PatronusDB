@@ -2,7 +2,7 @@
 
 struct SkipList global_skiplist;
 typedef struct Node {
-    value_type key;
+    char* key;
     value_type value;
     struct Node** forward;
 } Node;
@@ -12,10 +12,11 @@ typedef struct SkipList {
     Node* header;
 } SkipList;
 
-Node* createNode(int level, value_type key, value_type value) {
+Node* createNode(int level, char* key, value_type value) {
     Node* newNode = (Node*)pdb_malloc(sizeof(Node));
     newNode->key = key;
     newNode->value = value;
+    pdb_incre_value(value);
     newNode->forward = (Node**)pdb_malloc((level + 1) * sizeof(Node*));
     
     return newNode;
@@ -41,7 +42,7 @@ int randomLevel() {
    return level;
 }
 
-int pdb_skiptable_insert(SkipList* skipList, value_type key, value_type value) {
+int pdb_skiptable_insert(SkipList* skipList, char* key, value_type value) {
    Node* update[MAX_LEVEL + 1];
    Node* current = skipList->header;
 
@@ -90,7 +91,7 @@ void display(SkipList* skipList) {
     }
 }
 
-value_type pdb_skiptable_search(SkipList* skipList, value_type key) {
+value_type pdb_skiptable_search(SkipList* skipList, char* key) {
     Node* current = skipList->header;
 
     for (int i = skipList->level; i >= 0; --i) {
@@ -107,7 +108,7 @@ value_type pdb_skiptable_search(SkipList* skipList, value_type key) {
     }
 }
 
-int pdb_skiptable_delete(SkipList* skipList, value_type key) {
+int pdb_skiptable_delete(SkipList* skipList, char* key) {
     Node* update[MAX_LEVEL + 1];
     Node* current = skipList->header;
 
@@ -129,8 +130,9 @@ int pdb_skiptable_delete(SkipList* skipList, value_type key) {
         }
 
 
-        pdb_free(current->value, -1);
+        // pdb_free(current->value, -1);
         pdb_free(current->key, -1);
+        pdb_decre_value(current->value);
         pdb_free(current->forward, -1);
         pdb_free(current, -1);
 
@@ -144,7 +146,7 @@ int pdb_skiptable_delete(SkipList* skipList, value_type key) {
     return PDB_ERROR;
 }
 
-int pdb_skiptable_mod(SkipList* SkipList, value_type key, value_type new_value){
+int pdb_skiptable_mod(SkipList* SkipList, char* key, value_type new_value){
     Node* current = SkipList->header;
 
     for (int i = SkipList->level; i >= 0; --i) {
@@ -158,10 +160,12 @@ int pdb_skiptable_mod(SkipList* SkipList, value_type key, value_type new_value){
 
     if (current != NULL && strcmp(current->key, key) == 0) {
         if (current->value) {
-            pdb_free(current->value, -1); 
+            // pdb_free(current->value, -1); 
+            pdb_decre_value(current->value);
         }
 
         current->value = new_value;
+        pdb_incre_value(new_value);
 
         return PDB_OK;
     }
@@ -173,12 +177,13 @@ int pdb_skiptable_mset(SkipList* SkipList, char** tokens, int count){
 	int i;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];
-		char* value = tokens[i + 1];
-
-		int ret = pdb_skiptable_insert(SkipList, key, value);
+		char* raw_value = tokens[i + 1];
+        pdb_value* v = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
+		int ret = pdb_skiptable_insert(SkipList, key, v);
 		if (ret != PDB_OK){
 			return ret;
 		}
+        pdb_decre_value(v);
 	}
 
 	return PDB_OK;
