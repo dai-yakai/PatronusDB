@@ -17,7 +17,7 @@ static int _hash(char *key, int size) {
 }
 
 static int _pdb_hash_resize(pdb_hash_t* hash, size_t new_size){
-	if (new_size == hash->max_slots)	return 0;
+	if (new_size == hash->max_slots)	return PDB_DATASTRUCTURE_OK;
 	if (new_size < INIT_TABLE_SIZE)		new_size = INIT_TABLE_SIZE;
 	// rehash
 	hashnode_t** new_nodes = (hashnode_t**)pdb_malloc(sizeof(hashnode_t*) * new_size);
@@ -41,7 +41,7 @@ static int _pdb_hash_resize(pdb_hash_t* hash, size_t new_size){
 	hash->nodes = new_nodes;
 	hash->max_slots = new_size;
 
-	return 1;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 /**
@@ -80,11 +80,6 @@ hashnode_t *_create_node(char *key, pdb_value* value) {
 	strncpy(kcopy, key, strlen(key));
 	node->key = kcopy;
 
-	// char *kvalue = pdb_malloc(strlen(value) + 1);
-	// assert(kvalue != NULL);
-	// memset(kvalue, 0, strlen(value) + 1);
-	// strncpy(kvalue, value, strlen(value));
-	// node->value = kvalue;
 	node->value = value;
 	pdb_incre_value(value);
 	
@@ -102,7 +97,7 @@ int pdb_hash_create(pdb_hash_t* hash) {
 	hash->max_slots = INIT_TABLE_SIZE;
 	hash->count = 0; 
 
-	return PDB_OK;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 pdb_hash_t* pdb_hash_create2(){
@@ -146,18 +141,12 @@ int pdb_hash_set(pdb_hash_t* hash, char* key, pdb_value* value) {
 	while (node != NULL) {
         if (strcmp(node->key, key) == 0) { 
             if (node->value) {
-				// exist
-                // pdb_free(node->value, -1);
 				pdb_decre_value(node->value); 
             }
             
-            // char *new_value = pdb_malloc(strlen(value) + 1);
-            // if (!new_value) return PDB_MALLOC_NULL;
-            // strcpy(new_value, value);
-            // node->value = new_value;
 			node->value = value;
 			pdb_incre_value(value);
-            return 0;
+            return PDB_DATASTRUCTURE_EXIST;
         }
         node = node->next;
     }
@@ -171,7 +160,7 @@ int pdb_hash_set(pdb_hash_t* hash, char* key, pdb_value* value) {
 	
 	hash->count++;
 
-	return PDB_OK;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 
@@ -205,22 +194,15 @@ int pdb_hash_mod(pdb_hash_t* hash, char* key, pdb_value* value) {
 	}
 
 	if (node == NULL) {
-		return 1;
+		return PDB_DATASTRUCTURE_NOEXIST;
 	}
 
-	// node --> 
-	// pdb_free(node->value, -1);
 	pdb_decre_value(node->value);
-
-	// char *kvalue = pdb_malloc(strlen(value) + 1);
-	// if (kvalue == NULL) return PDB_MALLOC_NULL;
-	// memset(kvalue, 0, strlen(value) + 1);
-	// strncpy(kvalue, value, strlen(value));
 
 	node->value = value;
 	pdb_incre_value(value);
 	
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 int pdb_hash_count(pdb_hash_t *hash) {
@@ -228,12 +210,10 @@ int pdb_hash_count(pdb_hash_t *hash) {
 }
 
 int pdb_hash_del(pdb_hash_t *hash, char *key) {
-	if (!hash || !key) return -2;
-
 	int idx = _hash(key, hash->max_slots);
 
 	hashnode_t* head = hash->nodes[idx];
-	if (head == NULL) return -1; // noexist
+	if (head == NULL) return PDB_DATASTRUCTURE_NOEXIST; // noexist
 	// head node
 	if (strcmp(head->key, key) == 0) {
 		hashnode_t *tmp = head->next;
@@ -244,46 +224,40 @@ int pdb_hash_del(pdb_hash_t *hash, char *key) {
 		pdb_free(head, -1);
 		hash->count--;
 		
-		return 0;
+		return PDB_DATASTRUCTURE_OK;
 	}
 
-	hashnode_t *cur = head;
+	hashnode_t* cur = head;
 	while (cur->next != NULL) {
-		if (strcmp(cur->next->key, key) == 0) break; // search node
-		
+		if (strcmp(cur->next->key, key) == 0) break; // search node	
 		cur = cur->next;
 	}
 
 	if (cur->next == NULL) {
-		
-		return -1;
+		return PDB_DATASTRUCTURE_NOEXIST;
 	}
 
-	hashnode_t *tmp = cur->next;
+	hashnode_t* tmp = cur->next;
 	cur->next = tmp->next;
-#if ENABLE_KEY_POINTER
+
 	pdb_free(tmp->key, -1);
 	pdb_decre_value(tmp->value);
-	// pdb_free(tmp->value, -1);
-#endif
 	pdb_free(tmp, -1);
 	
 	hash->count--;
 
 	_pdb_hash_shrink(hash);
 
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }
 
-/**
- * Return 1 if not found; otherwise return 0;
- */
+
 int pdb_hash_exist(pdb_hash_t *hash, char *key) {
 	pdb_value* value = pdb_hash_get(hash, key);
 	// NULL return 1
-	if (!value) return 1;
+	if (value == NULL) return PDB_DATASTRUCTURE_NOEXIST;
 
-	return 0;
+	return PDB_DATASTRUCTURE_EXIST;
 }
 
 
@@ -303,5 +277,5 @@ int pdb_hash_mset(pdb_hash_t* arr, char** tokens, int count){
 		}
 	}
 
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }

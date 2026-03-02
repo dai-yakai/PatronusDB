@@ -21,7 +21,7 @@ int pdb_array_create(pdb_array_t* inst){
     inst->idx = 0;
     inst->total_count = 0;
 
-    return PDB_ARRAY_OK;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 void pdb_array_destroy(pdb_array_t* inst){
@@ -51,7 +51,7 @@ int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value){
     old_value = pdb_array_get(inst, key);
     if (old_value){
         pdb_log_info("pdb_array_set: key exist\n");
-        return PDB_ARRAY_EXIST;
+        return PDB_DATASTRUCTURE_EXIST;
     }
 
     // copy key
@@ -64,21 +64,13 @@ int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value){
     
     pdb_incre_value(value);
 
-    // char* kvalue = pdb_malloc(strlen(value) + 1);
-    // if (kvalue == NULL){
-    //     return PDB_MALLOC_NULL;
-    // }
-
-    // memset(kvalue, 0, strlen(value) + 1);
-    // strncpy(kvalue, value, strlen(value) + 1);
-
     int i = 0;
     for (i = 0; i < inst->total_count; i++){
         if (inst->table[i].key == NULL){
             inst->table[i].key = kcopy;
             inst->table[i].value = value;
             inst->total_count++;
-            return PDB_ARRAY_OK;
+            return PDB_DATASTRUCTURE_OK;
         }
     }
 
@@ -88,7 +80,7 @@ int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value){
         inst->total_count++;
     }   
 
-    return PDB_ARRAY_OK;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 // no exist, return NULL
@@ -127,11 +119,11 @@ int pdb_array_del(pdb_array_t* inst, char* key){
             pdb_decre_value(inst->table[i].value);
             inst->table[i].value = NULL;
 
-            return 0;
+            return PDB_DATASTRUCTURE_OK;
         }
     }
 
-    return i;
+    return PDB_DATASTRUCTURE_NOEXIST;
 }
 
 int pdb_array_mod(pdb_array_t* inst, char* key, pdb_value* value){
@@ -147,35 +139,24 @@ int pdb_array_mod(pdb_array_t* inst, char* key, pdb_value* value){
         }
         if (strcmp(inst->table[i].key, key) == 0){
             pdb_decre_value(inst->table[i].value);
-            // pdb_free(inst->table[i].value, -1);
 
-            // char* kvalue = pdb_malloc(sizeof(pdb_value));
-            // if (kvalue == NULL){
-            //     return PDB_MALLOC_NULL;
-            // }
-            // memset(kvalue, 0, strlen(value) + 1);
-
-            // strncpy(kvalue, value, strlen(value) + 1);
             inst->table[i].value = value;
             pdb_incre_value(value);
 
-            return 0;
+            return PDB_DATASTRUCTURE_OK;
         }
     }
-    return i;
+    return PDB_DATASTRUCTURE_NOEXIST;
 }
 
-/**
- * 0: no exist
- * 1: exist
- */
+
 int pdb_array_exist(pdb_array_t* inst, char* key){
     pdb_value* value;
     value = pdb_array_get(inst, key);
-    if (!value){
-        return 0;
+    if (value == NULL){
+        return PDB_DATASTRUCTURE_NOEXIST;
     }
-    return 1;
+    return PDB_DATASTRUCTURE_EXIST;
 }
 
 void pdb_print_array(pdb_array_t* inst){
@@ -204,5 +185,5 @@ int pdb_array_mset(pdb_array_t* arr, char** tokens, int count){
 		}
 	}
 
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }

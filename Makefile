@@ -2,6 +2,7 @@ TARGET = pdb_server
 CC = gcc
 
 CFLAGS  := -g -I./src -I./NtyCo/core/
+CFLAGS += $(EXTRA_CFLAGS)
 LDFLAGS := -L./NtyCo/
 LIBS    := -lntyco -lpthread -ldl -luring
 

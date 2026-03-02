@@ -13,6 +13,8 @@
 #include "pdb_aof.h"
 #include "pdb_bitmap.h"
 #include "pdb_value.h"
+#include "pdb_set.h"
+#include "pdb_sortedSet.h"
 
 
 char* find_crlf(char* start, int remaining_len);

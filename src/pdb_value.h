@@ -7,15 +7,17 @@
 #include <errno.h>
 
 #include "pdb_malloc.h"
-#include "pdb_sds.h"
 
-#define PDB_VALUE_TYPE_DEFAULT  0
-#define PDB_VALUE_TYPE_STRING   1
-#define PDB_VALUE_TYPE_JSON     2
-#define PDB_VALUE_TYPE_INT      3
-#define PDB_VALUE_TYPE_BITMAP   4
-#define PDB_VALUE_TYPE_NULL     5
-#define PDB_VALUE_TYPE_DOUBLE   6
+
+#define PDB_VALUE_TYPE_DEFAULT      0
+#define PDB_VALUE_TYPE_STRING       1
+#define PDB_VALUE_TYPE_JSON         2
+#define PDB_VALUE_TYPE_INT          3
+#define PDB_VALUE_TYPE_BITMAP       4
+#define PDB_VALUE_TYPE_NULL         5
+#define PDB_VALUE_TYPE_DOUBLE       6
+#define PDB_VALUE_TYPE_SET          7
+#define PDB_VALUE_TYPE_SORTEDSET    8
 
 
 typedef struct pdb_value{

@@ -344,7 +344,7 @@ int pdb_rbtree_create(pdb_rbtree_t* inst){
 	inst->nil->color = BLACK;
 	inst->root = inst->nil;
 
-	return PDB_OK;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 void pdb_rbtree_destroy(pdb_rbtree_t* inst){
@@ -378,16 +378,11 @@ int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value){
     if (exist_node != inst->nil) {
         if (exist_node->value) {
 			pdb_decre_value(exist_node->value);
-			// pdb_de_value();
-            // pdb_free(exist_node->value, -1);
         }
         exist_node->value = value;
 		pdb_incre_value(exist_node->value);
 
-        // if (!exist_node->value) return PDB_MALLOC_NULL;
-        // strcpy(exist_node->value, value);
-        
-        return 0; 
+        return PDB_DATASTRUCTURE_EXIST; 
     }
 
     rbtree_node *node = (rbtree_node*)pdb_malloc(sizeof(rbtree_node));
@@ -399,20 +394,13 @@ int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value){
         return PDB_MALLOC_NULL;
     }
     strcpy(node->key, key);
-    
-    // node->value = pdb_malloc(strlen(value) + 1);
-    // if (!node->value) {
-    //     pdb_free(node->key, -1); 
-    //     pdb_free(node, -1);
-    //     return PDB_MALLOC_NULL;
-    // }
-    // strcpy(node->value, value);
+
 	node->value = value;
 	pdb_incre_value(value);
 
     rbtree_insert(inst, node);
 
-    return 0;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 pdb_value* pdb_rbtree_get(pdb_rbtree_t* inst, char* key){
@@ -428,7 +416,7 @@ int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
 	if (!inst || !key) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
-	if (!node) return 1; // no exist
+	if (node == NULL) return PDB_DATASTRUCTURE_NOEXIST; // no exist
 	
 	rbtree_node *cur = rbtree_delete(inst, node);
 	if (cur->key) {
@@ -440,40 +428,34 @@ int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
 
 	pdb_free(cur, -1);
 
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 int pdb_rbtree_mod(pdb_rbtree_t* inst, char* key, pdb_value* value){
 	if (!inst || !key || !value) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
-	if (!node) return 1; // no exist
-	if (node == inst->nil) return 1;
+	if (!node) return PDB_DATASTRUCTURE_EXIST; // no exist
+	if (node == inst->nil) return PDB_DATASTRUCTURE_EXIST;
 	
 	if (node->value) {
-        // pdb_free(node->value, -1);
 		pdb_decre_value(node->value);
     }
-
-	// node->value = pdb_malloc(strlen(value) + 1);
-	// if (!node->value) return PDB_MALLOC_NULL;
-	
-	// strcpy(node->value, value);
 
 	node->value = value;
 	pdb_incre_value(value);
 
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }
 
 int pdb_rbtree_exist(pdb_rbtree_t* inst, char* key){
 	if (!inst || !key) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
-	if (!node) return 1; // no exist
-	if (node == inst->nil) return 1;
+	if (!node) return PDB_DATASTRUCTURE_NOEXIST; // no exist
+	if (node == inst->nil) return PDB_DATASTRUCTURE_NOEXIST;
 
-	return 0;
+	return PDB_DATASTRUCTURE_EXIST;
 }
 
 void pdb_print_rbtree(pdb_rbtree_t* inst){
@@ -502,5 +484,5 @@ int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count){
 		}
 	}
 
-	return 0;
+	return PDB_DATASTRUCTURE_OK;
 }

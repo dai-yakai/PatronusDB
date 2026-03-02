@@ -85,7 +85,11 @@ void pdb_bitmap_bitop(int opt, pdb_sds* dest, pdb_sds src1, pdb_sds src2){
     size_t len2 = pdb_get_sds_len(src2);
     size_t max_len = len1 > len2 ? len1 : len2;
 
-    *dest = pdb_get_new_sds(max_len);
+    size_t cur_len = pdb_get_sds_len(*dest);
+    if (cur_len < max_len){
+        *dest = pdb_enlarge_sds_greedy(*dest, max_len - cur_len);
+    }
+    // *dest = pdb_get_new_sds(max_len);
     pdb_set_sds_len(*dest, max_len);
 
     size_t i;

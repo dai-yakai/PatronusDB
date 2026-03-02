@@ -1,5 +1,7 @@
 #include "pdb_value.h"
-
+#include "pdb_set.h"
+#include "pdb_sds.h"
+#include "pdb_sortedSet.h"
 /**
  * Return 1 if succeeding; otherwise return 0
  */
@@ -42,12 +44,19 @@ pdb_sds pdb_parse_value_to_string(pdb_value* value){
 
         case PDB_VALUE_TYPE_DOUBLE:
         {
-
+            char buf[64];
+            snprintf(buf, 64, "%lf", *((double*)(value->ptr)));
+            pdb_sds s = pdb_get_new_sds2(buf);
+            return s;
         }
 
         case PDB_VALUE_TYPE_INT:
         {
             // TODO
+            char buf[64];
+            snprintf(buf, 64, "%d", (int)(value->ptr));
+            pdb_sds s = pdb_get_new_sds2(buf);
+            return s;
         }
 
         case PDB_VALUE_TYPE_JSON:
@@ -74,6 +83,22 @@ pdb_value* pdb_create_value(char* value, int type, ...){
     pdb_value* v = (pdb_value*)pdb_malloc(sizeof(pdb_value));
 
     switch(type){
+        case PDB_VALUE_TYPE_SET:
+        {
+            v->ptr = (pdb_set*)value;
+            v->type = PDB_VALUE_TYPE_SET;
+
+            break;
+        }
+
+        case PDB_VALUE_TYPE_SORTEDSET:
+        {
+            v->ptr = (struct pdb_sorted_set*)value;
+            v->type = PDB_VALUE_TYPE_SORTEDSET;
+
+            break;
+        }
+            
         case PDB_VALUE_TYPE_DEFAULT:
         {
             // default

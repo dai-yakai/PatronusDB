@@ -109,7 +109,7 @@ int pdb_skiplist_add(struct pdb_skiplist* sl, KEY_TYPE key, VALUE_TYPE value){
 
     sl->count++;
     
-    return 1; 
+    return PDB_DATASTRUCTURE_OK; 
 }
 
 
@@ -181,10 +181,10 @@ int pdb_skiplist_delete(struct pdb_skiplist* sl, KEY_TYPE key, VALUE_TYPE value)
         sl->count--;
         _pdb_destroy_node(node);
 
-        return 1;
+        return PDB_DATASTRUCTURE_OK;
     }
 
-    return 0;
+    return PDB_DATASTRUCTURE_NOEXIST;
 }
 
 
@@ -235,7 +235,7 @@ int pdb_sortedSet_add(struct pdb_sorted_set* Sset, char* key, double d_new_value
         double d_old_value = *(double*)(old_value->ptr);
         // exist
         if (d_new_value == d_old_value){
-            return 1;
+            return PDB_DATASTRUCTURE_EXIST;
         }else{
             pdb_hash_mod(Sset->set, key, new_value);
             pdb_skiplist_delete(Sset->list, key, d_old_value);
@@ -248,39 +248,49 @@ int pdb_sortedSet_add(struct pdb_sorted_set* Sset, char* key, double d_new_value
 
     pdb_decre_value(new_value);
 
-    return 1;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 int pdb_sortedSet_delete(struct pdb_sorted_set* Sset, char* key){
     pdb_value* value_ = pdb_hash_get(Sset->set, key);
     char* value = pdb_parse_value_to_string(value_);
-    if (value == NULL)  return 0;
+    if (value == NULL)  return PDB_DATASTRUCTURE_NOEXIST;
 
     double skiplist_value = atof(value);
     pdb_hash_del(Sset->set, key);
     pdb_skiplist_delete(Sset->list, key, skiplist_value);
 
-    return 1;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 double pdb_sortedSet_search(struct pdb_sorted_set* Sset, char* key, int* success){
     pdb_value* value = pdb_hash_get(Sset->set, key);
     if (value == NULL){
-        if (success != NULL)    *success = 0;
+        if (success != NULL)    *success = PDB_DATASTRUCTURE_NOEXIST;
         return 0;
     } 
 
     if (success != NULL){
-        *success = 1;
+        *success = PDB_DATASTRUCTURE_EXIST;
     }
     double skiplist_value = *((double*)value->ptr);
     return skiplist_value;
 }
 
+int pdb_sortedSet_incre(struct pdb_sorted_set* Sset, char* key, double increment){
+    pdb_value* value = pdb_hash_get(Sset->set, key);
+    if (value == NULL){
+        return PDB_DATASTRUCTURE_NOEXIST;
+    }
+    *((double*)value->ptr) += increment;
+
+    return PDB_DATASTRUCTURE_OK;
+}
+
 unsigned long pdb_sortedSet_rank(struct pdb_sorted_set* Sset, char* key, int* success){
     unsigned long rank = 0;
     double value = pdb_sortedSet_search(Sset, key, success);
-    if (*success == 0)   return 0;
+    if (*success == PDB_DATASTRUCTURE_NOEXIST)   return 0;
 
     struct pdb_skiplistNode* node = Sset->list->head;
     int i;
@@ -300,13 +310,13 @@ unsigned long pdb_sortedSet_rank(struct pdb_sorted_set* Sset, char* key, int* su
         return rank;
     }
 
-    if (success != NULL)    *success = 0;
-    return 0;
+    if (success != NULL)    *success = PDB_DATASTRUCTURE_NOEXIST;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 unsigned long pdb_sortedSet_revrank(struct pdb_sorted_set* Sset, char* key, int* success){
     unsigned long res = pdb_sortedSet_rank(Sset, key, success);
-    if (success != NULL && *success == 0)   return 0;
+    if (success != NULL && *success == PDB_DATASTRUCTURE_NOEXIST)   return 0;
 
     return Sset->list->count - res + 1;
 }
@@ -393,7 +403,7 @@ void test_correctness() {
 
     pdb_sortedSet_delete(zs, "Bob");
     pdb_sortedSet_search(zs, "Bob", &success);
-    if (success == 0) printf("[OK] 节点删除正常.\n");
+    if (success == PDB_DATASTRUCTURE_NOEXIST) printf("[OK] 节点删除正常.\n");
     else printf("[FAIL] 节点删除错误!\n");
 
     char** tops = pdb_sortedSet_topK(zs, 2); // top 2

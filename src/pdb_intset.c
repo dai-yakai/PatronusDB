@@ -52,15 +52,15 @@ static uint8_t _pdb_intset_search(struct pdb_intset* intset, uint32_t* pos, int6
 
     if (intset->len == 0) {
         if (pos) *pos = 0;
-        return 0;
+        return PDB_DATASTRUCTURE_NOEXIST;
     }
 
     if (value > _pdb_intset_get(intset, max)) {
         if (pos) *pos = intset->len;
-        return 0;
+        return PDB_DATASTRUCTURE_NOEXIST;
     } else if (value < _pdb_intset_get(intset, 0)) {
         if (pos) *pos = 0;
-        return 0;
+        return PDB_DATASTRUCTURE_NOEXIST;
     }
 
     while (max >= min) {
@@ -77,10 +77,10 @@ static uint8_t _pdb_intset_search(struct pdb_intset* intset, uint32_t* pos, int6
 
     if (value == cur) {
         if (pos) *pos = mid;
-        return 1;
+        return PDB_DATASTRUCTURE_EXIST;
     } else {
         if (pos) *pos = min; 
-        return 0;
+        return PDB_DATASTRUCTURE_NOEXIST;
     }
 }
 
@@ -136,9 +136,10 @@ struct pdb_intset* pdb_intset_create(){
     return intset;
 }
 
-
+/**
+ * If exist, success = 0
+ */
 struct pdb_intset* pdb_intset_add(struct pdb_intset* intset, int64_t value, int* success){
-    // pdb_print_intset(intset);
     uint8_t required_encoding = _pdb_intset_val_encoding(value);
     if (required_encoding > intset->flag){
         return _pdb_intset_upgrade_and_add(intset, value);
@@ -147,7 +148,7 @@ struct pdb_intset* pdb_intset_add(struct pdb_intset* intset, int64_t value, int*
     uint32_t pos = 0;
     uint8_t ret = _pdb_intset_search(intset, &pos, value);
     // exist
-    if (ret) {
+    if (ret == PDB_DATASTRUCTURE_EXIST) {
         if (success != NULL)    *success = 0;
         return intset;
     }   
@@ -169,20 +170,15 @@ struct pdb_intset* pdb_intset_add(struct pdb_intset* intset, int64_t value, int*
     return new_intset;
 }
 
-/**
- * Return 1 if found; otherwise return 0
- */
-int pdb_intset_search(struct pdb_intset* intset, int64_t value, uint32_t* pos){
-    if (_pdb_intset_search(intset, pos, value)){
-        return 1;
-    }
 
-    return 0;
+int pdb_intset_search(struct pdb_intset* intset, int64_t value, uint32_t* pos){
+    return _pdb_intset_search(intset, pos, value);
 }
 
 struct pdb_intset* pdb_intset_delete(struct pdb_intset* intset, int64_t value, int* success){
     uint32_t pos;
-    if (!pdb_intset_search(intset, value, &pos)){
+    if (pdb_intset_search(intset, value, &pos) == PDB_DATASTRUCTURE_NOEXIST){
+        // no exist
         if (success != NULL)    *success = 0;
         return intset;
     }
@@ -286,7 +282,7 @@ struct pdb_intset* pdb_intset_union(struct pdb_intset* s1, struct pdb_intset* s2
     }
     if (idx2 == s2->len){
         while(idx1 < s1->len){
-            int64_t value1 = _pdb_intset_get(s1, 1);
+            int64_t value1 = _pdb_intset_get(s1, idx1);
             _pdb_intset_set(intset, idx, value1);
             idx1++;
             idx++;
@@ -321,6 +317,13 @@ struct pdb_intset* pdb_intset_difference(struct pdb_intset* s1, struct pdb_intse
     uint32_t idx2 = 0;
     uint32_t idx = 0;
     while(idx1 < s1->len){
+        if (idx2 >= s2->len) {
+            int64_t value1 = _pdb_intset_get(s1, idx1);
+            _pdb_intset_set(intset, idx, value1);
+            idx++;
+            idx1++;
+            continue;
+        }
         int64_t value1 = _pdb_intset_get(s1, idx1);
         int64_t value2 = _pdb_intset_get(s2, idx2);
         if (value1 < value2){
@@ -431,8 +434,9 @@ void pdb_intset_test(){
         is = pdb_intset_add(is, 6, NULL);
         is = pdb_intset_add(is, 4, NULL);
         is = pdb_intset_add(is, 4, NULL);
+        pdb_print_intset(is);
         assert(is->len == 3);
-        // pdb_print_intset(is);
+        
         check(is);
         ok();
         pdb_free(is, -1);
@@ -461,8 +465,8 @@ void pdb_intset_test(){
         is = pdb_intset_add(is, 65535, NULL);
         assert(is->flag == PDB_INTSET_ENCODING_INT32);
         // pdb_print_intset(is);
-        assert(pdb_intset_search(is, 32, &pos) == 1);
-        assert(pdb_intset_search(is, 65535, &pos) == 1);
+        assert(pdb_intset_search(is, 32, &pos) == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_intset_search(is, 65535, &pos) == PDB_DATASTRUCTURE_EXIST);
         check(is);
         pdb_free(is, -1);
 
@@ -471,8 +475,8 @@ void pdb_intset_test(){
         assert(is->flag == PDB_INTSET_ENCODING_INT16);
         is = pdb_intset_add(is, -65535, NULL);
         assert(is->flag == PDB_INTSET_ENCODING_INT32);
-        assert(pdb_intset_search(is, 32, &pos) == 1);
-        assert(pdb_intset_search(is, -65535, &pos) == 1);
+        assert(pdb_intset_search(is, 32, &pos) == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_intset_search(is, -65535, &pos) == PDB_DATASTRUCTURE_EXIST);
         check(is);
         ok();
         pdb_free(is, -1);
@@ -485,8 +489,8 @@ void pdb_intset_test(){
         assert(is->flag == PDB_INTSET_ENCODING_INT16);
         is = pdb_intset_add(is, 4294967295, NULL);
         assert(is->flag == PDB_INTSET_ENCODING_INT64);
-        assert(pdb_intset_search(is, 32, &pos) == 1);
-        assert(pdb_intset_search(is, 4294967295, &pos) == 1);
+        assert(pdb_intset_search(is, 32, &pos) == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_intset_search(is, 4294967295, &pos) == PDB_DATASTRUCTURE_EXIST);
         check(is);
         pdb_free(is, -1);
 
@@ -495,8 +499,8 @@ void pdb_intset_test(){
         assert(is->flag == PDB_INTSET_ENCODING_INT16);
         is = pdb_intset_add(is, -4294967295, NULL);
         assert(is->flag == PDB_INTSET_ENCODING_INT64);
-        assert(pdb_intset_search(is, 32, &pos) == 1);
-        assert(pdb_intset_search(is, -4294967295, &pos) == 1);
+        assert(pdb_intset_search(is, 32, &pos) == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_intset_search(is, -4294967295, &pos) == PDB_DATASTRUCTURE_EXIST);
         check(is);
         ok();
         pdb_free(is, -1);
@@ -549,12 +553,12 @@ void pdb_intset_test(){
             v1 = rand() % 0xfff;
             is = pdb_intset_add(is, v1, NULL);
             uint32_t pos;
-            assert(pdb_intset_search(is, v1, &pos) == 1);
+            assert(pdb_intset_search(is, v1, &pos) == PDB_DATASTRUCTURE_EXIST);
 
             v2 = rand() % 0xfff;
             while(v2 == v1) v2 = rand() % 0xfff;
             is = pdb_intset_delete(is, v2, NULL);
-            assert(pdb_intset_search(is, v2, &pos) == 0);
+            assert(pdb_intset_search(is, v2, &pos) == PDB_DATASTRUCTURE_NOEXIST);
         }
         check(is);
         ok();

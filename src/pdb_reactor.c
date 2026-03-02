@@ -52,7 +52,7 @@ int set_event(int fd, int event, int flag) {
 int event_register(int fd, int event) {
 	assert(fd >= 0);
 
-	conn_list[fd]->write_buffer = pdb_get_new_sds(110 * 1024);
+	conn_list[fd]->write_buffer = pdb_get_new_sds(1100 * 1024);
 	conn_list[fd]->read_buffer = pdb_get_new_sds(PDB_PROTO_IO_BUFFER_LENGTH);
 	conn_list[fd]->read_pos = 0;
 	conn_list[fd]->write_pos = 0;
@@ -83,9 +83,6 @@ int accept_cb(int fd, msg_handler handler) {
     if (flags == -1) return -1;
     fcntl(clientfd, F_SETFL, flags | O_NONBLOCK);
 
-	// conn_list[clientfd] = (struct conn_info*)pdb_malloc(sizeof(struct conn_info));
-	// assert(conn_list[clientfd] != NULL);
-	// memset(conn_list[clientfd], 0, sizeof(struct conn_info));
 	pdb_insert_conn_list(clientfd);
 
 	conn_list[clientfd]->client_ip = (char*)malloc(16);
@@ -115,7 +112,7 @@ static int process_read_buffer(int fd, msg_handler handler){
 			// pdb_log_debug("process_read_buffer receive half package\n");
 			return PDB_HALF_PACKAGE;
 		}else if (package_len == PDB_PROTOCAL_ERROR){
-			pdb_log_debug("process_read_buffer receive error protocal\n");
+			pdb_log_debug("process_read_buffer receive error protocal\n%s\n", c->read_buffer);
 			memcpy(c->write_buffer + c->write_pos, "protocal error\r\n", 17);
 			return PDB_PROTOCAL_ERROR;
 		}

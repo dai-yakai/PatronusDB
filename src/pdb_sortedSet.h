@@ -60,6 +60,8 @@ void pdb_skiplist_destroy(struct pdb_skiplist* sl);
 struct pdb_sorted_set* pdb_create_sortedSet();
 void pdb_destroy_sortedSet(struct pdb_sorted_set*);
 int pdb_sortedSet_delete(struct pdb_sorted_set* Sset, char* key);
+int pdb_sortedSet_add(struct pdb_sorted_set* Sset, char* key, double d_new_value);
+int pdb_sortedSet_incre(struct pdb_sorted_set* Sset, char* key, double increment);
 double pdb_sortedSet_search(struct pdb_sorted_set* Sset, char* key, int* success);
 unsigned long pdb_sortedSet_rank(struct pdb_sorted_set* Sset, char* key, int* success);
 unsigned long pdb_sortedSet_revrank(struct pdb_sorted_set* Sset, char* key, int* success);

@@ -42,6 +42,7 @@ struct pdb_set* pdb_set_create(){
     set->flag = PDB_SET_ENCODING_INTSET;
     struct pdb_intset* intset = pdb_intset_create();
     set->ptr = intset;
+    set->count = 0;
 
     return set;
 }
@@ -51,6 +52,7 @@ int pdb_set_add(struct pdb_set* set, const char* value){
         pdb_hash_t* set_hash = (pdb_hash_t*)set->ptr;
         pdb_value* value_ = pdb_create_value(NULL, PDB_VALUE_TYPE_NULL);
         int ret = pdb_hash_set(set_hash, (char*)value, value_);
+        if (ret == PDB_DATASTRUCTURE_OK)    set->count++;
         pdb_decre_value(value_);
         return ret;
     }
@@ -63,20 +65,22 @@ int pdb_set_add(struct pdb_set* set, const char* value){
             if (((struct pdb_intset*)set->ptr)->len > PDB_MAX_INTSET_LENGTH){
                 _pdb_set_convert_to_hashtable(set);
             }
-            return 1;
+            set->count++;
+            return PDB_DATASTRUCTURE_OK;
         }else{
-            return 0;
+            return PDB_DATASTRUCTURE_EXIST;
         }
     }else{
         _pdb_set_convert_to_hashtable(set);
         pdb_hash_t* set_hash = (pdb_hash_t*)set->ptr;
         pdb_value* value_ = pdb_create_value(NULL, PDB_VALUE_TYPE_NULL);
         int ret = pdb_hash_set(set_hash, (char*)value, value_);
+        if (ret == PDB_DATASTRUCTURE_OK)    set->count++;
         pdb_decre_value(value_);
         return ret;
     }
 
-    return 0;
+    return PDB_DATASTRUCTURE_OK;
 }
 
 /*
@@ -84,8 +88,7 @@ int pdb_set_add(struct pdb_set* set, const char* value){
 */
 int pdb_set_search(struct pdb_set* set, const char* value){
     if (set->flag == PDB_SET_ENCODING_HASHTABLE){
-        if (pdb_hash_exist((pdb_hash_t*)set->ptr, (char*)value))    return 0;
-        return 1;
+        return pdb_hash_exist((pdb_hash_t*)set->ptr, (char*)value);
     }
 
     uint32_t pos;
@@ -94,26 +97,231 @@ int pdb_set_search(struct pdb_set* set, const char* value){
         return pdb_intset_search(set->ptr, val, &pos);
     }
 
-    return 0;
+    return PDB_DATASTRUCTURE_OK;
+}
+
+
+struct pdb_set* pdb_set_inter(struct pdb_set* set1, struct pdb_set* set2){
+    pdb_set* res = pdb_set_create();
+
+    if (set1->flag == PDB_SET_ENCODING_INTSET && set2->flag == PDB_SET_ENCODING_INTSET){
+        pdb_intset_destroy(res->ptr);
+        res->ptr = pdb_intset_intersect(set1->ptr, set2->ptr);
+        res->flag = PDB_SET_ENCODING_INTSET;
+        res->count = ((struct pdb_intset*)res->ptr)->len;
+
+        return res;
+    }
+
+    pdb_set* small_set = set1->count < set2->count ? set1 : set2;
+    pdb_set* large_set = set1->count >= set2->count ? set1 : set2;
+
+    if (small_set->flag == PDB_SET_ENCODING_INTSET){
+        struct pdb_intset* intset = small_set->ptr;
+        uint32_t i = 0;
+        for (i = 0; i < intset->len; i++){
+            int64_t val = _pdb_intset_get(intset, i);
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%" PRId64, val);
+
+            if (pdb_set_search(large_set, buf) == PDB_DATASTRUCTURE_EXIST){
+                pdb_set_add(res, buf);
+            }
+        }
+    }else{
+        hashtable_t* hash = small_set->ptr;
+        hashnode_t* node;
+        int i = 0;
+        for (i = 0; i < hash->max_slots; i++){
+            node = hash->nodes[i];
+            while(node != NULL){
+                if (pdb_set_search(large_set, node->key) == PDB_DATASTRUCTURE_EXIST){
+                    pdb_set_add(res, node->key);
+                }
+                node = node->next;
+            }
+        }
+    }
+
+    return res;
+}
+
+
+struct pdb_set* pdb_set_union(struct pdb_set* set1, struct pdb_set* set2){
+    pdb_set* res = pdb_set_create();
+
+    if (set1->flag == PDB_SET_ENCODING_INTSET && set2->flag == PDB_SET_ENCODING_INTSET){
+        pdb_intset_destroy(res->ptr);
+        res->ptr = pdb_intset_union(set1->ptr, set2->ptr);
+        res->count = ((struct pdb_intset*)res->ptr)->len;
+        res->flag = PDB_SET_ENCODING_INTSET;
+
+        return res;
+    }
+
+    if (set1->flag == PDB_SET_ENCODING_INTSET){
+        uint32_t i = 0;
+        struct pdb_intset* intset = set1->ptr;
+        for (i = 0; i < ((struct pdb_intset*)set1->ptr)->len; i++){
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%" PRId64, _pdb_intset_get(intset, i));
+            pdb_set_add(res, buf);
+        }
+    } else if(set1->flag == PDB_SET_ENCODING_HASHTABLE){
+        int i = 0;
+        hashtable_t* hash = set1->ptr;
+        for (i = 0; i < hash->max_slots; i++){
+            hashnode_t* node = hash->nodes[i];
+            while(node != NULL){
+                pdb_set_add(res, node->key);
+                node = node->next;
+            }
+
+        }
+    }
+
+
+    if (set2->flag == PDB_SET_ENCODING_INTSET){
+        uint32_t i = 0;
+        struct pdb_intset* intset = set2->ptr;
+        for (i = 0; i < ((struct pdb_intset*)set2->ptr)->len; i++){
+            char buf[32];
+            snprintf(buf, sizeof(buf), "%" PRId64, _pdb_intset_get(intset, i));
+            pdb_set_add(res, buf);
+        }
+    } else if(set2->flag == PDB_SET_ENCODING_HASHTABLE){
+        int i = 0;
+        hashtable_t* hash = set2->ptr;
+        for (i = 0; i < hash->max_slots; i++){
+            hashnode_t* node = hash->nodes[i];
+            while(node != NULL){
+                pdb_set_add(res, node->key);
+                node = node->next;
+            }
+        }
+    }
+
+    return res;
+}
+
+
+struct pdb_set* pdb_set_differ(struct pdb_set* set1, struct pdb_set* set2){
+    pdb_set* res = pdb_set_create();
+
+    if (set1->flag == PDB_SET_ENCODING_INTSET && set2->flag == PDB_SET_ENCODING_INTSET){
+        pdb_intset_destroy(res->ptr);
+        res->ptr = pdb_intset_difference(set1->ptr, set2->ptr);
+        res->flag = PDB_SET_ENCODING_INTSET;
+        res->count = ((struct pdb_intset*)res->ptr)->len;
+
+        return res;
+    }
+
+    if (set1->flag == PDB_SET_ENCODING_INTSET){
+        struct pdb_intset* intset = set1->ptr;
+        uint32_t i = 0;
+        for (i = 0; i <intset->len; i++){
+            char buf[64];
+            snprintf(buf, sizeof(buf), "%" PRId64, _pdb_intset_get(intset, i));
+            if (pdb_set_search(set2, buf) == PDB_DATASTRUCTURE_NOEXIST){
+                pdb_set_add(res, buf);
+            }
+        }
+    } else if(set1->flag == PDB_SET_ENCODING_HASHTABLE){
+        pdb_hash_t* hash = set1->ptr;
+        int i = 0;
+        for (i = 0; i < hash->max_slots; i++){
+            hashnode_t* node = hash->nodes[i];
+            while(node != NULL){
+                if (pdb_set_search(set2, node->key) == PDB_DATASTRUCTURE_NOEXIST){
+                    pdb_set_add(res, node->key);
+                }
+                node = node->next;
+            }
+        }
+    }
+
+    return res;
+}
+
+
+long pdb_set_get_count(struct pdb_set* set){
+    return set->count;
+}
+
+
+char* pdb_set_random_pop(struct pdb_set* set){
+    if (set->count == 0)    return NULL;
+
+    uint32_t random_idx;
+    hashnode_t* node;
+
+    if (set->flag == PDB_SET_ENCODING_INTSET){
+        struct pdb_intset* intset = set->ptr;
+        random_idx = rand() % intset->len;
+        int64_t val = _pdb_intset_get(intset, random_idx);
+        char* ret_str = pdb_malloc(32);
+        snprintf(ret_str, 32, "%" PRId64, val);
+        set->ptr = pdb_intset_delete(intset, val, NULL);
+        set->count--;
+        return ret_str;
+    }
+
+    if (set->flag == PDB_SET_ENCODING_HASHTABLE){
+        pdb_hash_t* hash = set->ptr;
+        hashnode_t* head;
+        do{
+            random_idx = rand() % hash->max_slots;
+            node = hash->nodes[random_idx];
+        } while(node == NULL);
+
+        head = node;
+        int list_node_count = 0;
+        while(node != NULL){
+            list_node_count++;
+            node = node->next;
+        }
+
+        random_idx = rand() % list_node_count;
+        list_node_count = 0;
+        node = head;
+        while(list_node_count < random_idx){
+            list_node_count++;
+            node = node->next;
+        }
+
+        char* res = pdb_malloc(strlen(node->key) + 1);
+        strcpy(res, node->key);
+        pdb_hash_del(set->ptr, node->key);
+        set->count--;
+        return res;
+    }
+
+    return NULL;
 }
 
 /**
- * Return 1 if found; otherwise return 0.
+ * Return PDB_DATASTRUCTURE_OK or PDB_DATASTRUCTURE_NOEXIST.
  */
 int pdb_set_delete(struct pdb_set* set, const char* value){
     if (set->flag == PDB_SET_ENCODING_HASHTABLE){
         pdb_hash_t* set_hash = (pdb_hash_t*)set->ptr;
-        return pdb_hash_del(set_hash, (char*)value);
+        int ret =  pdb_hash_del(set_hash, (char*)value);
+        if (ret == PDB_DATASTRUCTURE_OK)    set->count--;
+        return ret;
     }
 
     int64_t val;
     int success = 0;
     if (_pdb_set_is_numeric(value, &val)){
-        set->ptr = pdb_intset_delete(set->ptr, val, &success);
-        return success;
+        set->ptr = pdb_intset_delete(set->ptr, val, &success); 
+        if (success){
+            set->count--;
+            return PDB_DATASTRUCTURE_OK;
+        }    
     }
 
-    return 0;
+    return PDB_DATASTRUCTURE_NOEXIST;
 }
 
 void pdb_set_destroy(struct pdb_set* set){
@@ -144,14 +352,14 @@ void pdb_set_test(){
         set = pdb_set_create(); 
         assert(set->flag == PDB_SET_ENCODING_INTSET);
         
-        assert(pdb_set_add(set, "123") == 1); 
-        assert(pdb_set_add(set, "-456") == 1);
+        assert(pdb_set_add(set, "123") == PDB_DATASTRUCTURE_OK); 
+        assert(pdb_set_add(set, "-456") == PDB_DATASTRUCTURE_OK);
         
-        assert(pdb_set_add(set, "123") == 0); 
+        assert(pdb_set_add(set, "123") == PDB_DATASTRUCTURE_EXIST); 
         
-        assert(pdb_set_search(set, "123") == 1);
-        assert(pdb_set_search(set, "-456") == 1);
-        assert(pdb_set_search(set, "999") == 0);
+        assert(pdb_set_search(set, "123") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "-456") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "999") == PDB_DATASTRUCTURE_NOEXIST);
         
         assert(set->flag == PDB_SET_ENCODING_INTSET);
         
@@ -169,10 +377,10 @@ void pdb_set_test(){
         pdb_set_add(set, "hello_world");
         
         assert(set->flag == PDB_SET_ENCODING_HASHTABLE);
-        assert(pdb_set_search(set, "10") == 1);
-        assert(pdb_set_search(set, "20") == 1);
-        assert(pdb_set_search(set, "hello_world") == 1);
-        assert(pdb_set_search(set, "hello") == 0);
+        assert(pdb_set_search(set, "10") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "20") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "hello_world") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "hello") == PDB_DATASTRUCTURE_NOEXIST);
         
         pdb_set_destroy(set);
         ok();
@@ -193,11 +401,11 @@ void pdb_set_test(){
         
         assert(set->flag == PDB_SET_ENCODING_HASHTABLE);
         
-        assert(pdb_set_search(set, "0") == 1);
-        assert(pdb_set_search(set, "256") == 1);
+        assert(pdb_set_search(set, "0") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "256") == PDB_DATASTRUCTURE_EXIST);
         
         snprintf(buf, sizeof(buf), "%d", PDB_MAX_INTSET_LENGTH);
-        assert(pdb_set_search(set, buf) == 1);
+        assert(pdb_set_search(set, buf) == PDB_DATASTRUCTURE_EXIST);
         
         pdb_set_destroy(set);
         ok();
@@ -211,8 +419,8 @@ void pdb_set_test(){
         pdb_set_add(set, "10086");
         pdb_set_add(set, "another_string");
         
-        assert(pdb_set_search(set, "10086") == 1);
-        assert(pdb_set_search(set, "another_string") == 1);
+        assert(pdb_set_search(set, "10086") == PDB_DATASTRUCTURE_EXIST);
+        assert(pdb_set_search(set, "another_string") == PDB_DATASTRUCTURE_EXIST);
         
         pdb_set_destroy(set);
         ok();

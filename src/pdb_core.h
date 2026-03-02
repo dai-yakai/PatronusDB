@@ -12,6 +12,11 @@
 #define PDB_ARRAY_NO_EXIST      3
 #define PDB_ARRAY_ERROR         4
 
+#define PDB_DATASTRUCTURE_OK            0
+#define PDB_DATASTRUCTURE_ERROR         1
+#define PDB_DATASTRUCTURE_EXIST         2
+#define PDB_DATASTRUCTURE_NOEXIST       3
+
 // 业务返回代码
 #define PDB_HALF_PACKAGE        4 
 #define PDB_DISCONNECT          5
