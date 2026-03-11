@@ -33,6 +33,7 @@ typedef struct hashtable_s {
 
 	int max_slots;
 	int count;
+	char* parent_key;
 } hashtable_t;
 
 typedef struct hashtable_s pdb_hash_t;
@@ -50,5 +51,6 @@ int pdb_hash_del(pdb_hash_t *hash, char *key);
 int pdb_hash_exist(pdb_hash_t *hash, char *key);
 int pdb_hash_exist2(pdb_hash_t *hash, char *key, int* success);
 int pdb_hash_mset(pdb_hash_t* arr, char** tokens, int count);
+int pdb_hash_resize(pdb_hash_t* hash, size_t new_size);
 
 #endif

@@ -78,6 +78,7 @@ pdb_sds pdb_enlarge_sds_greedy(pdb_sds s, size_t add_size);
 pdb_sds pdb_enlarge_sds_no_greedy(pdb_sds s, size_t add_size);
 pdb_sds pdb_get_new_sds(size_t init_len);
 pdb_sds pdb_get_new_sds2(const char* str);
+pdb_sds pdb_get_new_sds_len(const void* data, size_t len);
 void pdb_sds_range(pdb_sds s, ssize_t start, ssize_t end);
 void pdb_sds_sub_str(pdb_sds s, size_t start, size_t len);
 void pdb_sds_len_increment(pdb_sds s, ssize_t increment);

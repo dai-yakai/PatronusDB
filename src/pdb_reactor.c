@@ -29,6 +29,7 @@
 int accept_cb(int fd, msg_handler handler);
 int recv_cb(int fd, msg_handler handler);
 int send_cb(int fd, msg_handler handler);
+extern int pdb_ebpf_poll();
 
 int epfd = 0;
 
@@ -52,7 +53,7 @@ int set_event(int fd, int event, int flag) {
 int event_register(int fd, int event) {
 	assert(fd >= 0);
 
-	conn_list[fd]->write_buffer = pdb_get_new_sds(1100 * 1024);
+	conn_list[fd]->write_buffer = pdb_get_new_sds(20 * 1024 * 1024);
 	conn_list[fd]->read_buffer = pdb_get_new_sds(PDB_PROTO_IO_BUFFER_LENGTH);
 	conn_list[fd]->read_pos = 0;
 	conn_list[fd]->write_pos = 0;
@@ -95,6 +96,29 @@ int accept_cb(int fd, msg_handler handler) {
 	return 0;
 }
 
+void pdb_write_to_slave(int fd, char* msg, int msg_len){
+	if (global_conf.is_slave){
+		return;
+	}
+
+	int i;
+	for (i = 0; i < global_replication->slave_num; i++){
+		int slave_fd = global_replication->fd[i];
+		// pdb_log_debug("slave_num: %d fd : %d\n", global_replication->slave_num, slave_fd);
+		if (!conn_list[slave_fd]->is_incre_ready){
+			// pdb_log_debug("fd: %d, is_incre_ready: %d\n", fd, conn_list[fd]->is_incre_ready);
+			return ;
+		}
+		
+		memcpy(conn_list[slave_fd]->write_buffer + conn_list[slave_fd]->write_pos, msg, msg_len);
+		pdb_sds_len_increment(conn_list[slave_fd]->write_buffer, msg_len); 
+		conn_list[slave_fd]->write_pos += msg_len;
+		set_event(slave_fd, EPOLLOUT, 0);
+
+		// pdb_log_debug("write to slave[fd %d]: %s\n", fd, msg);
+	}
+}
+
 
 static int process_read_buffer(int fd, msg_handler handler){
 	struct conn_info* c = conn_list[fd];
@@ -117,17 +141,20 @@ static int process_read_buffer(int fd, msg_handler handler){
 			return PDB_PROTOCAL_ERROR;
 		}
 
+		pdb_write_to_slave(fd, c->read_buffer, package_len);
+
+		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
 		// Write response directly into `c->write_buffer` to avoid extra allocating.
-		int response_len = handler(c->read_buffer, package_len, c->write_buffer + c->write_pos);
+		int response_len = handler(fd, c->read_buffer, package_len, c->write_buffer + c->write_pos);
 		if (response_len > 0){
 			c->write_pos += response_len;
 			pdb_sds_len_increment(c->write_buffer, response_len);
 		}
 		// pdb_log_info("c->write_pos: %d\n", c->write_pos);
-
+		
 		// deal with AOF
-		pdb_aof_buffer_append(c->read_buffer, package_len);
-		pdb_aof_write_to_written_buffer(c->read_buffer, package_len);
+		// pdb_aof_buffer_append(c->read_buffer, package_len);
+		// pdb_aof_write_to_written_buffer(c->read_buffer, package_len);
 
 		pdb_sds_range(c->read_buffer, package_len, -1);
 		c->read_pos -= package_len;
@@ -187,6 +214,7 @@ int recv_cb(int fd, msg_handler handler){
 
 
 int send_cb(int fd, msg_handler handler) {
+	// pdb_log_debug("send_cb : %d, write_buffer: %s\n", fd, conn_list[fd]->write_buffer);
 	struct conn_info* c = conn_list[fd];
 	if (c->write_pos > 3*1024){
 		int ret = send(fd, c->write_buffer, c->write_pos, 0);
@@ -204,7 +232,6 @@ int send_cb(int fd, msg_handler handler) {
 	
 	return PDB_OK;
 }
-
 
 int init_server(unsigned short port) {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -230,11 +257,43 @@ int init_server(unsigned short port) {
 	return sockfd;
 }
 
+void init_replication_slave_to_master_conn_list(int fd){
+	int flags = fcntl(fd, F_GETFL, 0);
+    if (flags != -1) {
+        fcntl(fd, F_SETFL, flags | O_NONBLOCK);
+    }
+
+	pdb_insert_conn_list(fd);
+	conn_list[fd]->write_buffer = pdb_get_new_sds(1100 * 1024);
+	conn_list[fd]->read_buffer = pdb_get_new_sds(PDB_PROTO_IO_BUFFER_LENGTH);
+	conn_list[fd]->read_pos = 0;
+	conn_list[fd]->write_pos = 0;
+
+	conn_list[fd]->fd = fd;
+	conn_list[fd]->recv_callback = recv_cb;
+	conn_list[fd]->send_callback = send_cb;
+	conn_list[fd]->is_aof_rewrite = 0;
+	conn_list[fd]->is_aof = 0;
+
+	conn_list[fd]->is_slave = global_conf.is_slave;
+	conn_list[fd]->event = EPOLLIN;
+	set_event(fd, EPOLLIN, 1);
+
+	conn_list[fd]->client_ip = (char*)pdb_malloc(16);
+    if (conn_list[fd]->client_ip) {
+        strcpy(conn_list[fd]->client_ip, global_conf.master_ip); 
+    }
+    conn_list[fd]->client_port = global_conf.master_port;
+}
+
+extern int is_incre_ready;
+extern pdb_rdma_snapshot_ctx* incre_master_snap;
 int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler response_handler){
     epfd = epoll_create(1);
 
 	int i = 0;
 
+	// listen fd
 	for (i = 0; i < MAX_PORTS; i++) {
 		int sockfd = init_server(port + i);
 		conn_list[sockfd] = (struct conn_info*)pdb_malloc(sizeof(struct conn_info));
@@ -246,24 +305,19 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 		set_event(sockfd, EPOLLIN, 1);
 	}
 
-	if (global_replication.is_master == 0 || global_replication.slave_to_master_fd > 0){
-        // slave
-        struct conn_info* slave_to_master_conn_info = (struct conn_info*)malloc(sizeof(struct conn_info));
-        memset(slave_to_master_conn_info, 0, sizeof(struct conn_info));
-
-        slave_to_master_conn_info->fd = global_replication.slave_to_master_fd;
-        slave_to_master_conn_info->wbuffer = malloc(BUFFER_LENGTH);
-        slave_to_master_conn_info->buffer = malloc(BUFFER_LENGTH);
-		slave_to_master_conn_info->recv_callback = recv_cb;
-		slave_to_master_conn_info->send_callback = send_cb;
-
-		set_event(global_replication.slave_to_master_fd, EPOLLIN, 1);
-		conn_list[global_replication.slave_to_master_fd] = slave_to_master_conn_info;
-    }
-
+	// initialize slave to master connection
+	pdb_init_replication();
+	
 	while (1) { // mainloop
 		struct epoll_event events[1024] = {0};
 		int nready = epoll_wait(epfd, events, 1024, 10);
+
+		// pdb_aof_dump();
+		// pdb_increment_syn();
+		if (global_dump.is_aof){
+			pdb_ebpf_poll();
+		}
+		pdb_is_aof_sqe_complete();
 
 		if (nready == 0){
 			// epoll_wait timeout
@@ -284,12 +338,12 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 					tmp_fd = conn_list[tmp_fd]->next_fd;
 				}
 			}
-			pdb_is_aof_written_end();
+			// pdb_is_aof_written_end();
 			continue;
 		}
 
 		int i = 0;
-		for (i = 0;i < nready;i ++) {
+		for (i = 0; i < nready; i ++) {
 			int connfd = events[i].data.fd;
 			struct conn_info* c = conn_list[connfd];
 			if (events[i].events & EPOLLIN) {
@@ -315,25 +369,8 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 
 			
 		}
-		pdb_aof_dump();
 		
-		// increment replication 
-        int status;
-        pid_t exit_pid = waitpid(-1, &status, WNOHANG);
-
-        if (exit_pid > 0){
-            int i;
-            for (i = 0; i < global_replication.slave_count; i++){
-                if (exit_pid == global_replication.slave_pid[i]){
-                    pdb_log_debug("master child thread[pid:%d] syn exit\n", exit_pid);
-                    struct conn_info* c = global_replication.master_to_slaves_info[i];
-                    if (c->master_to_slave_append_length > 0){
-                        // prepare_write_buffer(c, c->master_to_slave_append_buffer, c->master_to_slave_append_length);
-                        set_event(c->fd, EPOLLOUT, 0);
-                    }
-                }
-            }
-        }
+		
 	}
     
     return 0;

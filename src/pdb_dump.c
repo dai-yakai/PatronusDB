@@ -11,5 +11,12 @@ void pdb_init_dump(const char* file){
         global_dump.is_aof = 0;
         global_dump.is_aof_written = 0;
         global_dump.aof_rewrite_buffer = *(pdb_get_NULL_list());
+
+        global_dump.aof_rewrite_buffer_ebpf = pdb_get_new_sds(AOF_BUFFER_LEN);
+        global_dump.aof_rewrite_buffer_ebpf_offset = 0;
+
+        io_uring_queue_init(64, &global_dump.ring, 0);
     }
+
+    pdb_log_debug("1231231\n");
 }

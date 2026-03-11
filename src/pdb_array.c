@@ -3,6 +3,17 @@
 
 pdb_array_t global_array;
 
+static void _pdb_array_resize(pdb_array_t* inst, size_t new_size){
+    pdb_array_item_t* new_table = pdb_malloc(sizeof(pdb_array_item_t) * new_size);
+    int i;
+    for (i = 0; i < inst->total_count; i++){
+        memcpy(new_table + i, inst->table + i, sizeof(pdb_array_item_t));
+    }
+    pdb_free(inst->table, -1);
+    inst->total_count = new_size;
+    inst->table = new_table;
+}
+
 int pdb_array_create(pdb_array_t* inst){
     if (!inst)  return -1;
 
@@ -18,8 +29,8 @@ int pdb_array_create(pdb_array_t* inst){
 
     memset(inst->table, 0, sizeof(pdb_array_item_t) * PDB_ARRAY_SIZE);
 
-    inst->idx = 0;
-    inst->total_count = 0;
+    inst->total_count = PDB_ARRAY_SIZE;
+    inst->used_count = 0;
 
     return PDB_DATASTRUCTURE_OK;
 }
@@ -29,7 +40,7 @@ void pdb_array_destroy(pdb_array_t* inst){
 
     if (inst->table){
         int i;
-        for (i = 0; i < PDB_ARRAY_SIZE; i++){
+        for (i = 0; i < inst->total_count; i++){
             if ((inst->table)[i].key != NULL){
                 pdb_free(inst->table[i].key, -1);
                 pdb_free(inst->table[i].value, -1);
@@ -43,14 +54,13 @@ void pdb_array_destroy(pdb_array_t* inst){
 int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value){
     assert(inst != NULL && key != NULL && value != NULL);
     pdb_value* old_value;
-    if (inst->total_count == PDB_ARRAY_SIZE){
-        pdb_log_error("out of pdb_array size\n");
-        return -1;
+    if (inst->used_count == inst->total_count){
+        _pdb_array_resize(inst, inst->total_count * 1.5);
     }
 
     old_value = pdb_array_get(inst, key);
     if (old_value){
-        pdb_log_info("pdb_array_set: key exist\n");
+        // pdb_log_info("pdb_array_set: key exist\n");
         return PDB_DATASTRUCTURE_EXIST;
     }
 
@@ -69,16 +79,10 @@ int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value){
         if (inst->table[i].key == NULL){
             inst->table[i].key = kcopy;
             inst->table[i].value = value;
-            inst->total_count++;
+            inst->used_count++;
             return PDB_DATASTRUCTURE_OK;
         }
     }
-
-    if (i == inst->total_count && i < PDB_ARRAY_SIZE){
-        inst->table[i].key = kcopy;
-        inst->table[i].value = value;
-        inst->total_count++;
-    }   
 
     return PDB_DATASTRUCTURE_OK;
 }
@@ -112,12 +116,14 @@ pdb_value* pdb_array_get(pdb_array_t* inst, char* key){
 int pdb_array_del(pdb_array_t* inst, char* key){
     int i = 0;
     for (i = 0; i < inst->total_count; i++){
-        if (strcmp(inst->table[i].key, key) == 0){
+        if (inst->table[i].key != NULL && strcmp(inst->table[i].key, key) == 0){
             pdb_free(inst->table[i].key, -1);
             inst->table[i].key = NULL;
 
             pdb_decre_value(inst->table[i].value);
             inst->table[i].value = NULL;
+
+            inst->used_count--;
 
             return PDB_DATASTRUCTURE_OK;
         }
@@ -138,10 +144,9 @@ int pdb_array_mod(pdb_array_t* inst, char* key, pdb_value* value){
             continue;
         }
         if (strcmp(inst->table[i].key, key) == 0){
-            pdb_decre_value(inst->table[i].value);
-
-            inst->table[i].value = value;
             pdb_incre_value(value);
+            inst->table[i].value = value;
+            pdb_decre_value(inst->table[i].value);
 
             return PDB_DATASTRUCTURE_OK;
         }

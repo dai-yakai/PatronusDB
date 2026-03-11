@@ -18,12 +18,13 @@
 #define PDB_VALUE_TYPE_DOUBLE       6
 #define PDB_VALUE_TYPE_SET          7
 #define PDB_VALUE_TYPE_SORTEDSET    8
+#define PDB_VALUE_TYPE_HASH         9
 
 
 typedef struct pdb_value{
-    uint8_t type : 4;
-    uint32_t lru;
-    uint64_t expire_time;
+    uint8_t type;
+    // uint32_t lru;
+    // uint64_t expire_time;
     uint32_t ref_count;
 
     void* ptr;
@@ -32,7 +33,7 @@ typedef struct pdb_value{
 
 
 void pdb_decre_value(pdb_value* value);
-pdb_value* pdb_create_value(char* value, int type, ...);
+pdb_value* pdb_create_value(void* value, int type, ...);
 char* pdb_parse_value_to_string(pdb_value* value);
 void pdb_destroy_value(pdb_value* value);
 void pdb_incre_value(pdb_value* value);

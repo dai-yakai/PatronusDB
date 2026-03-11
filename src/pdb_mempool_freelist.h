@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <assert.h>
+
 
 #include "pdb_core.h"
 #include "pdb_log.h"

@@ -25,7 +25,7 @@ static void _pdb_set_convert_to_hashtable(struct pdb_set* set){
         char* buf = pdb_malloc(sizeof(char) * 32);
         memset(buf, 0, 32);
         int64_t value = _pdb_intset_get(intset, i);
-        snprintf(buf, sizeof(buf), "%" PRId64, value);
+        snprintf(buf, 32, "%" PRId64, value);
 
         pdb_value* value_ = pdb_create_value(NULL, PDB_VALUE_TYPE_NULL);
         pdb_hash_set(set_hash, buf, value_);
@@ -37,14 +37,23 @@ static void _pdb_set_convert_to_hashtable(struct pdb_set* set){
     set->flag = PDB_SET_ENCODING_HASHTABLE;
 }
 
-struct pdb_set* pdb_set_create(){
+struct pdb_set* pdb_set_create_with_key(char* key){
     struct pdb_set* set = pdb_malloc(sizeof(struct pdb_set));
     set->flag = PDB_SET_ENCODING_INTSET;
     struct pdb_intset* intset = pdb_intset_create();
     set->ptr = intset;
     set->count = 0;
 
+    char* tmp_key = pdb_malloc(strlen(key) + 1);
+    strcpy(tmp_key, key);
+    set->key = tmp_key;
+    pdb_log_debug("set_key: %s\n", set->key);
+
     return set;
+}
+
+struct pdb_set* pdb_set_create(){
+    return pdb_set_create_with_key(NULL);
 }
 
 int pdb_set_add(struct pdb_set* set, const char* value){
@@ -326,11 +335,11 @@ int pdb_set_delete(struct pdb_set* set, const char* value){
 
 void pdb_set_destroy(struct pdb_set* set){
     if (set->flag == PDB_SET_ENCODING_HASHTABLE){
-        pdb_hash_t* set_hash = (pdb_hash_t*)set->ptr;
-        pdb_hash_destory(set_hash);
+        pdb_hash_del(&global_hash, set->key);
         pdb_free(set, -1);
         return;
     }
+    if (set->key != NULL)   pdb_free(set->key, -1);
 
     pdb_intset_destroy(set->ptr);  
     pdb_free(set, -1); 

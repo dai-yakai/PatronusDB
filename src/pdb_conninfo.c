@@ -4,8 +4,11 @@ int global_conn_info_list_head = -1;
 int global_conn_info_list_tail = -1;
 int active_conn_num = 0;
 
-struct conn_info* conn_list[CONNECTION_SIZE] = {0};
 
+struct conn_info* conn_list[CONNECTION_SIZE] = {0};
+struct conn_info* conn_list_rdma[REPLICATION_NUM] = {0};
+// conn_replication[REPLICATION_NUM];
+struct conn_replication* global_replication = NULL;
 
 void pdb_insert_conn_list(int fd){
     // tail insert
@@ -28,6 +31,11 @@ void pdb_insert_conn_list(int fd){
 }
 
 void pdb_delete_conn_list(int fd){
+    if (conn_list[fd]->rdma_conn != NULL) {
+        pdb_rdma_destroy_conn(conn_list[fd]->rdma_conn);
+        conn_list[fd]->rdma_conn = NULL;
+    }
+
     if (active_conn_num == 1){
         pdb_sds_free(conn_list[fd]->read_buffer);
         pdb_sds_free(conn_list[fd]->write_buffer);

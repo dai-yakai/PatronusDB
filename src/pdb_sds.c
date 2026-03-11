@@ -345,6 +345,31 @@ pdb_sds pdb_get_new_sds2(const char* str){
     return new_sds;
 }
 
+pdb_sds pdb_get_new_sds_len(const void* data, size_t len) {
+    int type;
+    size_t hdrlen;
+
+    type = pdb_req_sds_type(len);
+    if (type == PDB_SDS_TYPE_5) type = PDB_SDS_TYPE_8;
+    hdrlen = pdb_get_sds_hdrlen(type);
+    
+    void* s = pdb_malloc(hdrlen + len + 1);
+    if (s == NULL) return NULL;
+
+    pdb_sds new_sds = (char*)s + hdrlen;
+    
+    pdb_set_sds_type(new_sds, type);
+    pdb_set_sds_alloc(new_sds, len);
+    pdb_set_sds_len(new_sds, len); 
+    
+    if (data && len > 0) {
+        memcpy(new_sds, data, len); 
+    }
+    new_sds[len] = '\0'; 
+
+    return new_sds;
+}
+
 /**
  * Changes `s` in-place to be a substring starting from `start` with `len`.
  * It does not shrink the buffer. The unuse capacity remains.

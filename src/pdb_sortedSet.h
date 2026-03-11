@@ -11,6 +11,8 @@
 #define PDB_MAX_SKIPLIST_LEVEL 32
 #define PDB_ZSKIPLIST_P 0.25
 
+#define PDB_SSET_HASH       "sset_hash"
+
 typedef char* KEY_TYPE;
 typedef double VALUE_TYPE;
 
@@ -42,6 +44,8 @@ struct pdb_skiplist{
  * sorted_set
  */
 struct pdb_sorted_set{
+    char* key;
+
     pdb_hash_t* set;
     struct pdb_skiplist* list;
 };
@@ -58,6 +62,7 @@ void pdb_skiplist_destroy(struct pdb_skiplist* sl);
  */
 
 struct pdb_sorted_set* pdb_create_sortedSet();
+struct pdb_sorted_set* pdb_create_sortedSet_with_key(char* key);
 void pdb_destroy_sortedSet(struct pdb_sorted_set*);
 int pdb_sortedSet_delete(struct pdb_sorted_set* Sset, char* key);
 int pdb_sortedSet_add(struct pdb_sorted_set* Sset, char* key, double d_new_value);

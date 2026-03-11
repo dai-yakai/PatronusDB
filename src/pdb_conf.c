@@ -7,7 +7,7 @@ config_entry conf_table[] = {
     {"network_mode",    CONF_TYPE_INT,      &global_conf.network_mode},
     {"master_port",     CONF_TYPE_INT,      &global_conf.master_port},
     {"master_ip",       CONF_TYPE_STRING,   &global_conf.master_ip},
-    {"is_slave",        CONF_TYPE_INT,      &global_conf.is_slave},
+    {"is_slave",        CONF_TYPE_BOOL,     &global_conf.is_slave},
     {"is_replication",  CONF_TYPE_BOOL,     &global_conf.is_replication},
     {"dump_dir",        CONF_TYPE_STRING,   &global_conf.dump_dir},
     {"max_memory",      CONF_TYPE_INT,      &global_conf.max_memory},

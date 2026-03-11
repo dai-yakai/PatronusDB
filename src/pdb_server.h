@@ -17,6 +17,7 @@
 #include "pdb_intset.h"
 #include "pdb_set.h"
 #include "pdb_sortedSet.h"
+#include "pdb_conninfo.h"
 
 #define ENABLE_ARRAY            0
 #define ENABLE_RBTREE           1
@@ -75,12 +76,12 @@ static threadPool_t g_kv_pool;
 
 
 
-struct replication_s global_replication = {0};
+// struct replication_s global_replication = {0};
 
-int pdb_protocol(char* rmsg, int length, char* out);
+int pdb_protocol(int fd, char* rmsg, int length, char* out);
 int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler response_handler);
 int ntyco_entry(unsigned short port, msg_handler request_handler, msg_handler response_handlerr);
 int uring_entry(unsigned short port, msg_handler request_handler, msg_handler response_handler);
-int pdb_filter_protocol(char** tokens, int count, char* response);
+int pdb_filter_protocol(int fd, char** tokens, int count, char* response);
 
 #endif

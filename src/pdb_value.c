@@ -2,6 +2,7 @@
 #include "pdb_set.h"
 #include "pdb_sds.h"
 #include "pdb_sortedSet.h"
+#include "pdb_hash.h"
 /**
  * Return 1 if succeeding; otherwise return 0
  */
@@ -76,7 +77,7 @@ pdb_sds pdb_parse_value_to_string(pdb_value* value){
     }
 }
 
-pdb_value* pdb_create_value(char* value, int type, ...){
+pdb_value* pdb_create_value(void* value, int type, ...){
     va_list args;
     va_start(args, type);
 
@@ -95,6 +96,14 @@ pdb_value* pdb_create_value(char* value, int type, ...){
         {
             v->ptr = (struct pdb_sorted_set*)value;
             v->type = PDB_VALUE_TYPE_SORTEDSET;
+
+            break;
+        }
+
+        case PDB_VALUE_TYPE_HASH:
+        {
+            v->ptr = (hashtable_t*)value;
+            v->type = PDB_VALUE_TYPE_HASH;
 
             break;
         }
@@ -177,8 +186,8 @@ pdb_value* pdb_create_value(char* value, int type, ...){
             
     }
  
-    v->expire_time = 0;
-    v->lru = 0;
+    // v->expire_time = 0;
+    // v->lru = 0;
     v->ref_count = 1;
 
     va_end(args);

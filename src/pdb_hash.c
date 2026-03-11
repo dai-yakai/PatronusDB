@@ -66,6 +66,11 @@ static int _pdb_hash_shrink(pdb_hash_t* hash){
 }
 
 
+int pdb_hash_resize(pdb_hash_t* hash, size_t new_size){
+	return _pdb_hash_resize(hash, new_size);
+}
+
+
 /**
  * Deep copy
  */
@@ -95,7 +100,8 @@ int pdb_hash_create(pdb_hash_t* hash) {
 	memset(hash->nodes, 0, sizeof(hashnode_t*) * INIT_TABLE_SIZE);
 
 	hash->max_slots = INIT_TABLE_SIZE;
-	hash->count = 0; 
+	hash->count = 0;
+	hash->parent_key = NULL; 
 
 	return PDB_DATASTRUCTURE_OK;
 }
@@ -107,6 +113,7 @@ pdb_hash_t* pdb_hash_create2(){
 	memset(hash->nodes, 0, sizeof(hashnode_t*) * INIT_TABLE_SIZE);
 
 	hash->max_slots = INIT_TABLE_SIZE;
+	hash->parent_key = NULL; 
 	hash->count = 0; 
 
 	return hash;
@@ -127,7 +134,10 @@ void pdb_hash_destory(pdb_hash_t *hash) {
 			pdb_free(tmp, -1);
 		}
 	}
-
+	if (hash->parent_key != NULL){
+		pdb_free(hash->parent_key, -1);
+	}
+	
 	pdb_free(hash->nodes, -1);
 }
 

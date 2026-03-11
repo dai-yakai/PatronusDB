@@ -7,6 +7,7 @@
 #include <sys/time.h>
 #include <errno.h>
 #include <sys/uio.h>
+#include <liburing.h>
 
 #include "pdb_rdb.h"
 #include "pdb_list.h"
@@ -22,5 +23,7 @@ int pdb_aof_dump();
 int pdb_aof_load(const char* file);
 int pdb_aof_write_to_written_buffer(char* msg, size_t len);
 int pdb_is_aof_written_end();
+int pdb_aof_incrememtal_append(void* dataStructure, const char* key, uint8_t opcode);
+void pdb_is_aof_sqe_complete();
 
 #endif

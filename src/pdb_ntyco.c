@@ -138,61 +138,61 @@ static int process_read_buffer(struct conn_info* c, msg_handler handler){
             return packet_len;
         }
 
-        if (global_replication.is_master){
-            for (int i = 0; i < global_replication.slave_count; i++){
-                struct conn_info* slave = global_replication.master_to_slaves_info[i];
-                if (slave->is_full_replication){
-                    if (slave->master_to_slave_append_length + packet_len < REPLICATION_BUFFER_LENGTH) {
-                        memcpy(slave->master_to_slave_append_buffer + slave->master_to_slave_append_length, 
-                            temp_buf, packet_len);
-                        slave->master_to_slave_append_length += packet_len;
-                    }
-                } else if (slave->is_replication){
-                    if(is_need_command(temp_buf)){
-                        prepare_write_buffer(slave, temp_buf, packet_len);
-                        send(slave->fd, temp_buf, packet_len, 0);
-                    }
-                }
-            }
-        }
+        // if (global_replication.is_master){
+        //     for (int i = 0; i < global_replication.slave_count; i++){
+        //         struct conn_info* slave = global_replication.master_to_slaves_info[i];
+        //         if (slave->is_full_replication){
+        //             if (slave->master_to_slave_append_length + packet_len < REPLICATION_BUFFER_LENGTH) {
+        //                 memcpy(slave->master_to_slave_append_buffer + slave->master_to_slave_append_length, 
+        //                     temp_buf, packet_len);
+        //                 slave->master_to_slave_append_length += packet_len;
+        //             }
+        //         } else if (slave->is_replication){
+        //             if(is_need_command(temp_buf)){
+        //                 prepare_write_buffer(slave, temp_buf, packet_len);
+        //                 send(slave->fd, temp_buf, packet_len, 0);
+        //             }
+        //         }
+        //     }
+        // }
 
         char backup = curr[packet_len];
         curr[packet_len] = '\0'; 
         response_out[0] = '\0';
 
-        int ret = handler(curr, packet_len, response_out);
+        int ret = handler(c->fd, curr, packet_len, response_out);
 
         curr[packet_len] = backup;
 
-        if (!global_replication.is_master && 
-            c->fd == global_replication.slave_to_master_fd) {
-                response_out[0] = '\0';
-        }
+        // if (!global_replication.is_master && 
+        //     c->fd == global_replication.slave_to_master_fd) {
+        //         response_out[0] = '\0';
+        // }
 
-        if (ret == -9999 && global_replication.is_master){
-            c->is_slave = 0;
-            c->is_replication = 1;
-            int idx = master_add_slave(c); 
+        // if (ret == -9999 && global_replication.is_master){
+        //     c->is_slave = 0;
+        //     c->is_replication = 1;
+        //     int idx = master_add_slave(c); 
 
-            pid_t pid = fork();
-            if (pid == 0){
-                c->is_full_replication = 1;
-                printf("master full syn begin\n");
-                perform_rbtree_full_sync_raw(c->fd);
-                printf("master rbtree full syn success\n");
-                perform_hash_full_sync_raw(c->fd);
-                printf("master hash full syn success\n");
+        //     pid_t pid = fork();
+        //     if (pid == 0){
+        //         c->is_full_replication = 1;
+        //         printf("master full syn begin\n");
+        //         perform_rbtree_full_sync_raw(c->fd);
+        //         printf("master rbtree full syn success\n");
+        //         perform_hash_full_sync_raw(c->fd);
+        //         printf("master hash full syn success\n");
                 
-                c->is_full_replication = 0;
-                printf("child thread exit\n");
-                _exit(0);
-            } else if (pid > 0){
-                printf("child pid: %d\n", pid);
-                c->master_to_slave_append_buffer = malloc(REPLICATION_BUFFER_LENGTH);
-                c->master_to_slave_append_length = 0;
-                global_replication.slave_pid[idx] = pid;
-            }
-        }
+        //         c->is_full_replication = 0;
+        //         printf("child thread exit\n");
+        //         _exit(0);
+        //     } else if (pid > 0){
+        //         printf("child pid: %d\n", pid);
+        //         c->master_to_slave_append_buffer = malloc(REPLICATION_BUFFER_LENGTH);
+        //         c->master_to_slave_append_length = 0;
+        //         global_replication.slave_pid[idx] = pid;
+        //     }
+        // }
 
         if (ret > 0) {
             prepare_write_buffer(c, response_out, strlen(response_out));
@@ -348,17 +348,17 @@ int ntyco_entry(unsigned short port, msg_handler request_handler, msg_handler re
     nty_coroutine *co_server = NULL;
     nty_coroutine_create(&co_server, server, &port);
 
-    if (!global_replication.is_master) {
-        // [修改] 直接传递已经在 main 函数中连接好的 FD
-        // 前提：main 函数必须成功连接并赋值给了 global_replication.slave_to_master_fd
-        if (global_replication.slave_to_master_fd > 0) {
-            nty_coroutine *co_slave = NULL;
-            // 传递 FD 的地址
-            nty_coroutine_create(&co_slave, slave_routine, &global_replication.slave_to_master_fd);
-        } else {
-            printf("[ERROR] Slave mode but no master connection FD found!\n");
-        }
-    }
+    // if (!global_replication.is_master) {
+    //     // [修改] 直接传递已经在 main 函数中连接好的 FD
+    //     // 前提：main 函数必须成功连接并赋值给了 global_replication.slave_to_master_fd
+    //     if (global_replication.slave_to_master_fd > 0) {
+    //         nty_coroutine *co_slave = NULL;
+    //         // 传递 FD 的地址
+    //         nty_coroutine_create(&co_slave, slave_routine, &global_replication.slave_to_master_fd);
+    //     } else {
+    //         printf("[ERROR] Slave mode but no master connection FD found!\n");
+    //     }
+    // }
 
     nty_schedule_run();
     return 0;

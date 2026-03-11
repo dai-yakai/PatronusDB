@@ -206,12 +206,29 @@ void pdb_skiplist_destroy(struct pdb_skiplist* sl){
  * sorted set
  */
 
-struct pdb_sorted_set* pdb_create_sortedSet(){
+struct pdb_sorted_set* pdb_create_sortedSet_with_key(char* key){
     struct pdb_sorted_set* Sset = (struct pdb_sorted_set*)pdb_malloc(sizeof(struct pdb_sorted_set));
     Sset->set = pdb_hash_create2();
+    // pdb_value* value = pdb_create_value(Sset->set, PDB_VALUE_TYPE_HASH);
+    // pdb_hash_set(&global_hash, PDB_SSET_HASH, value);
+    // pdb_decre_value(value);
+
     Sset->list = pdb_create_skiplist();
 
+    if (key == NULL){
+        Sset->key = NULL;
+        return Sset;
+    }
+
+    char* tmp_key = pdb_malloc(strlen(key) + 1);
+    strcpy(tmp_key, key);
+    Sset->key = tmp_key;
+    
     return Sset;
+}
+
+struct pdb_sorted_set* pdb_create_sortedSet(){
+    return pdb_create_sortedSet_with_key(NULL);
 }
 
 void pdb_destroy_sortedSet(struct pdb_sorted_set* Sset){

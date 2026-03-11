@@ -1,7 +1,9 @@
 #include "pdb_mempool_freelist.h"
-
+#include <assert.h>
 
 static void* _mp_malloc_tracked(struct mp_pool_s* pool, size_t size) {
+    assert(size > 0);
+    // printf("DEBUG: malloc size=%zu, pool=%p\n", size, (void*)pool);
     size_t total_size = size + sizeof(struct mp_chunk_record_s);
     char* p = (char*)malloc(total_size);
     if (!p) return NULL;
@@ -16,6 +18,7 @@ static void* _mp_malloc_tracked(struct mp_pool_s* pool, size_t size) {
 
 
 static char* _mp_chunk_alloc(struct mp_pool_s* pool, size_t size, int* nobjs) {
+    assert(size > 0);
     char* result;
     size_t total_bytes = size * (*nobjs);
     size_t bytes_left = pool->end_free - pool->start_free;
@@ -58,6 +61,7 @@ static char* _mp_chunk_alloc(struct mp_pool_s* pool, size_t size, int* nobjs) {
 
 
 static void* _mp_refill(struct mp_pool_s* pool, size_t n) {
+    assert(n > 0);
     int nobjs = 20;
     char* chunk = _mp_chunk_alloc(pool, n, &nobjs);
     if (!chunk) return NULL;
@@ -87,6 +91,7 @@ static void* _mp_refill(struct mp_pool_s* pool, size_t n) {
 
 
 struct mp_pool_s* pdb_mp_create_freelist_pool(size_t size) {
+    assert(size > 0);
     struct mp_pool_s* pool = (struct mp_pool_s*)malloc(sizeof(struct mp_pool_s));
     if (!pool) return NULL;
     memset(pool, 0, sizeof(struct mp_pool_s));
@@ -108,6 +113,7 @@ void pdb_mp_destory_freelist_pool(struct mp_pool_s* pool) {
 
 
 void* pdb_mp_freelist_alloc(struct mp_pool_s* pool, size_t size) {
+    assert(size > 0);
     if (!pool || size == 0) return NULL;
 
     size_t real_size = size + MP_HEADER_SIZE;
@@ -163,6 +169,7 @@ void pdb_mp_freelist_free(struct mp_pool_s* pool, void* p) {
 
 
 void* pdb_mp_freelist_realloc(struct mp_pool_s* pool, void* ptr, size_t size){
+    assert(size > 0);
     if (!ptr) return pdb_mp_freelist_alloc(pool, size);
     if (size == 0) {
         pdb_mp_freelist_free(pool, ptr);

@@ -10,13 +10,16 @@
 #include "pdb_conf.h"
 
 #define ENABLE_MEMPOOL      1
-#define ENABLE_JEMALLOC     0
+#define ENABLE_JEMALLOC     1
+
+#define MEMPOOL_SIZE        1024*1024*10
 
 #if ENABLE_JEMALLOC
 #include <jemalloc/jemalloc.h>
 #endif
 
 extern size_t used_memory;
+extern struct mp_pool_s* global_mempool;
 
 void* pdb_malloc(size_t size);
 void* pdb_realloc(void* ptr, size_t size);

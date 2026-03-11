@@ -10,7 +10,10 @@
 #define PDB_SET_ENCODING_HASHTABLE  2
 #define PDB_MAX_INTSET_LENGTH       512
 
+#define PDB_SET_HASH                "set_hash"
+
 typedef struct pdb_set{
+    char* key;
     uint8_t flag;
     void* ptr;
 
@@ -18,7 +21,7 @@ typedef struct pdb_set{
 } pdb_set;
 
 
-
+struct pdb_set* pdb_set_create_with_key(char* key);
 struct pdb_set* pdb_set_create();
 int pdb_set_add(struct pdb_set* set, const char* value);
 int pdb_set_search(struct pdb_set* set, const char* value);

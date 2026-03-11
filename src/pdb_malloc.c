@@ -4,7 +4,7 @@ size_t used_memory = 0;;
 
 
 #if ENABLE_MEMPOOL
-static struct mp_pool_s* global_mempool = NULL;
+struct mp_pool_s* global_mempool = NULL;
 
 void pdb_mem_init(size_t size){
     if (global_mempool == NULL){

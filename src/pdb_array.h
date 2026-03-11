@@ -12,6 +12,7 @@
 
 #define PDB_ARRAY_SIZE          1024*16
 #define ENABLE_PRINT_ARRAY      0
+#define PDB_SHRINK_RATE         0.75
 
 typedef struct pdb_array_item_s pdb_array_item_t;
 typedef struct pdb_array_s pdb_array_t;
@@ -36,7 +37,7 @@ struct pdb_array_item_s{
 
 struct pdb_array_s{
     pdb_array_item_t* table;
-    int idx;
+    int used_count;
 
     int total_count;
 };

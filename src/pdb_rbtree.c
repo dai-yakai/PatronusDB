@@ -343,6 +343,7 @@ int pdb_rbtree_create(pdb_rbtree_t* inst){
 	}
 	inst->nil->color = BLACK;
 	inst->root = inst->nil;
+	inst->node_count = 0;
 
 	return PDB_DATASTRUCTURE_OK;
 }
@@ -369,6 +370,31 @@ void pdb_rbtree_destroy(pdb_rbtree_t* inst){
 
 	return ;
 
+}
+
+/**
+ * For rdb load, without search node
+ */
+int pdb_rbtree_set_no_search(pdb_rbtree_t* inst, char* key, pdb_value* value){
+	if (!inst || !key || !value) return -1;
+
+	rbtree_node *node = (rbtree_node*)pdb_malloc(sizeof(rbtree_node));
+    if (!node) return PDB_MALLOC_NULL; 
+        
+    node->key = pdb_malloc(strlen(key) + 1);
+    if (!node->key) {
+        pdb_free(node, -1); 
+        return PDB_MALLOC_NULL;
+    }
+    strcpy(node->key, key);
+
+	node->value = value;
+	pdb_incre_value(value);
+
+    rbtree_insert(inst, node);
+	inst->node_count++;
+
+    return PDB_DATASTRUCTURE_OK;
 }
 
 int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value){
@@ -399,6 +425,7 @@ int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value){
 	pdb_incre_value(value);
 
     rbtree_insert(inst, node);
+	inst->node_count++;
 
     return PDB_DATASTRUCTURE_OK;
 }
@@ -427,6 +454,7 @@ int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
     }
 
 	pdb_free(cur, -1);
+	inst->node_count--;
 
 	return PDB_DATASTRUCTURE_OK;
 }

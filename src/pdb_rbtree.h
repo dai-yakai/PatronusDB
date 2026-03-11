@@ -40,6 +40,8 @@ struct _rbtree_node {
 struct _rbtree {
 	rbtree_node *root;
 	rbtree_node *nil;
+
+	int node_count;
 };
 
 rbtree_node *rbtree_mini(rbtree *T, rbtree_node *x);
@@ -57,6 +59,7 @@ void rbtree_traversal(rbtree *T, rbtree_node *node);
 
 int pdb_rbtree_create(pdb_rbtree_t* inst);
 void pdb_rbtree_destroy(pdb_rbtree_t* inst);
+int pdb_rbtree_set_no_search(pdb_rbtree_t* inst, char* key, pdb_value* value);
 int pdb_rbtree_set(pdb_rbtree_t* inst, char* key, pdb_value* value);
 int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count);
 pdb_value* pdb_rbtree_get(pdb_rbtree_t* inst, char* key);

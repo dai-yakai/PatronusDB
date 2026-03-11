@@ -285,11 +285,11 @@ static int process_read_buffer(struct io_uring* ring, conn_info_t *c, char *resp
         printf("Protocol Error: Not RESP\n");
         int len = sprintf(response_out, "Protocol Error\r\n");
         if (len > 0){
-            if (!global_replication.is_master && 
-                c->fd == global_replication.slave_to_master_fd) {
-                    // printf("response_out: %s\n", response_out);
-                    memset(response_out, 0, RESPONSE_LENGTH);
-            }
+            // if (!global_replication.is_master && 
+            //     c->fd == global_replication.slave_to_master_fd) {
+            //         // printf("response_out: %s\n", response_out);
+            //         memset(response_out, 0, RESPONSE_LENGTH);
+            // }
         }else{
             printf("process_read_buffer: write error\n");
         }
@@ -298,14 +298,14 @@ static int process_read_buffer(struct io_uring* ring, conn_info_t *c, char *resp
         
 
         // 如果response发送给从节点或者主节点
-        int i;
-        for (i = 0; i < global_replication.slave_count; i++){
-            if (c->fd == global_replication.master_to_slaves_info[i]->fd){
-                printf("response_out: %s\n", response_out);
-                memset(response_out, 0, strlen(response_out));
-            }
-        }
-        return 1;
+        // int i;
+        // for (i = 0; i < global_replication.slave_count; i++){
+        //     if (c->fd == global_replication.master_to_slaves_info[i]->fd){
+        //         printf("response_out: %s\n", response_out);
+        //         memset(response_out, 0, strlen(response_out));
+        //     }
+        // }
+        // return 1;
     }
     
     if (packet_len == 0) {
@@ -315,67 +315,67 @@ static int process_read_buffer(struct io_uring* ring, conn_info_t *c, char *resp
     }
 
     // master节点收到从节点同步的命令后，进行增量同步或者直接转发
-    if (global_replication.is_master){
-        for (int i = 0; i < global_replication.slave_count; i++){
-            struct conn_info* slave = global_replication.master_to_slaves_info[i];
-            if (slave->is_full_replication){
-                // 正在进行全量同步时，将主节点新收到的命令放入同步buffer中
-                if (slave->master_to_slave_append_length + packet_len < REPLICATION_BUFFER_LENGTH) {
-                    memcpy(slave->master_to_slave_append_buffer + slave->master_to_slave_append_length, 
-                           temp_buf, packet_len);
-                    slave->master_to_slave_append_length += packet_len;
-                } else {
-                    fprintf(stderr, "Error: Slave %d replication buffer overflow!\n", slave->fd);
-                }
-            }else if (slave->is_replication){
-                // 转发
-                if(is_need_command(temp_buf)){
-                    prepare_write_buffer(slave, temp_buf, packet_len);
-                    submit_write(ring, slave->fd, slave);
-                }
-            }
-        }
-    }
+    // if (global_replication.is_master){
+    //     for (int i = 0; i < global_replication.slave_count; i++){
+    //         struct conn_info* slave = global_replication.master_to_slaves_info[i];
+    //         if (slave->is_full_replication){
+    //             // 正在进行全量同步时，将主节点新收到的命令放入同步buffer中
+    //             if (slave->master_to_slave_append_length + packet_len < REPLICATION_BUFFER_LENGTH) {
+    //                 memcpy(slave->master_to_slave_append_buffer + slave->master_to_slave_append_length, 
+    //                        temp_buf, packet_len);
+    //                 slave->master_to_slave_append_length += packet_len;
+    //             } else {
+    //                 fprintf(stderr, "Error: Slave %d replication buffer overflow!\n", slave->fd);
+    //             }
+    //         }else if (slave->is_replication){
+    //             // 转发
+    //             if(is_need_command(temp_buf)){
+    //                 prepare_write_buffer(slave, temp_buf, packet_len);
+    //                 submit_write(ring, slave->fd, slave);
+    //             }
+    //         }
+    //     }
+    // }
     // printf("process_read_buffer2\n");
-    int ret = handler(temp_buf, packet_len, response_out);
-    if (!global_replication.is_master && 
-        c->fd == global_replication.slave_to_master_fd) {
-        memset(response_out, 0, RESPONSE_LENGTH); 
-    }
+    int ret = handler(c->fd, temp_buf, packet_len, response_out);
+    // if (!global_replication.is_master && 
+    //     c->fd == global_replication.slave_to_master_fd) {
+    //     memset(response_out, 0, RESPONSE_LENGTH); 
+    // }
     
 
-    // 主节点收到syn命令
-    if (ret == -9999 && global_replication.is_master){
-        // printf("ret == -9999\n");
-        // 从节点发送SYN，请求同步
-        c->is_slave = 0;
-        c->is_replication = 1;
-        int idx = master_add_slave(c);    //将从节点注册进 全局从节点信息中
+    // // 主节点收到syn命令
+    // if (ret == -9999 && global_replication.is_master){
+    //     // printf("ret == -9999\n");
+    //     // 从节点发送SYN，请求同步
+    //     c->is_slave = 0;
+    //     c->is_replication = 1;
+    //     int idx = master_add_slave(c);    //将从节点注册进 全局从节点信息中
 
-        pid_t pid = fork();
-        if (pid == 0){
-            // master子进程处理同步
-            c->is_full_replication = 1;
-            printf("master full syn begin\n");
-            perform_rbtree_full_sync(c->fd);
-            printf("master rbtree full syn success\n");
-            perform_hash_full_sync(c->fd);
-            printf("master hash full syn success\n");
-            c->is_full_replication = 0;
+    //     pid_t pid = fork();
+    //     if (pid == 0){
+    //         // master子进程处理同步
+    //         c->is_full_replication = 1;
+    //         printf("master full syn begin\n");
+    //         perform_rbtree_full_sync(c->fd);
+    //         printf("master rbtree full syn success\n");
+    //         perform_hash_full_sync(c->fd);
+    //         printf("master hash full syn success\n");
+    //         c->is_full_replication = 0;
 
-            _exit(0);
-        }else if (pid > 0){
-            printf("child pid: %d\n", pid);
-            c->master_to_slave_append_buffer = malloc(REPLICATION_BUFFER_LENGTH);
-            c->master_to_slave_append_length = 0;
-            global_replication.slave_pid[idx] = pid;
+    //         _exit(0);
+    //     }else if (pid > 0){
+    //         printf("child pid: %d\n", pid);
+    //         c->master_to_slave_append_buffer = malloc(REPLICATION_BUFFER_LENGTH);
+    //         c->master_to_slave_append_length = 0;
+    //         global_replication.slave_pid[idx] = pid;
 
-            // 在子进程结束之前，需要将新接收到SET命令存储到同步缓冲区中，等子进程结束再把新接收到的发送给子进程
-        }else{
-            perror("process_read_buffer: fork error");
-            exit(-99);
-        }
-    }
+    //         // 在子进程结束之前，需要将新接收到SET命令存储到同步缓冲区中，等子进程结束再把新接收到的发送给子进程
+    //     }else{
+    //         perror("process_read_buffer: fork error");
+    //         exit(-99);
+    //     }
+    // }
     c->rtail += packet_len;
 
     free(temp_buf);
@@ -428,17 +428,17 @@ int uring_entry(unsigned short port, msg_handler request_handler,
     ts.tv_sec = 0;
     ts.tv_nsec = 1000 * 1000;
 
-    if (global_replication.is_master == 0|| global_replication.slave_to_master_fd > 0){
-        // 如果是slave节点
-        struct conn_info* slave_to_master_conn_info = (struct conn_info*)malloc(sizeof(struct conn_info));
-        memset(slave_to_master_conn_info, 0, sizeof(struct conn_info));
+    // if (global_replication.is_master == 0|| global_replication.slave_to_master_fd > 0){
+    //     // 如果是slave节点
+    //     struct conn_info* slave_to_master_conn_info = (struct conn_info*)malloc(sizeof(struct conn_info));
+    //     memset(slave_to_master_conn_info, 0, sizeof(struct conn_info));
 
-        slave_to_master_conn_info->fd = global_replication.slave_to_master_fd;
-        slave_to_master_conn_info->wbuffer = malloc(BUFFER_LENGTH);
-        slave_to_master_conn_info->buffer = malloc(BUFFER_LENGTH);
+    //     slave_to_master_conn_info->fd = global_replication.slave_to_master_fd;
+    //     slave_to_master_conn_info->wbuffer = malloc(BUFFER_LENGTH);
+    //     slave_to_master_conn_info->buffer = malloc(BUFFER_LENGTH);
 
-        submit_read(&ring, global_replication.slave_to_master_fd, slave_to_master_conn_info);
-    }
+    //     submit_read(&ring, global_replication.slave_to_master_fd, slave_to_master_conn_info);
+    // }
     while (1)
     {
         io_uring_submit_and_wait_timeout(&ring, cqes, CQE_BATCH, &ts, NULL);
@@ -572,19 +572,19 @@ int uring_entry(unsigned short port, msg_handler request_handler,
         int status;
         pid_t exit_pid = waitpid(-1, &status, WNOHANG);
 
-        if (exit_pid > 0){
-            int i;
-            for (i = 0; i < global_replication.slave_count; i++){
-                if (exit_pid == global_replication.slave_pid[i]){
-                    printf("master child thread[pid:%d] syn exit\n", exit_pid);
-                    struct conn_info* c = global_replication.master_to_slaves_info[i];
-                    if (c->master_to_slave_append_length > 0){
-                        prepare_write_buffer(c, c->master_to_slave_append_buffer, c->master_to_slave_append_length);
-                        submit_write(&ring, c->fd, c);
-                    }
-                }
-            }
-        }
+        // if (exit_pid > 0){
+        //     int i;
+        //     for (i = 0; i < global_replication.slave_count; i++){
+        //         if (exit_pid == global_replication.slave_pid[i]){
+        //             printf("master child thread[pid:%d] syn exit\n", exit_pid);
+        //             struct conn_info* c = global_replication.master_to_slaves_info[i];
+        //             if (c->master_to_slave_append_length > 0){
+        //                 prepare_write_buffer(c, c->master_to_slave_append_buffer, c->master_to_slave_append_length);
+        //                 submit_write(&ring, c->fd, c);
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     return PDB_OK;

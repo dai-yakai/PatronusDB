@@ -7,11 +7,13 @@
 #include "pdb_handler.h"
 #include "pdb_sds.h"
 #include "pdb_list.h"
+#include "pdb_rdma.h"
 
 #define REPLICATION_BUFFER_LENGTH   1024*1024
 #define WRITE_BUFFER_LENGTH         16*1024*1024    // 16M
 #define PDB_PROTO_IO_BUFFER_LENGTH  16*1024         // 16k     
 #define CONNECTION_SIZE			    1024*1024       // 1024 * 1024
+#define REPLICATION_NUM             1024
 
 typedef int (*RCALLBACK)(int fd, msg_handler handler);
 
@@ -57,6 +59,15 @@ typedef struct conn_info {
 	} r_action;
 #endif
     // ###################################################
+    // rdb syn
+    struct pdb_rdma_conn_ctx* rdma_conn;
+    // incre syn
+    int is_incre_ready;
+    struct pdb_rdma_conn_ctx*  incre_rdma_conn;
+    uint64_t            incre_remote_vaddr;
+    uint32_t            incre_remote_rkey;
+    int                 is_syncing_incremental;
+
 
     int is_slave;                               // 是否为从节点
 
@@ -70,9 +81,17 @@ typedef struct conn_info {
     int is_full_replication;                         // 0: 同步完成； 1: 正在同步
 } conn_info_t;
 
+typedef struct conn_replication{
+    int* fd;
+    int slave_num;
+}conn_replication;
+
+extern struct conn_replication* global_replication;
+
 extern int global_conn_info_list_head;
 extern int global_conn_info_list_tail;
 extern struct conn_info* conn_list[CONNECTION_SIZE];
+
 extern int active_conn_num;
 
 void pdb_insert_conn_list(int fd);
