@@ -70,20 +70,14 @@ int pdb_is_aof_written_end(){
         if (errno != ECHILD) perror("wait4 error");
         return PDB_ERROR;
     }
-    // printf("buffer: %s\n", (char*)global_dump.aof_rewrite_buffer.head->val);
-    // Child process exits, and use writev to send global_dump->aof_rewrite_buffer
-    // if (pdb_is_list_NULL(&(global_dump.aof_rewrite_buffer))){
-    //     pdb_log_debug("Child process exits, but `global_dump->aof_rewrite_buffer` is NULL\n");
-    //     return PDB_OK;
-    // }
-    printf("Child process exits\n");
+
+    pdb_log_info("Child process exits\n");
 
     if (global_dump.aof_rewrite_buffer_ebpf_offset == 0){
         pdb_log_debug("Child process exits, but `global_dump->aof_rewrite_buffer` is NULL\n");
         return PDB_OK;
     }
 
-    
     fd = global_dump.dump_fd;
     // open(global_conf.dump_dir, O_RDWR | O_CREAT | O_APPEND, 0644);
     if (fd < 0) {
@@ -105,18 +99,6 @@ int pdb_is_aof_written_end(){
 }
 
 
-// int pdb_aof_buffer_append(char* resp_package, size_t package_len){
-//     if (!global_dump.is_aof || global_dump.is_aof_written){
-//         return PDB_OK;
-//     }
-
-//     if (is_need_command(resp_package)){
-//         global_dump.aof_buffer = pdb_sds_cat_len(global_dump.aof_buffer, resp_package, package_len);
-//     }
-//     return PDB_OK;
-// }
-
-
 int pdb_aof_dump(){
     
     if (!global_conf.is_aof || global_dump.is_aof_written){
@@ -130,17 +112,6 @@ int pdb_aof_dump(){
         pdb_log_error("Failed to open RDB file\n");
         return -1;
     }
-
-
-    // aof dump
-    // pdb_log_info("global_dump.aof_buffer: %s\n", global_dump.aof_buffer);
-    // open(global_conf.dump_dir, O_RDWR | O_CREAT | O_APPEND, 0644);
-    // pdb_log_debug("fd: %d\n", fd);
-    // if (fd < 0) {
-    //     pdb_log_error("Failed to open RDB file\n");
-    //     return -1;
-    // }
-
 
     struct io_uring_sqe* sqe = io_uring_get_sqe(&global_dump.ring);
     if (!sqe){
@@ -158,19 +129,6 @@ int pdb_aof_dump(){
     io_uring_prep_write(sqe, global_dump.dump_fd, buffer_to_write, len_to_write, -1);
     io_uring_sqe_set_data(sqe, buffer_to_write);
     io_uring_submit(&global_dump.ring);
-    // ssize_t write_len = write(fd, global_dump.aof_buffer, global_dump.aof_buffer_pos);
-    
-    // close(fd);
-
-    // if (write_len != -1){
-    //     // pdb_sds_free(global_dump.aof_buffer);
-    //     // global_dump.aof_buffer = pdb_get_new_sds(AOF_BUFFER_LEN);
-    //     global_dump.aof_buffer_pos = 0;
-    //     // pdb_log_debug("aof write: %d\n", write_len);
-    // }else{
-    //     pdb_log_error("write error\n");
-    //     return PDB_ERROR;
-    // }
 
     return PDB_OK;
 }
@@ -188,7 +146,7 @@ void pdb_is_aof_sqe_complete(){
         }
 
         if (aof_buffer){
-            pdb_log_info("io_uring success\n");
+            // pdb_log_info("io_uring success\n");
             pdb_sds_free(aof_buffer);
         }
         io_uring_cqe_seen(&global_dump.ring, cqe);
@@ -207,13 +165,12 @@ int pdb_aof_incrememtal_append(void* dataStructure, const char* key, uint8_t opc
         ret = pdb_incre_serialize(dataStructure, key, buf, total_len, offset, opcode);
         // global_dump.aof_rewrite_buffer_ebpf_offset = *offset;
         pdb_set_sds_len(global_dump.aof_rewrite_buffer_ebpf, global_dump.aof_rewrite_buffer_ebpf_offset);
-        
-        
     }else{
         char* buf = global_dump.aof_buffer;
         size_t* offset = &global_dump.aof_buffer_pos;
 
-        size_t total_len = pdb_get_sds_len(buf);
+        size_t total_len = pdb_get_sds_alloc(buf);
+        // pdb_log_info("total_len: %d\n", total_len);
         ret = pdb_incre_serialize(dataStructure, key, buf, total_len, offset, opcode);
         // global_dump.aof_buffer_pos = offset;
         pdb_set_sds_len(global_dump.aof_buffer, global_dump.aof_buffer_pos);
@@ -225,6 +182,46 @@ int pdb_aof_incrememtal_append(void* dataStructure, const char* key, uint8_t opc
     return ret;
 }
 
+int pdb_aof_buffer_append_bitmap(void* dataStructure, const char* key, uint64_t bit_offset, int val){
+    pdb_sds buf = global_dump.aof_buffer;
+    size_t* offset_ptr = &global_dump.aof_buffer_pos;
+    size_t start_offset = *offset_ptr;
+    size_t total_len = pdb_get_sds_alloc(buf);
+    
+    uint8_t opcode = PDB_OPCODE_BITMAP;
+    size_t key_len = (key == NULL) ? 0 : strlen(key);
+
+    // printf("[AOF_DEBUG] >>> Enter Bitmap Append: Key=%s, Offset_val=%zu, Buf_ptr=%p, Alloc=%zu\n", 
+    //        key ? key : "NULL", start_offset, (void*)buf, total_len);
+
+    
+    #define CHECK_AND_APPEND(func_call, name) do { \
+        size_t prev_off = *offset_ptr; \
+        if ((func_call) != PDB_RETURN_OK) { \
+            printf("[AOF_DEBUG] ERROR at %s: prev_off=%zu, current_off=%zu\n", name, prev_off, *offset_ptr); \
+            return -3; \
+        } \
+        if (*offset_ptr > total_len || *offset_ptr < prev_off) { \
+            printf("[AOF_DEBUG] CRITICAL: Offset corrupted after %s! %zu -> %zu (Max: %zu)\n", \
+                   name, prev_off, *offset_ptr, total_len); \
+        } \
+    } while(0)
+
+    CHECK_AND_APPEND(_pdb_append_uint8(buf, total_len, offset_ptr, opcode), "OPCODE");
+    CHECK_AND_APPEND(_pdb_append_uint32(buf, total_len, offset_ptr, key_len), "KEY_LEN");
+    CHECK_AND_APPEND(_pdb_append_string(buf, total_len, offset_ptr, (char*)key), "KEY_STR");
+    CHECK_AND_APPEND(_pdb_append_uint64(buf, total_len, offset_ptr, bit_offset), "BIT_OFFSET");
+    CHECK_AND_APPEND(_pdb_append_int(buf, total_len, offset_ptr, val), "VALUE");
+
+    #undef CHECK_AND_APPEND
+
+    // printf("[AOF_DEBUG] <<< Exit Bitmap Append Success: New_Offset=%zu, Written_Len=%zu\n", 
+    //        *offset_ptr, (*offset_ptr - start_offset));
+
+    pdb_aof_dump();
+    return 0;
+}
+
 
 int pdb_aof_load(const char* file){
     int time_used;
@@ -232,17 +229,10 @@ int pdb_aof_load(const char* file){
     gettimeofday(&tv_begin, NULL);
 
     int fd = global_dump.dump_fd;
-    // open(file, O_RDWR | O_CREAT | O_APPEND, 0644);
-    // open(file, O_RDONLY);
-    // if (fd < 0) {
-    //     pdb_log_error("RDB file not found or cannot be opened: %s\n", file);
-    //     return -1; 
-    // }
 
     struct stat st;
     if (fstat(fd, &st) < 0 || st.st_size == 0) {
         // file is empty
-        // close(fd);
         return 0; 
     }
     size_t total_size = st.st_size;
@@ -250,7 +240,6 @@ int pdb_aof_load(const char* file){
     const char* mapped_buf = (const char*)mmap(NULL, total_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapped_buf == MAP_FAILED) {
         pdb_log_error("mmap error\n");
-        // close(fd);
         return -1;
     }
 

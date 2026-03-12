@@ -7,6 +7,8 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 
+#include "pdb_cli_tool.h"
+
 #define MAX_MSG_LENGTH  1024
 #define SEND_BATCH      1024
 #define CMD_NUM         1000000
@@ -17,17 +19,16 @@
 
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
-int send_msg(int connfd, char* msg, int length){
+
+int pipeline_set_send_msg(int connfd, char* msg, int length){
     int total_sent = 0;
     int left = length;
     char *ptr = msg;
 
     while (left > 0) {
-        // printf("send: %.*s\n", left, ptr);
         int res = send(connfd, ptr, left, 0);
         if (res < 0) {
             if (errno == EINTR) continue; // 被信号打断，重试
-            // 如果是阻塞模式，EAGAIN 理论上不会出现，但为了稳健可以加
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
                 continue; 
             }
@@ -44,46 +45,26 @@ int send_msg(int connfd, char* msg, int length){
         left -= res;
     }
     
-    // 只有当 total_sent == length 时才算成功
     return total_sent;
 }
 
-int recv_msg(int connfd, char* msg, int length){
+int pipeline_set_recv_msg(int connfd, char* msg, int length){
     int res = recv(connfd, msg, length, 0);
     if (res < 0){
         perror("recv error");
         return -1;
     }
-
     return res;
 }
 
 
-int connect_tcpserver(const char* ip, unsigned short port){
-    int connfd = socket(AF_INET, SOCK_STREAM, 0);
-
-    struct sockaddr_in addr;
-    addr.sin_addr.s_addr = inet_addr(ip);
-    addr.sin_port = htons(port);
-    addr.sin_family = AF_INET;
-
-    int ret = connect(connfd, (struct sockaddr*)&addr, sizeof(struct sockaddr));
-    if (ret < 0){
-        printf("connect_tcpserver: connect error\n");
-        perror("connect");
-        return -1;
-    }
-
-    return connfd;
-}
-
 void testcase(int connfd, char* msg, char* pattern, char* casename){
     if (!msg || !pattern || !casename)    return ;
 
-    send_msg(connfd, msg, strlen(msg));
+    pipeline_set_send_msg(connfd, msg, strlen(msg));
 
     char result[MAX_MSG_LENGTH] = {0};
-    recv_msg(connfd, result, MAX_MSG_LENGTH);
+    pipeline_set_recv_msg(connfd, result, MAX_MSG_LENGTH);
 
     if (strcmp(result, pattern) == 0){
 #if ENABLE_PRINT_KV
@@ -93,17 +74,15 @@ void testcase(int connfd, char* msg, char* pattern, char* casename){
         printf("==> FAILED -> %s, '%s' != '%s'\n", casename, result, pattern);
         exit(-1);
     }
-
 }
 
-void verify_responses(int fd, int expect_count, const char* pattern) {
+void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const char* pattern, const char* ds_type) {
     char buffer[16384]; 
     int received_count = 0;
     int buf_len = 0;    
     int pattern_len = strlen(pattern);
 
     while (received_count < expect_count) {
-        // 追加接收
         int n = recv(fd, buffer + buf_len, sizeof(buffer) - buf_len - 1, 0);
         if (n < 0) {
             if (errno == EINTR) continue;
@@ -118,31 +97,43 @@ void verify_responses(int fd, int expect_count, const char* pattern) {
         buffer[buf_len] = '\0'; 
 
         char *current = buffer;
-        // printf("recv: %s\n", current);
         while (1) {
             char *line_end = strchr(current, '\n');
             if (line_end == NULL) {
-                break; // 半包，跳出内层循环继续 recv
+                break; // 半包
             }
             int current_resp_len = line_end - current + 1;
             
             if (strncmp(current, pattern, pattern_len) != 0) {
-                // 校验失败！
-                // 把 \n 换成 \0 方便打印错误信息
                 *line_end = '\0'; 
-                // 去掉可能的 \r
                 if (current_resp_len > 1 && current[current_resp_len-2] == '\r') 
                     current[current_resp_len-2] = '\0';
 
-                printf("\n[FATAL] Response Verify Failed!\n");
-                printf("Expected: %s", pattern); // pattern自带换行
-                printf("Received: %s\n", current);
-                printf("Progress: %d / %d in this batch\n", received_count, expect_count);
+                // 🚀 核心逻辑：推算报错的具体命令
+                int fail_i = start_i + (received_count / 3);
+                int cmd_idx = received_count % 3;
+                
+                char op_set[16], op_del[16];
+                if (strcmp(ds_type, "RBTREE") == 0) { strcpy(op_set, "RSET"); strcpy(op_del, "RDEL"); }
+                else if (strcmp(ds_type, "HASH") == 0) { strcpy(op_set, "HSET"); strcpy(op_del, "HDEL"); }
+                else { strcpy(op_set, "SET"); strcpy(op_del, "DEL"); }
+
+                char failed_cmd[128];
+                if (cmd_idx == 0) sprintf(failed_cmd, "%s DAI%d %d", op_set, fail_i, fail_i);
+                else if (cmd_idx == 1) sprintf(failed_cmd, "%s TAO%d %d", op_set, fail_i, fail_i);
+                else sprintf(failed_cmd, "%s TAO%d", op_del, fail_i);
+
+                printf("\n============================================\n");
+                printf("\033[1;31m[FATAL ERROR] Response Verify Failed!\033[0m\n");
+                printf("Failed Command : %s\n", failed_cmd);
+                printf("Loop Index (i) : %d\n", fail_i);
+                printf("Expected Reply : %s", pattern); 
+                printf("Actual Reply   : %s\n", current);
+                printf("============================================\n");
                 exit(-1);
             }
 
             received_count++;
-            
             current = line_end + 1;
 
             if (received_count == expect_count) break;
@@ -160,8 +151,8 @@ void verify_responses(int fd, int expect_count, const char* pattern) {
 void testcase_100w(int connfd){
     int count = 1000000;
     int i = 0;
-    char cmd[4096];
     int response_count = 0;
+    int batch_start_i = 0; 
     
     char batch_buf[8192];
     int batch_len = 0;
@@ -176,228 +167,174 @@ void testcase_100w(int connfd){
 
     // ############## RBtree ###################### 
 #if RBTREE
-    printf("RBTREE test begin\n");
+    printf("RBTREE is testing..........\n");
+    batch_start_i = 0; 
+    response_count = 0;
+    batch_len = 0;
+
     gettimeofday(&tv_begin, NULL);
     for(i = 0; i < count; i++){
-        if (i % 10000 == 0){
-            printf("i: %d\n", i);
-        }
-        
-        // RSET DAI{i} {i}
         k_len = sprintf(key, "DAI%d", i);  
         v_len = sprintf(val, "%d", i);     
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n"
-            "$4\r\nRSET\r\n"
-            "$%d\r\n%s\r\n"   
-            "$%d\r\n%s\r\n",  
-            k_len, key, 
-            v_len, val);
+            "*3\r\n$4\r\nRSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",  
+            k_len, key, v_len, val);
         
-        // RSET TAO{i} {i}
         k_len = sprintf(key, "TAO%d", i);
         v_len = sprintf(val, "%d", i);
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n"
-            "$4\r\nRSET\r\n"
-            "$%d\r\n%s\r\n"
-            "$%d\r\n%s\r\n", 
-            k_len, key, 
-            v_len, val);
+            "*3\r\n$4\r\nRSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", 
+            k_len, key, v_len, val);
         
-        // RDEL TAO{i}
         k_len = sprintf(key, "TAO%d", i);
-        
         batch_len += sprintf(batch_buf + batch_len, 
-            "*2\r\n"
-            "$4\r\nRDEL\r\n"
-            "$%d\r\n%s\r\n", 
-            k_len, key);
+            "*2\r\n$4\r\nRDEL\r\n$%d\r\n%s\r\n", k_len, key);
         
         response_count += 3;
         
         if (batch_len > 4096 || response_count >= SEND_BATCH) { 
             if (batch_len > 0) {
-                send_msg(connfd, batch_buf, batch_len);
+                pipeline_set_send_msg(connfd, batch_buf, batch_len);
                 batch_len = 0;
             }
         }
         
         if (response_count >= SEND_BATCH) {
-            verify_responses(connfd, response_count, "OK\r\n");
+            // 🚀 修改点 2：传入 start_i 和结构类型
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+            batch_start_i += (response_count / 3); // 步进游标
             response_count = 0;
         }
     }
     
     if (batch_len > 0) {
-        send_msg(connfd, batch_buf, batch_len);
+        pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        verify_responses(connfd, response_count, "OK\r\n");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
     }
 
     gettimeofday(&tv_end, NULL);
-
     time_used = TIME_SUB_MS(tv_end, tv_begin);
-    printf("RBTree testcase --> time_use: %ld, qps: %ld\n", time_used, 3000000L * 1000 / time_used);
+    printf("RBTree testcase success --> time_use: %ld, qps: %ld\n", time_used, 3000000L * 1000 / time_used);
 #endif
 
-    response_count = 0;
 #if HASH
     //############## Hash ######################
-    printf("HASH test begin\n");
+    printf("HASH is testing........\n");
+    batch_start_i = 0; // 重置游标
+    response_count = 0;
+    batch_len = 0;
+
     gettimeofday(&tv_begin, NULL);
     for(i = 0; i < count; i++){
-        if (i % 10000 == 0){
-            printf("i: %d\n", i);
-        }
-        
-        // RSET DAI{i} {i}
         k_len = sprintf(key, "DAI%d", i);  
         v_len = sprintf(val, "%d", i);     
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n"
-            "$4\r\nHSET\r\n"
-            "$%d\r\n%s\r\n"   
-            "$%d\r\n%s\r\n",  
-            k_len, key, 
-            v_len, val);
+            "*3\r\n$4\r\nHSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",  
+            k_len, key, v_len, val);
         
-        // RSET TAO{i} {i}
         k_len = sprintf(key, "TAO%d", i);
         v_len = sprintf(val, "%d", i);
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n"
-            "$4\r\nHSET\r\n"
-            "$%d\r\n%s\r\n"
-            "$%d\r\n%s\r\n", 
-            k_len, key, 
-            v_len, val);
+            "*3\r\n$4\r\nHSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", 
+            k_len, key, v_len, val);
         
-        // RDEL TAO{i}
         k_len = sprintf(key, "TAO%d", i);
-        
         batch_len += sprintf(batch_buf + batch_len, 
-            "*2\r\n"
-            "$4\r\nHDEL\r\n"
-            "$%d\r\n%s\r\n", 
-            k_len, key);
+            "*2\r\n$4\r\nHDEL\r\n$%d\r\n%s\r\n", k_len, key);
         
         response_count += 3;
         
         if (batch_len > 4096 || response_count >= SEND_BATCH) { 
             if (batch_len > 0) {
-                send_msg(connfd, batch_buf, batch_len);
+                pipeline_set_send_msg(connfd, batch_buf, batch_len);
                 batch_len = 0;
             }
         }
         
         if (response_count >= SEND_BATCH) {
-            verify_responses(connfd, response_count, "OK\r\n");
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "HASH");
+            batch_start_i += (response_count / 3);
             response_count = 0;
         }
     }
     
     if (batch_len > 0) {
-        send_msg(connfd, batch_buf, batch_len);
+        pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        verify_responses(connfd, response_count, "OK\r\n");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "HASH");
     }
 
     gettimeofday(&tv_end, NULL);
-
     time_used = TIME_SUB_MS(tv_end, tv_begin);
-    printf("HASH testcase --> time_use: %ld, qps: %ld\n", time_used, 3000000L * 1000 / time_used);
+    printf("HASH testcase success --> time_use: %ld, qps: %ld\n", time_used, 3000000L * 1000 / time_used);
 #endif
 
-    response_count = 0;
 #if ARRAY
     //############## Array ######################  
     printf("ARRAY test begin\n");
+    batch_start_i = 0; // 重置游标
+    response_count = 0;
+    batch_len = 0;
+
     gettimeofday(&tv_begin, NULL);
     for(i = 0; i < count; i++){
-        if (i % 10000 == 0){
-            printf("i: %d\n", i);
-        }
-        
-        // RSET DAI{i} {i}
         k_len = sprintf(key, "DAI%d", i);  
         v_len = sprintf(val, "%d", i);     
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n"
-            "$3\r\nSET\r\n"
-            "$%d\r\n%s\r\n"   
-            "$%d\r\n%s\r\n",  
-            k_len, key, 
-            v_len, val);
+            "*3\r\n$3\r\nSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",  
+            k_len, key, v_len, val);
         
-        // RSET TAO{i} {i}
         k_len = sprintf(key, "TAO%d", i);
         v_len = sprintf(val, "%d", i);
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n"
-            "$3\r\nSET\r\n"
-            "$%d\r\n%s\r\n"
-            "$%d\r\n%s\r\n", 
-            k_len, key, 
-            v_len, val);
+            "*3\r\n$3\r\nSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", 
+            k_len, key, v_len, val);
         
-        // RDEL TAO{i}
         k_len = sprintf(key, "TAO%d", i);
-        
         batch_len += sprintf(batch_buf + batch_len, 
-            "*2\r\n"
-            "$3\r\nDEL\r\n"
-            "$%d\r\n%s\r\n", 
-            k_len, key);
+            "*2\r\n$3\r\nDEL\r\n$%d\r\n%s\r\n", k_len, key);
         
         response_count += 3;
         
         if (batch_len > 4096 || response_count >= SEND_BATCH) { 
             if (batch_len > 0) {
-                send_msg(connfd, batch_buf, batch_len);
+                pipeline_set_send_msg(connfd, batch_buf, batch_len);
                 batch_len = 0;
             }
         }
         
         if (response_count >= SEND_BATCH) {
-            verify_responses(connfd, response_count, "OK\r\n");
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "ARRAY");
+            batch_start_i += (response_count / 3);
             response_count = 0;
         }
     }
     
     if (batch_len > 0) {
-        send_msg(connfd, batch_buf, batch_len);
+        pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        verify_responses(connfd, response_count, "OK\r\n");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "ARRAY");
     }
 
     gettimeofday(&tv_end, NULL);
-
     time_used = TIME_SUB_MS(tv_end, tv_begin);
-    printf("ARRAY testcase --> time_use: %ld, qps: %ld\n", time_used, 3000000L * 1000 / time_used);
+    printf("ARRAY testcase success --> time_use: %ld, qps: %ld\n", time_used, 3000000L * 1000 / time_used);
 #endif    
 }   
 
 
 // ./testcase 192.168.127.222 8888
-int main(int argc, char* argv[]){
-    if (argc != 3){
-        printf("argc error\n");
-        return -1;
-    }
-
-    char* ip = argv[1];
-    int port = atoi(argv[2]);
-
+int pdb_testcase_pipeline_set(char* ip, int port){
     int connfd = connect_tcpserver(ip, port);
 
     if (connfd == -1){
@@ -405,8 +342,6 @@ int main(int argc, char* argv[]){
         exit(-1);
     }
 
-
-    // array_testcase_10w(connfd);
     testcase_100w(connfd);
 
     return 0;

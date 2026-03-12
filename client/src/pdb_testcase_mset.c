@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "pdb_cli_tool.h"
+
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 #define BUFFER_SIZE (64 * 1024)
 
@@ -18,7 +20,7 @@
 #define BATCH          100
 #define BATCH_NUM      10000
 
-int send_all(int fd, char* msg, int length) {
+int mset_send_all(int fd, char* msg, int length) {
     int total_sent = 0;
     int left = length;
     char *ptr = msg;
@@ -38,7 +40,7 @@ int send_all(int fd, char* msg, int length) {
 }
 
 
-int verify_response(int fd) {
+int mset_verify_response(int fd) {
     char buffer[64];
     int n = recv(fd, buffer, sizeof(buffer) - 1, 0);
     if (n <= 0) {
@@ -57,19 +59,6 @@ int verify_response(int fd) {
     return -1;
 }
 
-int connect_tcpserver(const char* ip, unsigned short port) {
-    int connfd = socket(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in addr;
-    addr.sin_addr.s_addr = inet_addr(ip);
-    addr.sin_port = htons(port);
-    addr.sin_family = AF_INET;
-
-    if (connect(connfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        perror("connect error");
-        return -1;
-    }
-    return connfd;
-}
 
 void testcase_mset_100w(int connfd) {
     printf("Starting MSET testcase (10 batches * 10,000 keys)...\n");
@@ -116,11 +105,11 @@ void testcase_mset_100w(int connfd) {
             global_key_idx++;
         }
 
-        if (send_all(connfd, send_buf, offset) < 0) {
+        if (mset_send_all(connfd, send_buf, offset) < 0) {
             exit(1);
         }
 
-        int ret = verify_response(connfd);
+        int ret = mset_verify_response(connfd);
         if (ret == 0){
             printf("OK\n");
         }else if (ret == 1){
@@ -176,11 +165,11 @@ void testcase_mset_100w(int connfd) {
             global_key_idx++;
         }
 
-        if (send_all(connfd, send_buf, offset) < 0) {
+        if (mset_send_all(connfd, send_buf, offset) < 0) {
             exit(1);
         }
 
-        int ret = verify_response(connfd);
+        int ret = mset_verify_response(connfd);
         if (ret == 0){
             printf("OK\n");
         }else if (ret == 1){
@@ -236,11 +225,11 @@ void testcase_mset_100w(int connfd) {
             global_key_idx++;
         }
 
-        if (send_all(connfd, send_buf, offset) < 0) {
+        if (mset_send_all(connfd, send_buf, offset) < 0) {
             exit(1);
         }
 
-        int ret = verify_response(connfd);
+        int ret = mset_verify_response(connfd);
         if (ret == 0){
             printf("OK\n");
         }else if (ret == 1){
@@ -309,74 +298,13 @@ void recv_and_print_raw(int fd, int expected_count) {
     }
 }
 
-
-void testcase_mget_100w(int connfd) {
-    printf(">> Starting MGET testcase (100 batches * 10,000 keys)...\n");
-
-    int batches = 50;
-    int keys_per_batch = 10000;
-    long long total_keys = batches * keys_per_batch;
-
-    int buffer_size = 2 * 1024 * 1024;
-    char *send_buf = malloc(buffer_size);
-    if (!send_buf) { perror("malloc failed"); exit(1); }
-
-    struct timeval tv_start, tv_end;
-    gettimeofday(&tv_start, NULL);
-
-    int global_key_idx = 0;
-
-    for (int b = 0; b < batches; b++) {
-        int offset = 0;
-        int num_args = 1 + keys_per_batch; // 1个命令 + N个Key
-        
-        offset += sprintf(send_buf + offset, "*%d\r\n$5\r\nRMGET\r\n", num_args);
-
-        for (int k = 0; k < keys_per_batch; k++) {
-            char key[32];
-            int klen = sprintf(key, "RK_%d", global_key_idx);
-            offset += sprintf(send_buf + offset, "$%d\r\n%s\r\n", klen, key);
-            global_key_idx++;
-        }
-
-        if (send_all(connfd, send_buf, offset) < 0) exit(1);
-        
-        // 要放在循环里面
-        recv_and_print_raw(connfd, keys_per_batch);
-    }
-    
-
-    gettimeofday(&tv_end, NULL);
-    
-    
-    free(send_buf);
-
-    long time_used_ms = TIME_SUB_MS(tv_end, tv_start);
-    double seconds = time_used_ms / 1000.0;
-    long qps = (long)(total_keys / seconds);
-    double avg_latency_ms = (double)time_used_ms / batches;
-
-    printf("   [MGET] Time: %ld ms, QPS: %ld, Latency: %.2f ms/batch\n", 
-           time_used_ms, qps, avg_latency_ms);
-    printf("------------------------------------------------\n");
-}
-
-int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        printf("Usage: %s <ip> <port>\n", argv[0]);
-        return -1;
-    }
-
-    char* ip = argv[1];
-    int port = atoi(argv[2]);
-
+int pdb_testcase_mset(char* ip, int port) {
     int connfd = connect_tcpserver(ip, port);
     if (connfd == -1) {
         exit(-1);
     }
 
     testcase_mset_100w(connfd);
-    // testcase_mget_100w(connfd);
 
     close(connfd);
     return 0;

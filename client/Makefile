@@ -1,27 +1,28 @@
 CC = gcc
-
-CFLAGS = -Wall -g
-
+CFLAGS = -g
 LDFLAGS = -lreadline -lhistory
+
+# 目录定义
+SRC_DIR = src
+OBJ_DIR = obj
 
 TARGET = pdb-cli
 
-SRC_DIR := src
-OBJ_DIR := obj
+SRCS = $(wildcard $(SRC_DIR)/*.c)
+OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
 
-SRCS = pdb_cli.c
-SRCS_WITH_PATH := $(addprefix $(SRC_DIR)/, $(SRCS))
-OBJS := $(SRCS:%.c=$(OBJ_DIR)/%.o)
+all: $(OBJ_DIR) $(TARGET)
 
-all: $(TARGET)
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
 
 $(TARGET): $(OBJS)
 	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
-%.o: %.c
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -rf $(OBJ_DIR) $(TARGET)
 
 .PHONY: all clean

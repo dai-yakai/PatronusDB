@@ -1,12 +1,18 @@
 #include "pdb_bitmap.h"
 
-struct pdb_bitmap* pdb_bitmap_create(char* key, pdb_sds* s){
+struct pdb_bitmap* pdb_bitmap_create(char* key, pdb_sds s){
+    // pdb_log_info("pdb_bitmap_create\n");
     struct pdb_bitmap* bitmap = pdb_malloc(sizeof(struct pdb_bitmap));
+
     bitmap->data = s;
 
-    char* tmp_key = pdb_malloc(strlen(key) + 1);
-    strcpy(tmp_key, key);
-    bitmap->key = tmp_key;
+    if (key != NULL){
+        char* tmp_key = pdb_malloc(strlen(key) + 1);
+        strcpy(tmp_key, key);
+        bitmap->key = tmp_key;
+    }
+
+    bitmap->key = NULL;
 
     return bitmap;
 }
@@ -56,7 +62,7 @@ int pdb_bitmap_set(pdb_sds* b, uint64_t offset, int val, int* old_value){
 }
 
 int pdb_bitmap_set_(struct pdb_bitmap* bitmap, uint64_t offset, int val, int* old_value){
-    return pdb_bitmap_set(bitmap->data, offset, val, old_value);
+    return pdb_bitmap_set(&(bitmap->data), offset, val, old_value);
 }
 
 int pdb_bitmap_get(pdb_sds b, uint64_t offset){

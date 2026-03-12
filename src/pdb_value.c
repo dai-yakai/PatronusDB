@@ -67,7 +67,7 @@ pdb_sds pdb_parse_value_to_string(pdb_value* value){
 
         case PDB_VALUE_TYPE_BITMAP:
         {
-            return (pdb_sds)value->ptr;
+            return value->ptr;
         }
 
         case PDB_VALUE_TYPE_NULL:
@@ -196,6 +196,11 @@ pdb_value* pdb_create_value(void* value, int type, ...){
 }
 
 void pdb_destroy_value(pdb_value* value){
+    if (value->type == PDB_VALUE_TYPE_BITMAP){
+        pdb_sds_free(((struct pdb_bitmap*)value->ptr)->data);
+        pdb_free(value, -1);
+        return;
+    }
     if (value->type == PDB_VALUE_TYPE_INT){
         pdb_free(value, -1);
         return;

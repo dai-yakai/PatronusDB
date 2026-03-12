@@ -1,4 +1,10 @@
 // src/pdb_ebpf.c
+
+/**
+ * We utilize eBPF uprobes to intercept database mutation in real-time.
+ * Upon each increment, the `handle_event` callback is triggered to
+ * asynchronously append the incremental data into the `global_dump.aof_buffer`. 
+ */
 #define _GNU_SOURCE
 #include <dlfcn.h>
 #include <stdio.h>
@@ -10,12 +16,11 @@
 #include "pdb_rdma.h"
 #include "pdb_conninfo.h"
 
-static struct pdb_delta_bpf *skel;
-static struct ring_buffer *rb = NULL;
+static struct pdb_delta_bpf* skel;
+static struct ring_buffer* rb = NULL;
 extern pdb_rdma_snapshot_ctx* incre_master_snap;
 pdb_ebpf_ring_t g_ebpf_ring = {0};
 
-// 🚩 声明外部函数，只为了在下面取它的运行地址
 extern int pdb_array_set();
 extern int pdb_rbtree_set();
 extern int pdb_set_add();
@@ -29,6 +34,10 @@ struct dirty_key_event {
     void* dataStructure;
     char parent_key[PDB_MAX_KEY_LEN];
     int is_sub_element;
+
+    // bitmap
+    uint64_t offset;
+    int val;
 };
 
 /**
@@ -36,17 +45,16 @@ struct dirty_key_event {
  */
 typedef struct pdb_retry_node {
     void *dataStructure;
-    char key[256];      // 建议根据 PDB 的 key 最大长度设定
+    char key[256];      // store key
     uint8_t opcode;
     struct pdb_retry_node *next;
 } pdb_retry_node_t;
 
-// 重试队列管理结构
 typedef struct {
     pdb_retry_node_t *head;
     pdb_retry_node_t *tail;
     size_t count;
-    pthread_mutex_t lock; // 确保 handle_event 并发写入时的安全
+    pthread_mutex_t lock;
 } pdb_retry_queue_t;
 
 static pdb_retry_queue_t g_retry_queue = {NULL, NULL, 0, PTHREAD_MUTEX_INITIALIZER};
@@ -86,7 +94,6 @@ static int process_single_retry() {
     int ret = pdb_rdma_incremental_append(node->dataStructure, node->key, node->opcode);
     
     if (ret == 0) {
-        // 成功处理，出队
         g_retry_queue.head = node->next;
         if (g_retry_queue.head == NULL) g_retry_queue.tail = NULL;
         g_retry_queue.count--;
@@ -94,18 +101,16 @@ static int process_single_retry() {
         free(node);
         return 1; 
     } else if (ret == -3) {
-        // -3 代表 RDMA 确实满了，保留在队头，等会儿再试
         pthread_mutex_unlock(&g_retry_queue.lock);
         return -1; 
     } else {
-        // 🔴 毒药节点 (-1, -2)！必须强行出队，否则整个数据库都会被卡死！
         g_retry_queue.head = node->next;
         if (g_retry_queue.head == NULL) g_retry_queue.tail = NULL;
         g_retry_queue.count--;
         pthread_mutex_unlock(&g_retry_queue.lock);
         // pdb_log_debug("Dropped poison key: %s\n", (char*)node->key);
         free(node);
-        return 1; // 告诉外层，我已经清理掉了一个垃圾，继续循环处理下一个！
+        return 1; 
     }
 }
 
@@ -115,7 +120,13 @@ static int handle_event(void *ctx, void *data, size_t data_sz) {
     struct dirty_key_event *e = (struct dirty_key_event *)data;
     fflush(stdout);
 
-    int ret = pdb_aof_incrememtal_append(e->dataStructure, e->key, e->opcode);
+    int ret;
+    if (e->opcode == PDB_OPCODE_BITMAP){
+        // pdb_log_info("handle: %p\n", e->key);
+        ret = pdb_aof_buffer_append_bitmap(e->dataStructure, e->key, e->offset, e->val);
+        return 0;
+    }
+    ret = pdb_aof_incrememtal_append(e->dataStructure, e->key, e->opcode);
     if (ret < 0){
         // full
         // pdb_log_debug("key: %s\n", e->key);
@@ -202,6 +213,30 @@ int pdb_ebpf_init() {
         return -1;
     }
 
+    /**************************************************** */
+    /********************    BITMAP    ****************** */
+    /**************************************************** */
+    Dl_info bitmap_info;
+    if (dladdr((void *)pdb_bitmap_set_, &bitmap_info) == 0) {
+        fprintf(stderr, "Error: dladdr failed\n");
+        return -1;
+    }
+    
+    dynamic_offset = (size_t)pdb_bitmap_set_ - (size_t)bitmap_info.dli_fbase;
+    printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
+    skel->links.pdb_bitmap_add_entry = bpf_program__attach_uprobe(
+        skel->progs.pdb_bitmap_add_entry,
+        false,
+        -1,
+        "/proc/self/exe",
+        dynamic_offset
+    );
+    if (!skel->links.pdb_bitmap_add_entry) {
+        fprintf(stderr, "Error: Failed to attach uprobe manually\n");
+        return -1;
+    }
+
+
     rb = ring_buffer__new(bpf_map__fd(skel->maps.rb), handle_event, NULL, NULL);
     if (!rb) return -3;
 
@@ -213,37 +248,4 @@ void pdb_ebpf_poll() {
     // pdb_log_debug("pdb_ebpf_poll\n");
     int ret = ring_buffer__poll(rb, 0);
     return;
-
-    // if (g_retry_queue.count > 0) return;
-
-    // is rdma buffer full?
-    // size_t len = incre_master_snap->pool.total_size;
-    
-    // uint64_t* flag = (uint64_t*)(incre_master_snap->pool.base_addr + (PDB_RDMA_INCRE_BUFFER_LEN - 8));
-    // uint64_t* offset = (uint64_t*)(incre_master_snap->pool.base_addr + (PDB_RDMA_INCRE_BUFFER_LEN - 16));
-    // uint64_t* flag2 = (uint64_t*)(incre_master_snap->pool.base_addr + (PDB_RDMA_INCRE_BUFFER_LEN - 24));
-    
-    // // if (*offset + 4096 > len - 24) {
-    // //     // full 
-    // //     return;
-    // // }
-    // *flag2 = 1;
-
-    // if (*flag == 0){
-    //     while (process_single_retry() > 0);
-    // }
-    // // pdb_log_debug("flag: %d\n", *flag);
-    // if (rb && *flag == 0) {
-    //     int ret = 0;
-    //     do
-    //     {
-    //         ret = ring_buffer__poll(rb, 0);
-    //         // pdb_log_debug("*flag2 = 0\n");
-    //     } 
-    //     while(ret > 0);
-    // }
-
-    // *flag2 = 0;
-
-    return ;
 }

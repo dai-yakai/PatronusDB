@@ -53,6 +53,9 @@ int pdb_rdb_load(const char* file){
                     goto load_err;
                 }
                 break;
+            case PDB_OPCODE_EOF:
+            // end of file
+                break;
                 
             default:
                 pdb_log_error("RDB File Corrupted! Unknown structure opcode: %d at offset %zu\n", opcode, offset);
@@ -312,18 +315,18 @@ int pdb_rdb_dump(const char* file){
         return PDB_ERROR;
     }
 
-    int ret = pdb_rdb_array_dump(&global_array, tmp_file_name);
+    int ret = pdb_rdb_array_dump(&global_array, file);
     if (ret != PDB_OK) {
         pdb_log_error("array dump error\n");
         return ret;
     }
 
-    ret = pdb_rdb_rbtree_dump(&global_rbtree, tmp_file_name);
+    ret = pdb_rdb_rbtree_dump(&global_rbtree, file);
     if (ret != PDB_OK){
         pdb_log_error("rbtree dump error\n");
     }
     
-    ret = pdb_rdb_hash_dump(&global_hash, tmp_file_name);
+    ret = pdb_rdb_hash_dump(&global_hash, file);
     if (ret != PDB_OK) {
         pdb_log_error("hash dump error\n");
         return ret;
@@ -344,13 +347,14 @@ int pdb_rdb_dump(const char* file){
         return ret;
     }
 
-    if (ret == PDB_OK){
-        if (rename(tmp_file_name, file) == -1){
-            pdb_log_error("rename error\n");
-            unlink(tmp_file_name);
-            return PDB_ERROR;
-        }
-    }
+    // if (ret == PDB_OK){
+    //     if (rename(tmp_file_name, file) == -1){
+    //         pdb_log_error("RDB rename failed! From %s to %s. Reason: %s (errno: %d)\n", 
+    //               tmp_file_name, file, strerror(errno), errno);
+    //         unlink(tmp_file_name);
+    //         return PDB_ERROR;
+    //     }
+    // }
     // close(fd);
     
     return PDB_OK;

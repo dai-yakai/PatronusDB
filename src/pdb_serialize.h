@@ -34,6 +34,10 @@
 
 int _pdb_append(char* buf, size_t buf_len, size_t* offset, void* data, size_t data_len);
 int _pdb_append_uint8(char* buf, size_t buf_len, size_t* offset, uint8_t val);
+int _pdb_append_uint16(char* buf, size_t buf_len, size_t* offset, uint16_t val);
+int _pdb_append_uint32(char* buf, size_t buf_len, size_t* offset, uint32_t val);
+int _pdb_append_uint64(char* buf, size_t buf_len, size_t* offset, uint64_t val);
+
 int _pdb_append_int(char* buf, size_t buf_len, size_t* offset, int val);
 int _pdb_append_size_t(char* buf, size_t buf_len, size_t* offset, size_t val);
 int _pdb_append_long(char* buf, size_t buf_len, size_t* offset, long val);
@@ -43,13 +47,17 @@ int _pdb_append_string(char* buf, size_t buf_len, size_t* offset, char* val);
 int _pdb_append_value(char* buf, size_t buf_len, size_t* offset, pdb_value* value);
 int _pdb_append_set(char* buf, size_t buf_len, size_t* offset, pdb_set* set);
 int _pdb_append_sset(char* buf, size_t buf_len, size_t* offset, struct pdb_sorted_set* sset);
-int _pdb_append_bitmap(char* buf, size_t buf_len, size_t* offset, pdb_sds s);
+int _pdb_append_bitmap(char* buf, size_t buf_len, size_t* offset, struct pdb_bitmap* bitmap);
 int pdb_serialize_hash(char* buf, size_t buf_len, size_t* offset, pdb_hash_t* hash);
 int pdb_serialize_array(char* buf, size_t buf_len, size_t* offset, pdb_array_t* array);
 int pdb_serialize_rbtree(char* buf, size_t buf_len, size_t* offset, pdb_rbtree_t* rbtree);
 
 int _pdb_read(const char* buf, size_t buf_len, size_t* offset, void* dest, size_t len);
 int _pdb_read_uint8(const char* buf, size_t buf_len, size_t* offset, uint8_t* val);
+int _pdb_read_uint16(const char* buf, size_t buf_len, size_t* offset, uint16_t* val);
+int _pdb_read_uint32(const char* buf, size_t buf_len, size_t* offset, uint32_t* val);
+int _pdb_read_uint64(const char* buf, size_t buf_len, size_t* offset, uint64_t* val);
+
 int _pdb_read_int(const char* buf, size_t buf_len, size_t* offset, int* val);
 int _pdb_read_size_t(const char* buf, size_t buf_len, size_t* offset, size_t* val);
 int _pdb_read_long(const char* buf, size_t buf_len, size_t* offset, long* val);

@@ -12,23 +12,22 @@
 #include "pdb_array.h"
 #include "pdb_ebpf.h"
 
+extern void pdb_ebpf_poll();
 pdb_rdma_snapshot_ctx* global_master_snapshot = NULL;
-// volatile uint64_t remote_cookie_val = 0;
 
-// 性能调优常量
-#define NUM_CHUNKS 16          // 将大块数据切分为16个片段并行拉取
-#define RDMA_READ_DEPTH 32     // 对应 QP 配置中的 max_rd_atomic
+// Performance Configuration Constants
+// Divide large data into 16 chunks for parallel fetching
+#define NUM_CHUNKS 16        
+// Corresponding to max_rd_atomic in QP configuration  
+#define RDMA_READ_DEPTH 32
 
-/**
- * 计算微秒级延迟
- */
 static double get_delta_ms(struct timeval t_start, struct timeval t_end) {
     return (t_end.tv_sec - t_start.tv_sec) * 1000.0 + (t_end.tv_usec - t_start.tv_usec) / 1000.0;
 }
 
 
 
-extern void pdb_ebpf_poll();
+
 
 /**
  * **************************************************

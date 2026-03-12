@@ -1,6 +1,7 @@
 #include "pdb_serialize.h"
-#define PDB_OPCODE_SUB_SET  0xF3
-#define PDB_OPCODE_SUB_SSET 0xF4
+#define PDB_OPCODE_SUB_SET      0xF3
+#define PDB_OPCODE_SUB_SSET     0xF4
+#define PDB_OPCODE_SUB_BITMAP   0xF5
 /**
  * If succeed, return serialize len; otherwise return -1;
  */
@@ -11,11 +12,29 @@ int pdb_incre_serialize(void* dataStructure, const char* key, char* buf, size_t 
     // 🚩 步骤 1: 身份识别逻辑
     char* parent_key = NULL;
     if (opcode == PDB_OPCODE_HASH) {
+        pdb_value* value = pdb_hash_get(&global_hash, key);
+        if (value != NULL && value->type == PDB_VALUE_TYPE_BITMAP){
+            pdb_log_info("hash set bitmap\n");
+            return -3;
+        }
+
+
         pdb_hash_t* h = (pdb_hash_t*)dataStructure;
-        if (h->parent_key != NULL) {
-            parent_key = h->parent_key;
-            // 修正 Opcode：告诉反序列化器，这是一个 SADD 操作，不是顶层 HSET
-            opcode = PDB_OPCODE_SUB_SET; 
+        parent_key = h->parent_key;
+        if (parent_key != NULL){
+            value = pdb_hash_get(&global_hash, parent_key);
+            switch(value->type){
+                case PDB_VALUE_TYPE_SORTEDSET:
+                {
+                    opcode = PDB_OPCODE_SUB_SET; 
+                    break;
+                }
+                case PDB_VALUE_TYPE_SET:
+                {
+                    opcode = PDB_OPCODE_SUB_SET; 
+                    break;
+                }
+            }
         }
     }
 
@@ -25,7 +44,7 @@ int pdb_incre_serialize(void* dataStructure, const char* key, char* buf, size_t 
         case PDB_OPCODE_HASH:  value = pdb_hash_get(dataStructure, (char*)key); break;
         case PDB_OPCODE_RBTREE: value = pdb_rbtree_get(dataStructure, (char*)key); break;
         case PDB_OPCODE_SUB_SET: value = pdb_hash_get(dataStructure, (char*)key); break;
-    }
+    }   
 
     if (value == NULL) return -1;
     if (*offset + 4096 >= buf_len - 32) return -3;
@@ -93,12 +112,47 @@ int pdb_incre_deserialize(const char* buf, size_t buf_len, size_t* offset){
                 pdb_sortedSet_add((struct pdb_sorted_set*)set_val->ptr, member_key, score);
             } else if (set_val->type == PDB_VALUE_TYPE_HASH) {
                 pdb_hash_set((pdb_hash_t*)set_val->ptr, member_key, val);
+            } else if (set_val->type == PDB_VALUE_TYPE_BITMAP){
+
             }
         }
 
         pdb_free(parent_key, -1);
         pdb_free(member_key, -1);
         pdb_decre_value(val);
+        return 0;
+    }
+
+    if (opcode == PDB_OPCODE_BITMAP){
+        // pdb_log_debug("deserialize bitmap\n");
+        uint32_t key_len;
+        char* key = pdb_malloc(key_len + 1);
+        int val;
+        uint64_t bit_offset;
+        int ret;
+        struct pdb_bitmap* bitmap;
+        if (_pdb_read_uint32(buf, buf_len, offset, &key_len) < 0 || 
+            _pdb_read_string(buf, buf_len, offset, &key) < 0 || 
+            _pdb_read_uint64(buf, buf_len, offset, &bit_offset) < 0 ||
+            _pdb_read_int(buf, buf_len, offset, &val) < 0)
+        {
+            pdb_log_debug("read bitmap error\n");
+        }
+
+        pdb_log_info("key:%s\n", key);
+        pdb_log_info("bit_offset: %d\n", bit_offset);
+        pdb_log_info("val: %d\n", val);
+        pdb_value* value = pdb_hash_get(&global_hash, key);
+        if (value == NULL){
+            pdb_sds sds = pdb_get_new_sds(PDB_INIT_BTIMAP_LENGTH);
+            bitmap = pdb_bitmap_create(key, sds);
+            value = pdb_create_value(bitmap, PDB_VALUE_TYPE_BITMAP);
+            pdb_hash_set(&global_hash, key, value);
+        }
+
+        bitmap = (struct pdb_bitmap*)value->ptr;
+        ret = pdb_bitmap_set_(bitmap, bit_offset, val, NULL);
+
         return 0;
     }
 

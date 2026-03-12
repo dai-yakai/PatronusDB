@@ -9,7 +9,7 @@
 #include "pdb_sds.h"
 #include "pdb_list.h"
 
-#define AOF_BUFFER_LEN                  16*1024
+#define AOF_BUFFER_LEN                  1024*1024
 
 struct pdb_dump_s{
     int dump_fd;

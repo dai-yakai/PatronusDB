@@ -8,6 +8,8 @@
 #include <arpa/inet.h>
 #include <unistd.h>
 
+#include "pdb_cli_tool.h"
+
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 #define BUFFER_SIZE (64 * 1024)
 
@@ -18,21 +20,7 @@
 #define BATCH          100
 #define BATCH_NUM      10000
 
-int connect_tcpserver(const char* ip, unsigned short port) {
-    int connfd = socket(AF_INET, SOCK_STREAM, 0);
-    struct sockaddr_in addr;
-    addr.sin_addr.s_addr = inet_addr(ip);
-    addr.sin_port = htons(port);
-    addr.sin_family = AF_INET;
-
-    if (connect(connfd, (struct sockaddr*)&addr, sizeof(addr)) < 0) {
-        perror("connect error");
-        return -1;
-    }
-    return connfd;
-}
-
-int send_all(int fd, char* msg, int length) {
+static int mget_send_all(int fd, char* msg, int length) {
     int total_sent = 0;
     int left = length;
     char *ptr = msg;
@@ -51,45 +39,41 @@ int send_all(int fd, char* msg, int length) {
     return total_sent;
 }
 
-void recv_and_print_raw(int fd, int expected_count) {
+static void mget_recv_and_print_raw(int fd, int expected_count) {
     char buffer[BUFFER_SIZE];
     int n;
     int items_received = 0;
     
-    // 循环接收，直到收齐 expected_count 个换行符
     while (items_received < expected_count) {
         n = recv(fd, buffer, BUFFER_SIZE - 1, 0);
         
         if (n < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR) {
-                continue; // 暂时无数据，继续等待
+                continue; 
             }
             perror("recv error");
-            break; // 致命错误，退出
+            break; 
         } 
         else if (n == 0) {
+            // disconnect
             printf("\nServer closed connection prematurely. Received %d/%d items.\n", 
                    items_received, expected_count);
-            break; // 服务器断开
+            break; 
         }
-
-        // 收到数据，进行处理
-        buffer[n] = '\0'; 
         
-        // 遍历收到的数据，统计有多少个 '\n'
         for (int i = 0; i < n; i++) {
             if (buffer[i] == '\n') {
                 items_received++;
             }
         }
         
-        printf("recv chunk: %s", buffer);
+        // printf("recv chunk: %s", buffer);
     }
 }
 
 
-void testcase_mget_100w(int connfd) {
-    printf(">> Starting MGET testcase (100 batches * 10,000 keys)...\n");
+static void testcase_mget_100w(int connfd) {
+    printf(">> Starting MGET testcase (1000000 batches * 10,000 keys)...\n");
 
     int batches = BATCH;
     int keys_per_batch = BATCH_NUM;
@@ -103,11 +87,15 @@ void testcase_mget_100w(int connfd) {
     gettimeofday(&tv_start, NULL);
 
     int global_key_idx = 0;
+    long time_used_ms;
+    double seconds;
+    long qps;
 
 #if RBTREE
+    printf("RBTREE test --------------------------------------\n");
     for (int b = 0; b < batches; b++) {
         int offset = 0;
-        int num_args = 1 + keys_per_batch; // 1个命令 + N个Key
+        int num_args = 1 + keys_per_batch; 
         
         offset += sprintf(send_buf + offset, "*%d\r\n$5\r\nRMGET\r\n", num_args);
 
@@ -117,31 +105,31 @@ void testcase_mget_100w(int connfd) {
             offset += sprintf(send_buf + offset, "$%d\r\n%s\r\n", klen, key);
             global_key_idx++;
         }
+        if (mget_send_all(connfd, send_buf, offset) < 0) exit(1);  
+        mget_recv_and_print_raw(connfd, keys_per_batch);
 
-        if (send_all(connfd, send_buf, offset) < 0) exit(1);
-        
-        // 要放在循环里面
-        recv_and_print_raw(connfd, keys_per_batch);
+        if (b % (batches/10) == 0 || b == batches - 1) {
+            print_progress("RBTREE", b + 1, batches);
+        }
     }
+    printf("\n");
     
-
-    gettimeofday(&tv_end, NULL);
-    
-    
-    
-
-    long time_used_ms = TIME_SUB_MS(tv_end, tv_start);
-    double seconds = time_used_ms / 1000.0;
-    long qps = (long)(total_keys / seconds);
-    double avg_latency_ms = (double)time_used_ms / batches;
-
-    // printf("   [MGET] Time: %ld ms, QPS: %ld, Latency: %.2f ms/batch\n", 
-    //        time_used_ms, qps, avg_latency_ms);
-    // printf("------------------------------------------------\n");
+    gettimeofday(&tv_end, NULL); 
+    time_used_ms = TIME_SUB_MS(tv_end, tv_start);
+    seconds = time_used_ms / 1000.0;
+    qps = (long)(total_keys / seconds);
+    printf("   [MGET] Time: %ld ms, QPS: %ld\n", 
+            time_used_ms, qps);
+    printf("------------------------------------------------\n\n\n");
 #endif
+
+
     memset(send_buf, 0, buffer_size);
     global_key_idx = 0;
+
+
 #if HASH
+    printf("HASH test --------------------------------------\n");
     for (int b = 0; b < batches; b++) {
         int offset = 0;
         int num_args = 1 + keys_per_batch; // 1个命令 + N个Key
@@ -155,35 +143,44 @@ void testcase_mget_100w(int connfd) {
             global_key_idx++;
         }
 
-        if (send_all(connfd, send_buf, offset) < 0) exit(1);
+        if (mget_send_all(connfd, send_buf, offset) < 0) exit(1);
         
-        // 要放在循环里面
-        recv_and_print_raw(connfd, keys_per_batch);
+        mget_recv_and_print_raw(connfd, keys_per_batch);
+
+        if (b % (batches/10) == 0 || b == batches - 1) {
+            print_progress("HASH", b + 1, batches);
+        }
     }
+
+    printf("\n");
+    printf("\n");
+
+    time_used_ms = TIME_SUB_MS(tv_end, tv_start);
+    seconds = time_used_ms / 1000.0;
+    qps = (long)(total_keys / seconds);
+
+    printf("   [MGET] Time: %ld ms, QPS: %ld\n", 
+            time_used_ms, qps);
+    printf("------------------------------------------------\n\n\n");
 #endif
 
-    free(send_buf);
+    memset(send_buf, 0, buffer_size);
+    global_key_idx = 0;
 
 #if ARRAY
 
 #endif
+
+    free(send_buf);
 }
 
-int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        printf("Usage: %s <ip> <port>\n", argv[0]);
-        return -1;
-    }
 
-    char* ip = argv[1];
-    int port = atoi(argv[2]);
-
+int pdb_testcase_mget(char* ip, int port) {
     int connfd = connect_tcpserver(ip, port);
     if (connfd == -1) {
         exit(-1);
     }
 
-    // testcase_mset_100w(connfd);
     testcase_mget_100w(connfd);
 
     close(connfd);

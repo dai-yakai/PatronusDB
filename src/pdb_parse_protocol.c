@@ -405,7 +405,8 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
     int bitmap_pos_value;
     uint64_t start;
     uint64_t pos;
-    int is_new;
+    int is_new = 0;
+    struct pdb_bitmap* bitmap = NULL;
     /********* *****/
 
     /*******set***** */
@@ -749,6 +750,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
         /********************************************** */  
         case PDB_CMD_BITMAP_SET:
         // BITSET key offset value
+            // pdb_log_info("BITSET\n");
             if (count != 4){
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     len = sprintf(response, "Protocol Error: Valilate RESP protocal\r\n");
@@ -779,22 +781,22 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     }
                     
                 }
+                // pdb_log_info("value11111\n");
                 break;
             }
 
             if (value == NULL){
                 sds = pdb_get_new_sds(PDB_INIT_BTIMAP_LENGTH);
-                value = pdb_create_value(sds, PDB_VALUE_TYPE_BITMAP);
+                bitmap = pdb_bitmap_create(key, sds);
+
+                strcpy(bitmap->parent_key, key);
+                value = pdb_create_value(bitmap, PDB_VALUE_TYPE_BITMAP);
+                pdb_hash_set(&global_hash, key, value);
                 is_new = 1;    
             }
 
-            sds = pdb_parse_value_to_string(value);
-            struct pdb_bitmap* bitmap = pdb_bitmap_create(key, &sds);
-            // ret = pdb_bitmap_set(&sds, offset, val, NULL);
+            bitmap = (struct pdb_bitmap*)value->ptr;
             ret = pdb_bitmap_set_(bitmap, offset, val, NULL);
-            // update
-            value->ptr = sds;
-            ret = pdb_hash_set(&global_hash, key, value);
             if(is_new){
                 pdb_decre_value(value);
             }
@@ -816,17 +818,21 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 pdb_log_info("BITMAPSET: receive error protocol\n");
                 break;
             }
+            // key = tokens[1];
             offset = strtoull(tokens[2], &endptr, 10);
             value = pdb_hash_get(&global_hash, key);
-            sds = pdb_parse_value_to_string(value);
-            if (sds == NULL){
+            
+            if (value == NULL){
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     len = sprintf(response, "Unavailable key\r\n");
                 }
                 break;
             }
+            bitmap = (struct pdb_bitmap*)value->ptr;
+            sds = bitmap->data;
             
             bitmap_value = pdb_bitmap_get(sds, offset);
+            // pdb_log_debug("bitmap_value: %d\n", bitmap_value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 len = sprintf(response, "%d\r\n", bitmap_value);
             }

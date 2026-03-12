@@ -7,11 +7,11 @@
 char LICENSE[] SEC("license") = "GPL";
 
 typedef struct pdb_hash {
-    void **nodes;       // 偏移 0: 8 字节指针
+    void **nodes;       
              
-    int max_slots;      // 偏移 8: 4 字节
-    int count;          // 偏移 12: 4 字节
-    char parent_key[PDB_MAX_KEY_LEN];   // 偏移 16: 8 字节指针 (这就是我们要读的字段！)
+    int max_slots;
+    int count;
+    char parent_key[PDB_MAX_KEY_LEN];
 } pdb_hash_t;
 
 struct dirty_key_event {
@@ -21,6 +21,10 @@ struct dirty_key_event {
     void* dataStructure;
     char parent_key[PDB_MAX_KEY_LEN];
     int is_sub_element;
+
+    // bitmap
+    uint64_t offset;
+    int val;
 };
 
 struct {
@@ -109,6 +113,41 @@ int pdb_rbtree_set_entry(struct pt_regs *ctx) {
     return 0;
 }
 
+
+// bitmap
+/**
+ * int pdb_bitmap_set_(struct pdb_bitmap* bitmap, uint64_t offset, int val, int* old_value)
+ *                          RDI,                    RSI(si),          RDX...
+ */
+SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_bitmap_set")
+int pdb_bitmap_add_entry(struct pt_regs *ctx) {
+    void* bitmap_ptr = (void *)ctx->di; 
+    if (!bitmap_ptr) return 0;
+
+    char *key_ptr = NULL;
+    long ret = bpf_probe_read_user(&key_ptr, sizeof(key_ptr), bitmap_ptr);
+    
+    if (ret != 0 || !key_ptr) return 0;
+    // bpf_printk("uprobe bitmap: bitmap_ptr=%p, key_ptr=%p\n", bitmap_ptr, key_ptr);
+
+    uint64_t offset = ctx->si;
+    int val = ctx->dx;
+
+    struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
+    if (!e) return 0;
+
+    e->opcode = 0xF0;
+    e->offset = offset;
+    e->val = val;
+
+    bpf_probe_read_user_str(&e->key, sizeof(e->key), (char *)bitmap_ptr + 16);
+    bpf_printk("uprobe bitmap: e->key=%s\n", e->key);
+
+    bpf_ringbuf_submit(e, 0);
+    return 0;
+}
+
+
 // set
 // SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_set_add")
 // int pdb_set_add_entry(struct pt_regs *ctx) {
@@ -165,30 +204,3 @@ int pdb_rbtree_set_entry(struct pt_regs *ctx) {
 //     return 0;
 // }
 
-// bitmap
-// SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_bitmap_set_")
-// int pdb_bitmap_add_entry(struct pt_regs *ctx) {
-//     // 1. 获取第一个参数：struct pdb_set* set
-//     // 在 x86_64 架构下，第一个参数存放在 di 寄存器中
-//     void *set_ptr = (void *)ctx->di; 
-//     if (!set_ptr) return 0;
-
-//     // 2. 🚩 第一次探针读取：提取 char* key 指针
-//     // 因为 key 是 pdb_set 结构体的第一个成员，所以偏移量为 0。
-//     char *key_ptr = NULL;
-//     long ret = bpf_probe_read_user(&key_ptr, sizeof(key_ptr), set_ptr);
-    
-//     // 如果读取失败，或者这个 Set 是没有顶级 Key 的临时计算集合 (key_ptr == NULL)，则直接放过
-//     if (ret != 0 || !key_ptr) return 0;
-
-//     struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
-//     if (!e) return 0;
-
-//     e->opcode = 0xFA;
-
-//     // 4. 🚩 第二次探针读取：顺着指针提取真实的字符串内容
-//     bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
-
-//     bpf_ringbuf_submit(e, 0);
-//     return 0;
-// }

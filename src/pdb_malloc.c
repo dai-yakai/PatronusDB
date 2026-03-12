@@ -28,7 +28,10 @@ void pdb_mem_destroy(){
 
 
 void* pdb_malloc(size_t size){
-    assert(size > 0);
+    if (size <= 0){
+        return NULL;
+    }
+    // assert(size > 0);
     void* p;
 
 #if ENABLE_MEMPOOL

@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include "pdb_malloc.h"
+#include "pdb_bitmap.h"
 
 
 #define PDB_VALUE_TYPE_DEFAULT      0

@@ -1,8 +1,14 @@
 #include "pdb_serialize.h"
 
 int _pdb_append(char* buf, size_t buf_len, size_t* offset, void* data, size_t data_len) {
-    if (buf == NULL || buf_len <= 0 || data == NULL || data_len <= 0) return PDB_RETURN_PARAM_ERROR;
-    if (*offset + data_len > buf_len) return PDB_RETURN_PARAM_ERROR; // 防溢出
+    if (buf == NULL || buf_len <= 0 || data == NULL || data_len <= 0) {
+        pdb_log_info("buf: %p, buf_len: %d, data: %p, data_len: %d\n", buf, buf_len, data, data_len);
+        return PDB_RETURN_PARAM_ERROR;
+    }
+    if (*offset + data_len > buf_len){
+        pdb_log_info("offset: %d, data_len: %d, buf_len: %d\n", *offset, data_len, buf_len);
+        return PDB_RETURN_PARAM_ERROR; // 防溢出
+    } 
     
     memcpy(buf + *offset, data, data_len);
     *offset += data_len;
@@ -10,7 +16,35 @@ int _pdb_append(char* buf, size_t buf_len, size_t* offset, void* data, size_t da
 }
 
 int _pdb_append_uint8(char* buf, size_t buf_len, size_t* offset, uint8_t val) {
-    return _pdb_append(buf, buf_len, offset, &val, sizeof(uint8_t));
+    int ret = _pdb_append(buf, buf_len, offset, &val, sizeof(uint8_t));
+    if (ret != PDB_RETURN_OK){
+        pdb_log_info("_pdb_append_uint8, return : %d\n", ret);
+    }
+    return ret;
+}
+
+int _pdb_append_uint16(char* buf, size_t buf_len, size_t* offset, uint16_t val){
+    int ret = _pdb_append(buf, buf_len, offset, &val, sizeof(uint16_t));
+    if (ret != PDB_RETURN_OK){
+        pdb_log_info("_pdb_append_uint16\n");
+    }
+    return ret;
+}
+
+int _pdb_append_uint32(char* buf, size_t buf_len, size_t* offset, uint32_t val){
+    int ret = _pdb_append(buf, buf_len, offset, &val, sizeof(uint32_t));
+    if (ret != PDB_RETURN_OK){
+        pdb_log_info("_pdb_append_uint32\n");
+    }
+    return ret;
+}
+
+int _pdb_append_uint64(char* buf, size_t buf_len, size_t* offset, uint64_t val){
+    int ret = _pdb_append(buf, buf_len, offset, &val, sizeof(uint64_t));
+    if (ret != PDB_RETURN_OK){
+        pdb_log_info("pdb_append_uint64\n");
+    }
+    return ret;
 }
 
 int _pdb_append_int(char* buf, size_t buf_len, size_t* offset, int val) {
@@ -18,7 +52,11 @@ int _pdb_append_int(char* buf, size_t buf_len, size_t* offset, int val) {
 }
 
 int _pdb_append_size_t(char* buf, size_t buf_len, size_t* offset, size_t val) {
-    return _pdb_append(buf, buf_len, offset, &val, sizeof(size_t));
+    int ret = _pdb_append(buf, buf_len, offset, &val, sizeof(size_t));
+    if (ret != PDB_RETURN_OK){
+        pdb_log_info("_pdb_append_size_t ret: %d\n", ret);
+    }
+    return ret;
 }
 
 int _pdb_append_long(char* buf, size_t buf_len, size_t* offset, long val) {
@@ -80,8 +118,10 @@ int _pdb_append_sset(char* buf, size_t buf_len, size_t* offset, struct pdb_sorte
     return PDB_RETURN_OK;
 }
 
-int _pdb_append_bitmap(char* buf, size_t buf_len, size_t* offset, pdb_sds s) {
+int _pdb_append_bitmap(char* buf, size_t buf_len, size_t* offset, struct pdb_bitmap* bitmap) {
+    pdb_sds s = bitmap->data;
     size_t len = pdb_get_sds_len(s);
+    pdb_log_info("_pdb_append_bitmap: %d\n", len);
     if (_pdb_append_size_t(buf, buf_len, offset, len) < 0) return -1;
     if (len > 0) {
         if (_pdb_append(buf, buf_len, offset, s, len) < 0) return -1;
@@ -177,6 +217,19 @@ int _pdb_read(const char* buf, size_t buf_len, size_t* offset, void* dest, size_
 int _pdb_read_uint8(const char* buf, size_t buf_len, size_t* offset, uint8_t* val) {
     return _pdb_read(buf, buf_len, offset, val, sizeof(uint8_t));
 }
+
+int _pdb_read_uint16(const char* buf, size_t buf_len, size_t* offset, uint16_t* val) {
+    return _pdb_read(buf, buf_len, offset, val, sizeof(uint16_t));
+}
+
+int _pdb_read_uint32(const char* buf, size_t buf_len, size_t* offset, uint32_t* val) {
+    return _pdb_read(buf, buf_len, offset, val, sizeof(uint32_t));
+}
+
+int _pdb_read_uint64(const char* buf, size_t buf_len, size_t* offset, uint64_t* val) {
+    return _pdb_read(buf, buf_len, offset, val, sizeof(uint64_t));
+}
+
 
 int _pdb_read_int(const char* buf, size_t buf_len, size_t* offset, int* val) {
     return _pdb_read(buf, buf_len, offset, val, sizeof(int));
@@ -348,7 +401,8 @@ pdb_value* _pdb_deserialize_value(const char* buf, size_t buf_len, size_t* offse
                 pdb_free(raw_data, -1);
                 goto err;
             }
-            value->ptr = pdb_get_new_sds_len(raw_data, bit_len);
+            struct pdb_bitmap* bitmap = pdb_bitmap_create(NULL, pdb_get_new_sds_len(raw_data, bit_len));
+            value->ptr = bitmap;
             
             pdb_free(raw_data, -1);
             break;

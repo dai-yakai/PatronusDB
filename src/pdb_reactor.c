@@ -312,8 +312,6 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 		struct epoll_event events[1024] = {0};
 		int nready = epoll_wait(epfd, events, 1024, 10);
 
-		// pdb_aof_dump();
-		// pdb_increment_syn();
 		if (global_dump.is_aof){
 			pdb_ebpf_poll();
 		}

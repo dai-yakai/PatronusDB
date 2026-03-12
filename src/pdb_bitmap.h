@@ -13,14 +13,16 @@
 #define BITOP_XOR 2
 #define BITOP_NOT 3
 
-#define PDB_INIT_BTIMAP_LENGTH      256    
+#define PDB_INIT_BTIMAP_LENGTH      1024   
 
 struct pdb_bitmap{
     char* key;
-    pdb_sds* data;
+    pdb_sds data;
+
+    char parent_key[1024];
 };
 
-struct pdb_bitmap* pdb_bitmap_create(char* key, pdb_sds* s);
+struct pdb_bitmap* pdb_bitmap_create(char* key, pdb_sds s);
 int pdb_bitmap_set_(struct pdb_bitmap* bitmap, uint64_t offset, int val, int* old_value);
 int pdb_bitmap_set(pdb_sds* b, uint64_t offset, int val, int* old_value);
 int pdb_bitmap_get(pdb_sds b, uint64_t offset);
