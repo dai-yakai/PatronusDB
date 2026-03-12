@@ -124,6 +124,7 @@ is_aof no
 
 * **QPS**
   * **Reactor**
+
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
   | malloc |  |  |  |  |  |  |
@@ -140,6 +141,7 @@ is_aof no
   | jemalloc |  |        |  |  |  |  |
   
   * **io_uring**
+  
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
   | malloc |  |  |  |  |  |  |
