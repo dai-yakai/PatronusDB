@@ -60,7 +60,7 @@
 
 ## Using PDB-CLI
 
-PDB-CLI is Redis' command line interface. It is available in pdb source. You can start a PDB-server instance, and then, in another terminal try the following:
+PDB-CLI is PDB' command line interface. It is available in pdb source. You can start a PDB-server instance, and then, in another terminal try the following:
 
 ```shell
 cd client
