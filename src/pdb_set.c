@@ -47,7 +47,7 @@ struct pdb_set* pdb_set_create_with_key(char* key){
     char* tmp_key = pdb_malloc(strlen(key) + 1);
     strcpy(tmp_key, key);
     set->key = tmp_key;
-    pdb_log_debug("set_key: %s\n", set->key);
+    // pdb_log_debug("set_key: %s\n", set->key);
 
     return set;
 }

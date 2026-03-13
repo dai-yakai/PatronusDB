@@ -9,204 +9,94 @@
 #include "nty_coroutine.h"
 #include "pdb_handler.h"
 #include "server.h"
+#include "pdb_parse_protocol.h"
+#include "pdb_conninfo.h"
+#include "pdb_sds.h"
 
 static msg_handler handler;
 
 
-void conn_destroy(struct conn_info* c) {
-    if (c) {
-        if (c->fd > 0) close(c->fd);
-        if (c->buffer) free(c->buffer);
-        if (c->wbuffer) free(c->wbuffer);
-        free(c);
-    }
+static void pdb_write_to_slave(int fd, char* msg, int msg_len){
+	if (global_conf.is_slave){
+		return;
+	}
+
+	int i;
+	for (i = 0; i < global_replication->slave_num; i++){
+		int slave_fd = global_replication->fd[i];
+		// pdb_log_debug("slave_num: %d fd : %d\n", global_replication->slave_num, slave_fd);
+		if (!conn_list[slave_fd]->is_incre_ready){
+			// pdb_log_debug("fd: %d, is_incre_ready: %d\n", fd, conn_list[fd]->is_incre_ready);
+			return ;
+		}
+		
+        int ret = send(slave_fd, msg, msg_len, 0);
+		// pdb_log_debug("write to slave[fd %d]: %s\n", fd, msg);
+	}
 }
-
-
-struct conn_info* conn_create(int fd) {
-    struct conn_info* c = (struct conn_info*)malloc(sizeof(struct conn_info));
-    if (!c) return NULL;
-    memset(c, 0, sizeof(struct conn_info));
-    
-    c->fd = fd;
-    c->buffer = (char*)malloc(BUFFER_LENGTH);
-    c->wbuffer = (char*)malloc(BUFFER_LENGTH); // 如果只做读缓冲，这个可以暂时不用
-    
-    // 初始化头尾指针
-    c->rhead = c->rtail = 0;
-    c->whead = c->wtail = 0;
-    
-    return c;
-}
-
-// 查看是否是需要的命令（get和set）
-static int is_need_command(char *buf) {
-    if (buf == NULL) return 0;
-
-    if (strstr(buf, "SYN") != NULL) return 0; 
-
-    if (strstr(buf, "SET") != NULL) return 1;   // 包含 SET, MSET, RSET, HSET
-    if (strstr(buf, "DEL") != NULL) return 1;   // 包含 DEL, RDEL, HDEL
-    if (strstr(buf, "MOD") != NULL) return 1;   // 包含 MOD
-    return 0; 
-}
-
-static int check_resp_integrity(const char *buf, int len) {
-    if (len < 4) return -1;
-    if (buf[0] != '*') return -1;
-
-    const char *curr = buf;
-    const char *end = buf + len;
-    const char *crlf = strstr(curr, "\r\n");
-    if (!crlf || crlf >= end) return 0;
-
-    int count = atoi(curr + 1);
-    curr = crlf + 2;
-
-    for (int i = 0; i < count; i++) {
-        if (curr >= end) return 0;
-        if (*curr != '$') return -1;
-
-        crlf = strstr(curr, "\r\n");
-        if (!crlf || crlf >= end) return 0;
-
-        int bulk_len = atoi(curr + 1);
-        curr = crlf + 2;
-
-        if (curr + bulk_len + 2 > end) return 0;
-        curr += bulk_len + 2; 
-    }
-    return (int)(curr - buf);
-}
-
-static void prepare_write_buffer(struct conn_info *c, char *data, int len) {
-    unsigned int space = BUFFER_LENGTH - (c->whead - c->wtail);
-    if (space < len) {
-        fprintf(stderr, "Write buffer overflow\n"); 
-        return;
-    }
-    unsigned int mask_head = c->whead & BUFFER_MASK;
-    unsigned int linear_space = BUFFER_LENGTH - mask_head;
-    if (len <= linear_space) {
-        memcpy(&c->wbuffer[mask_head], data, len);
-    } else {
-        memcpy(&c->wbuffer[mask_head], data, linear_space);
-        memcpy(&c->wbuffer[0], data + linear_space, len - linear_space);
-    }
-    c->whead += len;
-}
-
 
 static int process_read_buffer(struct conn_info* c, msg_handler handler){
-    unsigned int data_len = c->rhead - c->rtail;
-    if (data_len == 0) return 0;
+    int fd = c->fd;
+    while(c->read_pos > 0){
+        // pdb_log_info("c->read_pos: %d\n", c->read_pos);
+		int bulk_length = 0;
+		size_t package_len = check_resp_integrity(c->read_buffer, c->read_pos, &bulk_length);
+		
 
-    char *temp_buf = malloc(data_len + 1);
-    if (!temp_buf) return 0; 
-    temp_buf[0] = '\0';
-    // memset(temp_buf, 0, data_len + 1);
+		if (bulk_length > PDB_PROTO_IO_BUFFER_LENGTH){
+			c->is_big_package = 1;
+			c->bulk_length = bulk_length;
+		}
+		
+		if (package_len == PDB_HALF_PACKAGE){
+			// pdb_log_debug("process_read_buffer receive half package\n");
+			return PDB_HALF_PACKAGE;
+		}else if (package_len == PDB_PROTOCAL_ERROR){
+			// pdb_log_debug("process_read_buffer receive error protocal\n%s\n", c->read_buffer);
+			memcpy(c->write_buffer + c->write_pos, "protocal error\r\n", 17);
+			return PDB_PROTOCAL_ERROR;
+		}
 
-    unsigned int tail_mask = c->rtail & BUFFER_MASK;
-    unsigned int linear = BUFFER_LENGTH - tail_mask;
-    if (data_len <= linear) {
-        memcpy(temp_buf, &c->buffer[tail_mask], data_len);
-    } else {
-        memcpy(temp_buf, &c->buffer[tail_mask], linear);
-        memcpy(temp_buf + linear, &c->buffer[0], data_len - linear);
-    }
-    temp_buf[data_len] = '\0'; 
-
-    // if (global_replication.is_master == 0){
-    //     printf("temp_buf: %s\n", temp_buf);
-    // }
-
-    char* curr = temp_buf;
-    int remaining_len = data_len;
-    int total_processed_len = 0;
-
-    char *response_out = malloc(RESPONSE_LENGTH);
-    if (!response_out) { free(temp_buf); return 0; }
-    response_out[0] = '\0';
-    // memset(response_out, 0, RESPONSE_LENGTH);
-
-    while(remaining_len > 0){
-        int packet_len = check_resp_integrity(curr, remaining_len);
-        if (packet_len == 0) break;
-        if (packet_len < 0) {
-            free(temp_buf);
-            free(response_out);
-            return packet_len;
+        if (global_conf.is_replication){
+            pdb_write_to_slave(fd, c->read_buffer, package_len);
         }
+		
 
-        // if (global_replication.is_master){
-        //     for (int i = 0; i < global_replication.slave_count; i++){
-        //         struct conn_info* slave = global_replication.master_to_slaves_info[i];
-        //         if (slave->is_full_replication){
-        //             if (slave->master_to_slave_append_length + packet_len < REPLICATION_BUFFER_LENGTH) {
-        //                 memcpy(slave->master_to_slave_append_buffer + slave->master_to_slave_append_length, 
-        //                     temp_buf, packet_len);
-        //                 slave->master_to_slave_append_length += packet_len;
-        //             }
-        //         } else if (slave->is_replication){
-        //             if(is_need_command(temp_buf)){
-        //                 prepare_write_buffer(slave, temp_buf, packet_len);
-        //                 send(slave->fd, temp_buf, packet_len, 0);
-        //             }
-        //         }
-        //     }
+		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
+		// Write response directly into `c->write_buffer` to avoid extra allocating.
+		// printf("LEN BEFORE: %zu\n", pdb_get_sds_len(c->read_buffer));
+        int response_len = handler(fd, c->read_buffer, package_len, c->write_buffer + c->write_pos);
+        // printf("LEN after: %zu\n", pdb_get_sds_len(c->read_buffer));
+		if (response_len > 0){
+			c->write_pos += response_len;
+			pdb_sds_len_increment(c->write_buffer, response_len);
+		}
+		// pdb_log_info("c->write_pos: %d\n", c->write_pos);
+		
+		// deal with AOF
+		// pdb_aof_buffer_append(c->read_buffer, package_len);
+		// pdb_aof_write_to_written_buffer(c->read_buffer, package_len);
+        // printf("DEBUG before range: c=%p, read_buf=%p, write_buf=%p\n", (void*)c, (void*)c->read_buffer, (void*)c->write_buffer);
+		pdb_sds_range(c->read_buffer, package_len, -1);
+
+        // printf("--- Visualized ---\n");
+        // for (size_t i = 0; i < package_len; i++) {
+        //     char ch = c->read_buffer[i];
+        //     if (ch == '\r') printf("\\r");
+        //     else if (ch == '\n') printf("\\n\n");
+        //     else if (ch >= 32 && ch <= 126) printf("%c", ch);
+        //     else printf("."); // 不可打印字符用点代替
         // }
+        // printf("\n\n");
 
-        char backup = curr[packet_len];
-        curr[packet_len] = '\0'; 
-        response_out[0] = '\0';
+		c->read_pos -= package_len;
+		
+		if (c->is_big_package == 1){
+			c->is_big_package = -1;
+		}
+	}
 
-        int ret = handler(c->fd, curr, packet_len, response_out);
-
-        curr[packet_len] = backup;
-
-        // if (!global_replication.is_master && 
-        //     c->fd == global_replication.slave_to_master_fd) {
-        //         response_out[0] = '\0';
-        // }
-
-        // if (ret == -9999 && global_replication.is_master){
-        //     c->is_slave = 0;
-        //     c->is_replication = 1;
-        //     int idx = master_add_slave(c); 
-
-        //     pid_t pid = fork();
-        //     if (pid == 0){
-        //         c->is_full_replication = 1;
-        //         printf("master full syn begin\n");
-        //         perform_rbtree_full_sync_raw(c->fd);
-        //         printf("master rbtree full syn success\n");
-        //         perform_hash_full_sync_raw(c->fd);
-        //         printf("master hash full syn success\n");
-                
-        //         c->is_full_replication = 0;
-        //         printf("child thread exit\n");
-        //         _exit(0);
-        //     } else if (pid > 0){
-        //         printf("child pid: %d\n", pid);
-        //         c->master_to_slave_append_buffer = malloc(REPLICATION_BUFFER_LENGTH);
-        //         c->master_to_slave_append_length = 0;
-        //         global_replication.slave_pid[idx] = pid;
-        //     }
-        // }
-
-        if (ret > 0) {
-            prepare_write_buffer(c, response_out, strlen(response_out));
-        }
-
-        curr += packet_len;
-        remaining_len -= packet_len;
-        total_processed_len += packet_len;
-    }
-
-    c->rtail += total_processed_len;
-    free(temp_buf);
-    free(response_out);
-    return total_processed_len;
+	return PDB_OK;
 }
 
 
@@ -219,17 +109,24 @@ void server_reader(void *arg) {
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 
     while (1) {
-        int writable = BUFFER_LENGTH - (c->rhead - c->rtail);
-        if (writable <= 0) {
-            nty_coroutine_yield(nty_coroutine_get_sched()->curr_thread);
-            continue; 
+        size_t read_len = PDB_PROTO_IO_BUFFER_LENGTH;
+        size_t avail_len = pdb_get_sds_avail(c->read_buffer);
+        assert(avail_len >= 0);
+
+        int nread;
+
+        if (c->is_big_package){
+            read_len = c->bulk_length;
         }
 
-        int rhead_idx = c->rhead & BUFFER_MASK;
-        int linear_writable = BUFFER_LENGTH - rhead_idx;
-        int recv_len = (writable < linear_writable) ? writable : linear_writable;
+        if (avail_len < read_len + 2){
+            size_t remaining_length = read_len + 2 - avail_len;		// +2:\r\n
+            read_len = remaining_length;
+            // pdb_log_info("read_len: %d\n", read_len);
+            c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, read_len);
+        }
 
-        ret = recv(fd, c->buffer + rhead_idx, recv_len, 0);
+        ret = recv(fd, c->read_buffer + c->read_pos, read_len, 0);
 
         if (ret < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -240,72 +137,21 @@ void server_reader(void *arg) {
         } else if (ret == 0) {
             break; 
         }
-
-        c->rhead += ret;
+        c->read_pos += ret;
+        pdb_sds_len_increment(c->read_buffer, ret);
         process_read_buffer(c, handler);
         
-        // 发送回复
-        int send_len = c->whead - c->wtail;
-        if (send_len > 0) {
-            int wtail_idx = c->wtail & BUFFER_MASK;
-            int linear_send = BUFFER_LENGTH - wtail_idx;
-            int real_send_len = (send_len < linear_send) ? send_len : linear_send;
-
-            int sent = send(fd, c->wbuffer + wtail_idx, real_send_len, 0);
-            if (sent > 0) {
-                c->wtail += sent;
-            } else if (sent < 0 && errno != EAGAIN) {
-                break;
-            }
-        }
-    }
-    conn_destroy(c); 
-}
-
-
-void slave_routine(void *arg) {
-    int fd = *(int *)arg;
-
-    printf("[SLAVE] Coroutine taking over FD: %d\n", fd);
-
-    int flags = fcntl(fd, F_GETFL, 0);
-    fcntl(fd, F_SETFL, flags | O_NONBLOCK);
-
-    struct conn_info *c = conn_create(fd);
-    if (!c) { close(fd); return; }
-
-    while (1) {
-        int writable = BUFFER_LENGTH - (c->rhead - c->rtail);
-        if (writable <= 0) {
-            nty_coroutine_yield(nty_coroutine_get_sched()->curr_thread);
-            continue;
-        }
-
-        int rhead_idx = c->rhead & BUFFER_MASK;
-        int linear_writable = BUFFER_LENGTH - rhead_idx;
-        int recv_len = (writable < linear_writable) ? writable : linear_writable;
-
-        int ret = recv(fd, c->buffer + rhead_idx, recv_len, 0);
-
-        if (ret < 0) {
-            if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                nty_coroutine_yield(nty_coroutine_get_sched()->curr_thread);
-                continue;
-            }
-            printf("[SLAVE] Disconnected from Master.\n");
-            break;
-        } else if (ret == 0) {
-            printf("[SLAVE] Master closed connection.\n");
+        int sent = send(fd, c->write_buffer, c->write_pos, 0);
+        if (sent > 0) {
+            pdb_sds_range(c->write_buffer, sent, -1);
+            c->write_pos -= sent;
+        } else if (sent < 0 && errno != EAGAIN) {
             break;
         }
-
-        c->rhead += ret;
-        process_read_buffer(c, handler);
-        c->wtail = c->whead; // Slave 不回复，重置写指针
+        
     }
-
-    conn_destroy(c);
 }
+
 
 void server(void *arg) {
     unsigned short port = *(unsigned short *)arg;
@@ -322,21 +168,39 @@ void server(void *arg) {
     bind(fd, (struct sockaddr*)&local, sizeof(struct sockaddr_in));
 
     listen(fd, 20);
-    printf("listen port : %d\n", port);
+    pdb_insert_conn_list(fd);
+    conn_list[fd]->fd = fd;
+    // printf("listen port : %d\n", port);
 
     while (1) {
         struct sockaddr_in remote;
         socklen_t len = sizeof(struct sockaddr_in);
-        int cli_fd = accept(fd, (struct sockaddr*)&remote, &len);
+        int clientfd = accept(fd, (struct sockaddr*)&remote, &len);
 
-        if (cli_fd < 0) continue;
+        if (clientfd < 0) continue;
         
-        struct conn_info *c = conn_create(cli_fd);
-        if (!c) {
-            close(cli_fd);
-            continue;
-        }
+        pdb_insert_conn_list(clientfd);
+        conn_list[clientfd]->client_ip = (char*)malloc(16);
+        assert(conn_list[clientfd]->client_ip != NULL);
 
+        struct conn_info* listen_c = conn_list[fd];
+        struct sockaddr_in *clientaddr = (struct sockaddr_in *)&listen_c->uring_accept_addr;
+        inet_ntop(AF_INET, &clientaddr->sin_addr, conn_list[clientfd]->client_ip, 16);
+        conn_list[clientfd]->client_port = ntohs(clientaddr->sin_port);
+
+
+        conn_list[clientfd]->write_buffer = pdb_get_new_sds(16 * 1024);
+        conn_list[clientfd]->read_buffer = pdb_get_new_sds(PDB_PROTO_IO_BUFFER_LENGTH);
+        conn_list[clientfd]->read_pos = 0;
+        conn_list[clientfd]->write_pos = 0;
+
+        conn_list[clientfd]->fd = clientfd;
+        conn_list[clientfd]->is_aof_rewrite = 0;
+        conn_list[clientfd]->is_aof = 0;
+
+        conn_list[clientfd]->is_slave = global_conf.is_slave;
+
+        struct conn_info* c = conn_list[clientfd];
         nty_coroutine *read_co;
         nty_coroutine_create(&read_co, server_reader, c);
     }
@@ -347,18 +211,6 @@ int ntyco_entry(unsigned short port, msg_handler request_handler, msg_handler re
 
     nty_coroutine *co_server = NULL;
     nty_coroutine_create(&co_server, server, &port);
-
-    // if (!global_replication.is_master) {
-    //     // [修改] 直接传递已经在 main 函数中连接好的 FD
-    //     // 前提：main 函数必须成功连接并赋值给了 global_replication.slave_to_master_fd
-    //     if (global_replication.slave_to_master_fd > 0) {
-    //         nty_coroutine *co_slave = NULL;
-    //         // 传递 FD 的地址
-    //         nty_coroutine_create(&co_slave, slave_routine, &global_replication.slave_to_master_fd);
-    //     } else {
-    //         printf("[ERROR] Slave mode but no master connection FD found!\n");
-    //     }
-    // }
 
     nty_schedule_run();
     return 0;

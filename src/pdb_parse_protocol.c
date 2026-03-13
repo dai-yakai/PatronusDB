@@ -316,6 +316,7 @@ int check_resp_integrity(const char *buf, int len, int* bulk_length) {
     const char *end = buf + len;
 
     // Parsing the num of tokens
+    // pdb_log_info("resp check: %s\n", buf);
     const char *crlf = strstr(curr, "\r\n");
     if (!crlf || crlf >= end) {
 		return PDB_HALF_PACKAGE;
@@ -328,6 +329,9 @@ int check_resp_integrity(const char *buf, int len, int* bulk_length) {
         if (curr >= end){
             return PDB_HALF_PACKAGE;
         } 
+        if (*curr != '$' && *curr == '\0'){
+			return PDB_HALF_PACKAGE;
+		}
         if (*curr != '$'){
 			return PDB_PROTOCAL_ERROR;
 		}

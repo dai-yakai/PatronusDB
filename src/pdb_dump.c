@@ -17,6 +17,4 @@ void pdb_init_dump(const char* file){
 
         io_uring_queue_init(64, &global_dump.ring, 0);
     }
-
-    pdb_log_debug("1231231\n");
 }

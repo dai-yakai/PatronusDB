@@ -52,6 +52,10 @@ typedef struct conn_info {
     // ############## reactor ##############################
     RCALLBACK send_callback;
     RCALLBACK recv_callback;
+
+    // ############## reactor ##############################
+    struct sockaddr_in uring_accept_addr;
+    socklen_t uirng_accept_len;
 #if 0
 	union {
 		RCALLBACK recv_callback;

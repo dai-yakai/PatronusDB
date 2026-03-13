@@ -1,14 +1,18 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <liburing.h>
 #include <netinet/in.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <sched.h>
 
 #include "pdb_handler.h"
 #include "pdb_replication.h"
 #include "pdb_conninfo.h"
 #include "pdb_core.h"
+#include "pdb_parse_protocol.h"
 
 #include "pdb_hash.h"
 #include "pdb_rbtree.h"
@@ -28,133 +32,29 @@
 
 static msg_handler handler;
 
-// 计算环形缓冲区可用长度
-int ringBufferLen(unsigned int tail, unsigned int head){
-    int rhead_idx = head & BUFFER_MASK;
-    int space_left = BUFFER_LENGTH - (head - tail);
-    int linear_space = BUFFER_LENGTH - rhead_idx;
-    int len = (space_left < linear_space) ? space_left : linear_space;
-
-    return len;
-}
-
-// 计算环形缓冲区可读（buffer）的长度（如果读操作需要回绕，就分两次）
-static int get_writable_length(unsigned int tail, unsigned int head) {
-    int head_idx = head & BUFFER_MASK;
-    int space_left = BUFFER_LENGTH - (head - tail); // 总共剩余空间
-    int linear_space = BUFFER_LENGTH - head_idx;    // 物理数组尾部剩余空间
-    
-    // 取二者较小值
-    return (space_left < linear_space) ? space_left : linear_space;
-}
-
-// 计算环形缓冲区（wbuffer）可写的长度（如果写操作需要回绕，就分两次）
-static int get_readable_length(unsigned int tail, unsigned int head) {
-    int tail_idx = tail & BUFFER_MASK;
-    int data_len = head - tail;                  // 总共有的数据量
-    int linear_len = BUFFER_LENGTH - tail_idx;   // 从 tail 到数组末尾的数据量
-    
-    return (data_len < linear_len) ? data_len : linear_len;
-}
-
-static int check_resp_integrity(const char *buf, int len) {
-    if (buf[0] != '*') return -1; // 必须以 * 开头
-
-    if (len < 4){
-        // printf("check_resp_integrity: buf_len < 4\n");
-        return 0; // 至少 *1\r\n
-    }
-    
-
-    const char *curr = buf;
-    const char *end = buf + len;
-
-    // 解析数组个数
-    const char *crlf = strstr(curr, "\r\n");
-    if (!crlf || crlf >= end) {
-        // printf("[DEBUG] Failed at Bulk Len. Hex Dump:\n");
-            // for(int k=0; k<len; k++) printf("%02X ", (unsigned char)buf[k]);
-             //printf("\n");
-        return 0;
-    }
-
-    int count = atoi(curr + 1);
-    curr = crlf + 2;
-
-    for (int i = 0; i < count; i++) {
-        if (curr >= end){
-            // printf("check_resp_integrity: error\n");
-            return 0;
-        } 
-        if (*curr != '$') return -1;
-
-        crlf = strstr(curr, "\r\n");
-        if (!crlf || crlf >= end) {
-            // printf("check_resp_integrity: !crlf || crlf >= end\n");
-            return 0;
-        }
-
-        int bulk_len = atoi(curr + 1);
-        curr = crlf + 2;
-
-        if (curr + bulk_len + 2 > end) {
-            // printf("check_resp_integrity: curr + bulk_len + 2 > end\n");
-
-            return 0; // 数据还没收齐
-        }
-        
-        
-        curr += bulk_len + 2; 
-    }
-    return (int)(curr - buf);
-}
-
 /*********************** 提交事件 *************************/
-
-static inline void submit_accept(struct io_uring *ring, int sockfd,
-                                 struct sockaddr *addr, socklen_t *len)
+static inline void submit_accept(struct io_uring *ring, int sockfd)
 {
-    printf("submit_accept: %d\n", sockfd);
+    struct conn_info* c = conn_list[sockfd];
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
     if (!sqe) {
-        // 队列满了，强制提交当前任务
         io_uring_submit(ring);
         sqe = io_uring_get_sqe(ring);
-        
         if (!sqe) {
-            fprintf(stderr, "Fatal: SQ Ring Full and flush faile111111d!\n");
+            fprintf(stderr, "Fatal: SQ Ring Full and flush failed!\n");
             exit(1);
         }
     }
 
-    conn_info_t *c = malloc(sizeof(conn_info_t));
-    memset(c, 0, sizeof(conn_info_t));
-
-    c->fd = sockfd;
-    c->event = EVENT_ACCEPT;
-
-    c->buffer = malloc(BUFFER_LENGTH);
-    c->wbuffer = malloc(BUFFER_LENGTH);
-    if (!c->buffer || !c->wbuffer) {
-        fprintf(stderr, "Fatal: malloc buffers failed\n");
-        exit(1);
-    }
-
-    c->rhead = 0;
-    c->rtail = 0;
-    c->whead = 0;
-    c->wtail = 0;
-
-    io_uring_prep_accept(sqe, sockfd, addr, len, 0);
+    io_uring_prep_accept(sqe, sockfd, (struct sockaddr*)&c->uring_accept_addr, &c->uirng_accept_len, 0);
     io_uring_sqe_set_data(sqe, c);
 }
 
-
-static inline void submit_read(struct io_uring *ring, int fd, conn_info_t *c)
+static inline void submit_read(struct io_uring *ring, int fd)
 {
+    struct conn_info* c = conn_list[fd];
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
     if (!sqe) {
-        // 队列满了，强制提交任务
         io_uring_submit(ring);
         sqe = io_uring_get_sqe(ring);
         
@@ -164,23 +64,77 @@ static inline void submit_read(struct io_uring *ring, int fd, conn_info_t *c)
         }
     }
 
-    // 计算环形缓冲区中能接收的长度 
-    int rhead_idx = c->rhead & BUFFER_MASK;
-    int len = get_writable_length(c->rtail, c->rhead);
-    if (len == 0) {
-        // 缓冲区满了，无法继续接收新的数据
-        return; 
-    }
+    // expand read buffer
+    size_t read_len = PDB_PROTO_IO_BUFFER_LENGTH;
+	size_t avail_len = pdb_get_sds_avail(c->read_buffer);
+	assert(avail_len >= 0);
 
+	int nread;
+
+	if (c->is_big_package){
+		read_len = c->bulk_length;
+	}
+
+	if (avail_len < read_len + 2){
+		size_t remaining_length = read_len + 2 - avail_len;		// +2:\r\n
+		read_len = remaining_length;
+		// pdb_log_info("read_len: %d\n", read_len);
+		c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, read_len);
+	}
+
+    int len = pdb_get_sds_avail(c->read_buffer);
     c->event = EVENT_READ;
-
-    io_uring_prep_recv(sqe, fd, &c->buffer[rhead_idx], len, 0);
+    io_uring_prep_recv(sqe, fd, c->read_buffer + c->read_pos, len, 0);
     io_uring_sqe_set_data(sqe, c);
 }
 
-static inline void submit_write(struct io_uring *ring, int fd,
-                                conn_info_t *c)
+int handle_accept_completion(struct io_uring *ring, struct io_uring_cqe *cqe, int listen_fd) 
 {
+    struct conn_info* listen_c = conn_list[listen_fd];
+    int clientfd = cqe->res; 
+    if (clientfd < 0) {
+        pdb_log_error("io_uring accept failed: %s\n", strerror(-clientfd));
+        return clientfd;
+    }
+    pdb_log_info("Accept returned FD: %d\n", clientfd);
+
+    int flags = fcntl(clientfd, F_GETFL, 0);
+    if (flags != -1) {
+        fcntl(clientfd, F_SETFL, flags | O_NONBLOCK);
+    }
+
+    pdb_insert_conn_list(clientfd);
+    conn_list[clientfd]->client_ip = (char*)malloc(16);
+    assert(conn_list[clientfd]->client_ip != NULL);
+
+    struct sockaddr_in *clientaddr = (struct sockaddr_in *)&listen_c->uring_accept_addr;
+    inet_ntop(AF_INET, &clientaddr->sin_addr, conn_list[clientfd]->client_ip, 16);
+    conn_list[clientfd]->client_port = ntohs(clientaddr->sin_port);
+
+    conn_list[clientfd]->event = EVENT_READ;
+
+    conn_list[clientfd]->write_buffer = pdb_get_new_sds(16 * 1024);
+	conn_list[clientfd]->read_buffer = pdb_get_new_sds(PDB_PROTO_IO_BUFFER_LENGTH);
+	conn_list[clientfd]->read_pos = 0;
+	conn_list[clientfd]->write_pos = 0;
+
+	conn_list[clientfd]->fd = clientfd;
+	conn_list[clientfd]->is_aof_rewrite = 0;
+	conn_list[clientfd]->is_aof = 0;
+
+	conn_list[clientfd]->is_slave = global_conf.is_slave;
+
+    submit_read(ring, clientfd);
+
+    return clientfd;
+}
+
+
+
+
+static inline void submit_write(struct io_uring *ring, int fd)
+{
+    struct conn_info* c = conn_list[fd];
     struct io_uring_sqe *sqe = io_uring_get_sqe(ring);
     if (!sqe) {
         // 队列满了，强制提交当前任务
@@ -191,207 +145,96 @@ static inline void submit_write(struct io_uring *ring, int fd,
             fprintf(stderr, "Fatal: SQ Ring Full and flush failed!\n");
             exit(1);
         }
-    }
-
-    int len = get_readable_length(c->wtail, c->whead);
-    if (len == 0) {
-        return; // 没数据发，直接返回
     }
 
     c->event = EVENT_WRITE;
-    // memcpy(c->wbuffer, data, len);
-
-    int whead_idx = c->wtail & BUFFER_MASK;
-    io_uring_prep_send(sqe, fd, &c->wbuffer[whead_idx], len, 0);
+    io_uring_prep_send(sqe, fd, c->write_buffer, c->write_pos, 0);
     io_uring_sqe_set_data(sqe, c);
 }
 
-static int prepare_write_buffer(conn_info_t *c, char *data, int len) {
-    unsigned int space = BUFFER_LENGTH - (c->whead - c->wtail);
-    if (space < len) {
-        printf("c->wbuffer: %s\n", c->wbuffer);
-        fprintf(stderr, "Write buffer overflow, dropping data\n"); // 简单丢弃或扩容
-        return -1;
-    }
 
-    unsigned int mask_head = c->whead & BUFFER_MASK;
-    unsigned int linear_space = BUFFER_LENGTH - mask_head;
+static void pdb_write_to_slave(struct io_uring* ring, char* msg, int msg_len){
+	if (global_conf.is_slave){
+		return;
+	}
 
-    if (len <= linear_space) {
-        // 可以一次性拷进去
-        memcpy(&c->wbuffer[mask_head], data, len);
-    } else {
-        // 需要分两段拷贝（回绕）
-        memcpy(&c->wbuffer[mask_head], data, linear_space);
-        memcpy(&c->wbuffer[0], data + linear_space, len - linear_space);
-    }
-    c->whead += len;
+	int i;
+	for (i = 0; i < global_replication->slave_num; i++){
+		int slave_fd = global_replication->fd[i];
+		// pdb_log_debug("slave_num: %d fd : %d\n", global_replication->slave_num, slave_fd);
+		if (!conn_list[slave_fd]->is_incre_ready){
+			// pdb_log_debug("fd: %d, is_incre_ready: %d\n", fd, conn_list[fd]->is_incre_ready);
+			return ;
+		}
+		
+		memcpy(conn_list[slave_fd]->write_buffer + conn_list[slave_fd]->write_pos, msg, msg_len);
+		pdb_sds_len_increment(conn_list[slave_fd]->write_buffer, msg_len); 
+		conn_list[slave_fd]->write_pos += msg_len;
+		
+        submit_write(ring, slave_fd);
 
-    return PDB_OK;
+		// pdb_log_debug("write to slave[fd %d]: %s\n", fd, msg);
+	}
 }
 
-// 查看是否是需要的命令（get和set）
-static int is_need_command(char *buf) {
-    if (buf == NULL) return 0;
-    
-    if (strstr(buf, "SYN") != NULL) return 0; 
-    
-    if (strstr(buf, "SET") != NULL) return 1; // 包含 SET, MSET, RSET, HSET
-    if (strstr(buf, "DEL") != NULL) return 1; // 包含 DEL, RDEL, HDEL
-    if (strstr(buf, "MOD") != NULL) return 1; // 包含 MOD
-    
-    return PDB_OK; 
-}
 
-/**
- * @brief (buffer)中提取出指令，并丢给handler进行处理，生成响应
- * 
- * @param c 连接的上下文
- * @param response_out: 指令经过handler处理后生成的响应
- * 
- * @return 有响应，返回1；没响应，返回 <= 0
- */
+static int process_read_buffer(struct io_uring* ring, conn_info_t *c) {
+	int fd = c->fd;
+    size_t processed_bytes = 0;
 
-static int process_read_buffer(struct io_uring* ring, conn_info_t *c, char *response_out) {
-    
-    unsigned int data_len = c->rhead - c->rtail;
-    if (data_len == 0) return 0;
+    while(c->read_pos > processed_bytes){
+		int bulk_length = 0;
+		size_t package_len = check_resp_integrity(c->read_buffer + processed_bytes, c->read_pos - processed_bytes, &bulk_length);
+		
+		if (bulk_length > PDB_PROTO_IO_BUFFER_LENGTH){
+			c->is_big_package = 1;
+			c->bulk_length = bulk_length;
+		}
+		
+		if (package_len == PDB_HALF_PACKAGE){
+            break;
+			// pdb_log_debug("process_read_buffer receive half package\n");
+			// return PDB_HALF_PACKAGE;
+		}else if (package_len == PDB_PROTOCAL_ERROR){
+			// pdb_log_debug("process_read_buffer receive error protocal\n%s\n", c->read_buffer);
+			memcpy(c->write_buffer + c->write_pos, "protocal error\r\n", 17);
+			return PDB_PROTOCAL_ERROR;
+		}
 
-    char *temp_buf = malloc(data_len + 1);
-    if (!temp_buf) {
-        perror("malloc temp_buf failed");
-        return 0; 
-    }
-    temp_buf[0] = '\0';
-    // memset(temp_buf, 0, data_len + 1);
-
-    unsigned int tail_mask = c->rtail & BUFFER_MASK;
-    unsigned int linear = BUFFER_LENGTH - tail_mask;
-    if (data_len <= linear) {
-        memcpy(temp_buf, &c->buffer[tail_mask], data_len);
-    } else {
-        // 回绕
-        memcpy(temp_buf, &c->buffer[tail_mask], linear);
-        memcpy(temp_buf + linear, &c->buffer[0], data_len - linear);
-    }
-    temp_buf[data_len] = '\0'; 
-
-    // 检查是否收齐了一个完整的RESP包
-    int packet_len = check_resp_integrity(temp_buf, data_len);
-    // printf("check_resp_integrity return: %d\n", packet_len);
-    if (packet_len < 0) {
-        // printf("#############################\n");
-        // printf("temp_buf: %s\n", temp_buf);
-        printf("Protocol Error: Not RESP\n");
-        int len = sprintf(response_out, "Protocol Error\r\n");
-        if (len > 0){
-            // if (!global_replication.is_master && 
-            //     c->fd == global_replication.slave_to_master_fd) {
-            //         // printf("response_out: %s\n", response_out);
-            //         memset(response_out, 0, RESPONSE_LENGTH);
-            // }
-        }else{
-            printf("process_read_buffer: write error\n");
+        if (global_conf.is_replication){
+            pdb_write_to_slave(ring, c->read_buffer, package_len);
         }
-        free(temp_buf);
-        c->rtail = c->rhead; // 丢弃所有数据
-        
+		
+		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
+		// Write response directly into `c->write_buffer` to avoid extra allocating.
+		int response_len = handler(fd, c->read_buffer + processed_bytes, package_len, c->write_buffer + c->write_pos);
+		if (response_len > 0){
+			c->write_pos += response_len;
+			pdb_sds_len_increment(c->write_buffer, response_len);
+		}
+		// pdb_log_info("c->write_pos: %d\n", c->write_pos);
+		
+		// deal with AOF
+		// pdb_aof_buffer_append(c->read_buffer, package_len);
+		// pdb_aof_write_to_written_buffer(c->read_buffer, package_len);
+        processed_bytes += package_len;
 
-        // 如果response发送给从节点或者主节点
-        // int i;
-        // for (i = 0; i < global_replication.slave_count; i++){
-        //     if (c->fd == global_replication.master_to_slaves_info[i]->fd){
-        //         printf("response_out: %s\n", response_out);
-        //         memset(response_out, 0, strlen(response_out));
-        //     }
-        // }
-        // return 1;
+		// pdb_sds_range(c->read_buffer, package_len, -1);
+		// c->read_pos -= package_len;
+		
+		if (c->is_big_package == 1){
+			c->is_big_package = -1;
+		}
+	}
+
+    if (processed_bytes > 0) {
+        pdb_sds_range(c->read_buffer, processed_bytes, -1);
+        c->read_pos -= processed_bytes;
     }
-    
-    if (packet_len == 0) {
-        // printf("process_read_buffer1: %s, %d\n", temp_buf, data_len);
-        free(temp_buf);
-        return PDB_OK; // 数据不完整，继续等待 io_uring 读更多数据
-    }
 
-    // master节点收到从节点同步的命令后，进行增量同步或者直接转发
-    // if (global_replication.is_master){
-    //     for (int i = 0; i < global_replication.slave_count; i++){
-    //         struct conn_info* slave = global_replication.master_to_slaves_info[i];
-    //         if (slave->is_full_replication){
-    //             // 正在进行全量同步时，将主节点新收到的命令放入同步buffer中
-    //             if (slave->master_to_slave_append_length + packet_len < REPLICATION_BUFFER_LENGTH) {
-    //                 memcpy(slave->master_to_slave_append_buffer + slave->master_to_slave_append_length, 
-    //                        temp_buf, packet_len);
-    //                 slave->master_to_slave_append_length += packet_len;
-    //             } else {
-    //                 fprintf(stderr, "Error: Slave %d replication buffer overflow!\n", slave->fd);
-    //             }
-    //         }else if (slave->is_replication){
-    //             // 转发
-    //             if(is_need_command(temp_buf)){
-    //                 prepare_write_buffer(slave, temp_buf, packet_len);
-    //                 submit_write(ring, slave->fd, slave);
-    //             }
-    //         }
-    //     }
-    // }
-    // printf("process_read_buffer2\n");
-    int ret = handler(c->fd, temp_buf, packet_len, response_out);
-    // if (!global_replication.is_master && 
-    //     c->fd == global_replication.slave_to_master_fd) {
-    //     memset(response_out, 0, RESPONSE_LENGTH); 
-    // }
-    
-
-    // // 主节点收到syn命令
-    // if (ret == -9999 && global_replication.is_master){
-    //     // printf("ret == -9999\n");
-    //     // 从节点发送SYN，请求同步
-    //     c->is_slave = 0;
-    //     c->is_replication = 1;
-    //     int idx = master_add_slave(c);    //将从节点注册进 全局从节点信息中
-
-    //     pid_t pid = fork();
-    //     if (pid == 0){
-    //         // master子进程处理同步
-    //         c->is_full_replication = 1;
-    //         printf("master full syn begin\n");
-    //         perform_rbtree_full_sync(c->fd);
-    //         printf("master rbtree full syn success\n");
-    //         perform_hash_full_sync(c->fd);
-    //         printf("master hash full syn success\n");
-    //         c->is_full_replication = 0;
-
-    //         _exit(0);
-    //     }else if (pid > 0){
-    //         printf("child pid: %d\n", pid);
-    //         c->master_to_slave_append_buffer = malloc(REPLICATION_BUFFER_LENGTH);
-    //         c->master_to_slave_append_length = 0;
-    //         global_replication.slave_pid[idx] = pid;
-
-    //         // 在子进程结束之前，需要将新接收到SET命令存储到同步缓冲区中，等子进程结束再把新接收到的发送给子进程
-    //     }else{
-    //         perror("process_read_buffer: fork error");
-    //         exit(-99);
-    //     }
-    // }
-    c->rtail += packet_len;
-
-    free(temp_buf);
-
-    return 1;
+	return PDB_OK;
 }
 
-
-/**
- * @brief ：将响应（data指向的字符串）放入wbuffer中
- * 
- * @param data: 需要写入wbuffer的数据
- * @param len 写入数据(data)的长度
- * 
- * @return 
- */
 
 /*********************** 启动 server *************************/
 
@@ -400,7 +243,14 @@ int uring_entry(unsigned short port, msg_handler request_handler,
 {
     handler = request_handler;
 
+    int opt = 1;
     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0){
+		perror("setsockopt error");
+		return PDB_ERROR;
+	}
+
+
     struct sockaddr_in addr;
     memset(&addr, 0, sizeof(addr));
 
@@ -410,181 +260,138 @@ int uring_entry(unsigned short port, msg_handler request_handler,
 
     bind(sockfd, (struct sockaddr *)&addr, sizeof(addr));
     listen(sockfd, 128);
-
-    // printf("io_uring kvstore listening on %d ...\n", port);
+    pdb_insert_conn_list(sockfd);
+    conn_list[sockfd]->event = EVENT_ACCEPT;
+    conn_list[sockfd]->fd = sockfd;
 
     /************** 创建 io_uring 队列 **************/
     struct io_uring ring;
-    io_uring_queue_init(QUEUE_DEPTH, &ring, 0);
+    struct io_uring_params params;
+    memset(&params, 0, sizeof(params));
+    params.flags = IORING_SETUP_SQPOLL | IORING_SETUP_SQ_AFF;
+    params.sq_thread_idle = 2000;
+    params.sq_thread_cpu = 1;
 
-    /************** 第一次提交 accept **************/
-    struct sockaddr_in clientaddr;
-    socklen_t len = sizeof(clientaddr);
-    submit_accept(&ring, sockfd, (struct sockaddr *)&clientaddr, &len);
+    cpu_set_t cpuset;
+    CPU_ZERO(&cpuset);
+    CPU_SET(0, &cpuset);
+    pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+
+    int ret = io_uring_queue_init_params(QUEUE_DEPTH, &ring, &params);
+    if (ret < 0) {
+        pdb_log_error("SQPOLL init failed! Check permissions.\n");
+    }
+
+    // io_uring_queue_init(QUEUE_DEPTH, &ring, 0);
+
+    submit_accept(&ring, sockfd);
+    
 
     struct io_uring_cqe* cqes[CQE_BATCH];
+    struct __kernel_timespec ts = { .tv_sec = 0, .tv_nsec = 1000 * 1000 };
 
-    struct __kernel_timespec ts;
-    ts.tv_sec = 0;
-    ts.tv_nsec = 1000 * 1000;
+    // init replication
+    pdb_init_replication();
 
-    // if (global_replication.is_master == 0|| global_replication.slave_to_master_fd > 0){
-    //     // 如果是slave节点
-    //     struct conn_info* slave_to_master_conn_info = (struct conn_info*)malloc(sizeof(struct conn_info));
-    //     memset(slave_to_master_conn_info, 0, sizeof(struct conn_info));
+    while (1) {
+        // io_uring_submit_and_wait_timeout(&ring, cqes, CQE_BATCH, &ts, NULL);
+        // if (io_uring_sqring_wait(&ring)) {
+        //     io_uring_submit(&ring);
+        // } else {
+            
+        // }
 
-    //     slave_to_master_conn_info->fd = global_replication.slave_to_master_fd;
-    //     slave_to_master_conn_info->wbuffer = malloc(BUFFER_LENGTH);
-    //     slave_to_master_conn_info->buffer = malloc(BUFFER_LENGTH);
+        io_uring_submit(&ring);
 
-    //     submit_read(&ring, global_replication.slave_to_master_fd, slave_to_master_conn_info);
-    // }
-    while (1)
-    {
-        io_uring_submit_and_wait_timeout(&ring, cqes, CQE_BATCH, &ts, NULL);
-        // io_uring_submit_and_wait(&ring, 1);
-#if 0
         struct io_uring_cqe *cqe;
-        io_uring_wait_cqe(&ring, &cqe);
-      
-        conn_info_t *c = io_uring_cqe_get_data(cqe);
-        int res = cqe->res;
-        io_uring_cqe_seen(&ring, cqe);
+        int ret = io_uring_wait_cqe(&ring, &cqe);
+        if (ret < 0) continue;
 
-        if (res < 0) {
-            free(c);
-            continue;
-        }
-#endif 
-        int count = io_uring_peek_batch_cqe(&ring, cqes, CQE_BATCH);
-        if (count == 0){
-            continue;
-        }
-        int i = 0;
-        for (i = 0; i < count; i++){
-            struct io_uring_cqe *cqe = cqes[i];
-            conn_info_t *c = io_uring_cqe_get_data(cqe);
+        unsigned head;
+        unsigned processed = 0;
+
+        // int count = io_uring_peek_batch_cqe(&ring, cqes, CQE_BATCH);
+        // if (count == 0) {
+        //     struct io_uring_cqe *cqe_ptr;
+        //     int wait_ret = io_uring_wait_cqe(&ring, &cqe_ptr);
+        //     if (wait_ret < 0) continue;
+            
+        //     cqes[0] = cqe_ptr;
+        //     count = io_uring_peek_batch_cqe(&ring, &cqes[1], CQE_BATCH - 1);
+        //     count += 1; 
+        // }
+
+        // printf("DEBUG: CQ Ready before process: %u\n", io_uring_cq_ready(&ring));
+        // for (int i = 0; i < count; i++) {
+        io_uring_for_each_cqe(&ring, head, cqe) {
+            // pdb_log_info("main loop: count: %d\n", count);
+            processed++;
+            // struct io_uring_cqe* cqe = cqes[i];
+            conn_info_t* c = io_uring_cqe_get_data(cqe);
             int res = cqe->res;
 
-            if (c == NULL){
-                printf("c==null\n");
-                continue;
-            }
+            if (c == NULL) continue;
 
             /************************* ACCEPT *************************/
             if (c->event == EVENT_ACCEPT) {
-                int connfd = res;
-                free(c);
+                pdb_log_info("io_uring accept\n");
+                if (res >= 0) {     
+                    int client_fd = handle_accept_completion(&ring, cqe, c->fd);
+                }
+                submit_accept(&ring, c->fd);
 
-                /* 再提交一次 accept */
-                submit_accept(&ring, sockfd, (struct sockaddr *)&clientaddr, &len);
-
-                /* 为新连接分配 conn_info */
-                conn_info_t *nc = malloc(sizeof(conn_info_t));
-                memset(nc, 0, sizeof(conn_info_t));
-                nc->fd = connfd;
-                nc->buffer = malloc(BUFFER_LENGTH);
-                nc->wbuffer = malloc(BUFFER_LENGTH);
-                memset(nc->buffer, 0, BUFFER_LENGTH);
-                memset(nc->wbuffer, 0, BUFFER_LENGTH);
-
-                submit_read(&ring, connfd, nc);
             }
 
             /************************* READ *************************/
             else if (c->event == EVENT_READ) {
                 if (res <= 0) { 
-                    if (res < 0) {
-                        fprintf(stderr, "[Read Error] fd=%d, res=%d\n", c->fd, res);
-                    }
-                    close(c->fd);
-                    free(c);
-                    continue; 
-                }
-#if 0
-                /* 去掉 \r\n */
-                for (int i = 0; i < res; i++) {
-                    if (c->buffer[i] == '\r' || c->buffer[i] == '\n')
-                        c->buffer[i] = '\0';
-                }
-#endif
-                c->rhead += res;
+                    // read error
+                    if (res < 0 && res != -ECONNRESET) fprintf(stderr, "[Read Error] fd=%d, res=%d\n", c->fd, res);
+                    // close(c->fd);
+                    // pdb_sds_free(c->read_buffer);
+                    // pdb_sds_free(c->write_buffer);
 
-                char* response = malloc(RESPONSE_LENGTH);
-                if (response == NULL){
-                    perror("Fatal: malloc buffers failed\n");
+                    int fd_to_close = c->fd;
+                    close(fd_to_close); 
+                    pdb_delete_conn_list(fd_to_close);
+                    
+                    continue;
                 }
-                response[0] = '\0';
-                // memset(response, 0, RESPONSE_LENGTH);
+                // pdb_log_info("io_uring read\n");
+                c->read_pos += res;
+                pdb_sds_len_increment(c->read_buffer, res);
+                process_read_buffer(&ring, c);
 
-                int has_response = 0;
-
-                while (process_read_buffer(&ring, c, response) == PDB_OK) {
-                    // 如果 handler 生成了响应，放入写缓冲区
-                    // printf("[DEBUG] Logic Check: Handler output len = %lu\n", strlen(response));
-                    if (strlen(response) > 0) {
-                        // printf("response: %s\n", response);
-                        int response_ret = prepare_write_buffer(c, response, strlen(response));
-                        if (response_ret == -1){
-                            // wbffer满了
-                            submit_write(&ring, c->fd, c);
-                            break;
-                        }
-                        has_response = 1;
-                        // 清空 response 供下一次循环使用
-                        memset(response, 0, sizeof(response));
-                    }
-                }
-                free(response);
-
-                if (has_response) {
-                    submit_write(&ring, c->fd, c);
+                if (c->write_pos > 0) {
+                    submit_write(&ring, c->fd);
                 } else {
-                    submit_read(&ring, c->fd, c);
+                    submit_read(&ring, c->fd);
                 }
             }
 
             /************************* WRITE *************************/
             else if (c->event == EVENT_WRITE) {
                 if (res < 0) {
-                    // 连接断开
-                    close(c->fd);
-                    free(c->buffer);
-                    free(c->wbuffer);
-                    free(c);
-
+                    int fd_to_close = c->fd;
+                    close(fd_to_close);
+                    pdb_delete_conn_list(fd_to_close);
                     continue; 
                 }
 
-                c->wtail += res;
+                // pdb_log_info("io_uring write\n");
+                pdb_sds_range(c->write_buffer, res, -1);
+                c->write_pos -= res;
 
-                // 检查是否还有数据没发完
-                if (c->whead - c->wtail > 0) {
-                    submit_write(&ring, c->fd, c);
+                if (c->write_pos > 0) {
+                    submit_write(&ring, c->fd);
                 } else {
-                    submit_read(&ring, c->fd, c);
+                    submit_read(&ring, c->fd);
                 }
             }
         }
-        io_uring_cq_advance(&ring, count);
-
-        // 子进程完成主从同步后，处理父进程收到新的命令，将新的命令发送给从节点
-        int status;
-        pid_t exit_pid = waitpid(-1, &status, WNOHANG);
-
-        // if (exit_pid > 0){
-        //     int i;
-        //     for (i = 0; i < global_replication.slave_count; i++){
-        //         if (exit_pid == global_replication.slave_pid[i]){
-        //             printf("master child thread[pid:%d] syn exit\n", exit_pid);
-        //             struct conn_info* c = global_replication.master_to_slaves_info[i];
-        //             if (c->master_to_slave_append_length > 0){
-        //                 prepare_write_buffer(c, c->master_to_slave_append_buffer, c->master_to_slave_append_length);
-        //                 submit_write(&ring, c->fd, c);
-        //             }
-        //         }
-        //     }
-        // }
+        if (processed > 0) {
+            io_uring_cq_advance(&ring, processed);
+        }
     }
 
     return PDB_OK;
