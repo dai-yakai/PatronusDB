@@ -122,7 +122,7 @@ is_aof no
 
 * **QPS**
   * **Reactor**
-  
+
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
   | malloc | 417536 | 515198 | 32258 | 587889 | 449842 | 865051 |
@@ -169,10 +169,11 @@ is_aof no
        ​    valley: 2.13G
      
      * **Valgrind Massif**: 
-  	| malloc |  total(B)   | useful-heap(B) | extra-heap(B) |
-  	|  :--:  | :--:  |  :--:  |  :--:  |
-  	| peak value | 307,218,912 | 207,968,907 | 99,250,005 |
-  	| valley value | 41,159,224 |   39,656,975   | 1,502,249 |
+     
+        | malloc |  total(B)   | useful-heap(B) | extra-heap(B) |
+        |  :--:  | :--:  |  :--:  |  :--:  |
+        | peak value | 307,218,912 | 207,968,907 | 99,250,005 |
+        | valley value | 41,159,224 |   39,656,975   | 1,502,249 |
   
   3. **Test Result**(jemalloc): 
   
@@ -185,13 +186,12 @@ is_aof no
        ​    valley: 2.02G
      
      
-        * **Valgrind Massif**: 
-     
-  
-  |    malloc    |  total(B)   | useful-heap(B) | extra-heap(B) |
-  | :----------: | :---------: | :------------: | :-----------: |
-  |  peak value  | 221,218,336 |  156,460,703   |  64,757,633   |
-  | valley value | 40,122,536  |   38,878,873   |   1,243,663   |
+      * **Valgrind Massif**: 
+
+        |    malloc    |  total(B)   | useful-heap(B) | extra-heap(B) |
+        | :----------: | :---------: | :------------: | :-----------: |
+        |  peak value  | 221,218,336 |  156,460,703   |  64,757,633   |
+        | valley value | 40,122,536  |   38,878,873   |   1,243,663   |
   
   4. **Test Result**(mempool):
   
@@ -205,7 +205,8 @@ is_aof no
   
      * **Valgrind Massif**:
   
-     |    malloc    |  total(B)   | useful-heap(B) | extra-heap(B) |
-     | :----------: | :---------: | :------------: | :-----------: |
-     |  peak value  | 230,879,608 |  230,837,899   |    41,709     |
-     | valley value | 230,879,568 |  230,837,869   |    41,699     |
+
+        |    malloc    |  total(B)   | useful-heap(B) | extra-heap(B) |
+        | :----------: | :---------: | :------------: | :-----------: |
+        |  peak value  | 230,879,608 |  230,837,899   |    41,709     |
+        | valley value | 230,879,568 |  230,837,869   |    41,699     |
