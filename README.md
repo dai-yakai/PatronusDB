@@ -122,6 +122,7 @@ is_aof no
 
 * **QPS**
   * **Reactor**
+  
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
   | malloc | 417536 | 515198 | 32258 | 587889 | 449842 | 865051 |
