@@ -43,9 +43,20 @@ int pdb_bitmap_set(pdb_sds* b, uint64_t offset, int val, int* old_value){
          * We must add 1 to avoid add_size = 0
          */
         size_t add_size = byte_idx - pdb_get_sds_len(*b) + 1;
-        *b = pdb_enlarge_sds_greedy(*b, add_size);
-        memset(*b + old_len, 0, pdb_get_sds_alloc(*b) - old_len);
+        *b = pdb_enlarge_sds_greedy(*b, add_size + 16);
         pdb_set_sds_len(*b, byte_idx + 1);
+        size_t actual_size = 0;
+
+        void* true_prefix = (void*)((char*)(*b) - 13);
+        // actual_size = malloc_usable_size(true_prefix);
+        // pdb_log_info("old_len: %d, add_size: %d, len: %d, alloc len: %d, sds alloc len: %d\n", old_len, add_size, pdb_get_sds_len(*b), actual_size, pdb_get_sds_alloc(*b));
+        
+        
+        
+        
+        for (size_t i = 0; i < add_size; i++) {
+            (*b)[old_len + i] = 0;
+        }
     }
 
     if (old_value != NULL){

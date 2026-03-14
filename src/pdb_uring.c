@@ -301,11 +301,15 @@ int uring_entry(unsigned short port, msg_handler request_handler,
             
         // }
 
-        io_uring_submit(&ring);
+        // io_uring_submit(&ring);
 
         struct io_uring_cqe *cqe;
-        int ret = io_uring_wait_cqe(&ring, &cqe);
-        if (ret < 0) continue;
+        int count = io_uring_peek_batch_cqe(&ring, cqes, CQE_BATCH);
+        if (count == 0) {
+            for (int i = 0; i < 800; i++) __builtin_ia32_pause();
+            io_uring_submit(&ring);
+            continue;
+        }
 
         unsigned head;
         unsigned processed = 0;

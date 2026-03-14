@@ -151,7 +151,7 @@ int pdb_ebpf_init() {
     }
     
     size_t dynamic_offset = (size_t)pdb_hash_set - (size_t)hash_info.dli_fbase;
-    printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
+    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_hash_set_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_hash_set_entry,
         false,
@@ -176,7 +176,7 @@ int pdb_ebpf_init() {
     }
     
     dynamic_offset = (size_t)pdb_array_set- (size_t)array_info.dli_fbase;
-    printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
+    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_array_set_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_array_set_entry,
         false,
@@ -200,7 +200,7 @@ int pdb_ebpf_init() {
     }
     
     dynamic_offset = (size_t)pdb_rbtree_set - (size_t)rbtree_info.dli_fbase;
-    printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
+    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_rbtree_set_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_rbtree_set_entry,
         false,
@@ -223,7 +223,7 @@ int pdb_ebpf_init() {
     }
     
     dynamic_offset = (size_t)pdb_bitmap_set_ - (size_t)bitmap_info.dli_fbase;
-    printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
+    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_bitmap_add_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_bitmap_add_entry,
         false,

@@ -26,5 +26,4 @@ int pdb_is_aof_written_end();
 int pdb_aof_incrememtal_append(void* dataStructure, const char* key, uint8_t opcode);
 void pdb_is_aof_sqe_complete();
 int pdb_aof_buffer_append_bitmap(void* dataStructure, const char* key, uint64_t offset, int val);
-
 #endif

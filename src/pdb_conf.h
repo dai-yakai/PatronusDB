@@ -20,6 +20,7 @@ typedef struct server_config_s{
     char* dump_dir;
     char* persistence;
     bool is_aof;
+    bool is_backup;
 
     int max_memory;
 }server_config;

@@ -36,7 +36,7 @@ void pdb_init_aof(){
     }else if (pid > 0){
         // father process
         global_dump.is_aof_written = 1;
-        pdb_log_debug("global_dump.is_aof_written: %d\n", global_dump.is_aof_written);
+        // pdb_log_debug("global_dump.is_aof_written: %d\n", global_dump.is_aof_written);
         global_dump.aof_pid = pid;
     }else{
         pdb_log_error("fork error\n");
@@ -74,6 +74,7 @@ int pdb_is_aof_written_end(){
     pdb_log_info("Child process exits\n");
 
     if (global_dump.aof_rewrite_buffer_ebpf_offset == 0){
+        global_dump.is_aof_written = 0;
         pdb_log_debug("Child process exits, but `global_dump->aof_rewrite_buffer` is NULL\n");
         return PDB_OK;
     }
@@ -98,6 +99,12 @@ int pdb_is_aof_written_end(){
     return PDB_OK;
 }
 
+static inline uint64_t get_current_ms() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return (uint64_t)tv.tv_sec * 1000 + (uint64_t)tv.tv_usec / 1000;
+}
+
 
 int pdb_aof_dump(){
     
@@ -113,6 +120,12 @@ int pdb_aof_dump(){
         return -1;
     }
 
+    int is_force = 1;
+    size_t len_to_write = global_dump.aof_buffer_pos;
+    #define AOF_FLUSH_THRESHOLD (32 * 1024)
+
+    if (len_to_write == 0)  return PDB_OK;
+
     struct io_uring_sqe* sqe = io_uring_get_sqe(&global_dump.ring);
     if (!sqe){
         io_uring_submit(&global_dump.ring);
@@ -121,7 +134,7 @@ int pdb_aof_dump(){
     }
     // backup old aof_buffer and aof_buffer_pos
     char* buffer_to_write = global_dump.aof_buffer;
-    size_t len_to_write = global_dump.aof_buffer_pos;
+    len_to_write = global_dump.aof_buffer_pos;
     // alloc new aof_buffer
     global_dump.aof_buffer = pdb_get_new_sds(AOF_BUFFER_LEN);
     global_dump.aof_buffer_pos = 0;
@@ -130,6 +143,7 @@ int pdb_aof_dump(){
     io_uring_sqe_set_data(sqe, buffer_to_write);
     io_uring_submit(&global_dump.ring);
 
+    global_dump.last_flush_time = get_current_ms();
     return PDB_OK;
 }
 
@@ -222,17 +236,49 @@ int pdb_aof_buffer_append_bitmap(void* dataStructure, const char* key, uint64_t 
     return 0;
 }
 
+static void pdb_open_aof_file(const char* file){
+    if (global_conf.is_backup){
+        pdb_log_debug("backup\n");
+        struct stat st;
+        if (stat(file, &st) != 0) {
+            return;
+        }
+        time_t rawtime;
+        time(&rawtime);
+        char backup_name[1024];
+        snprintf(backup_name, sizeof(backup_name), "%s.%ld", file, (long)rawtime);
+        
+        if (rename(file, backup_name) == 0) {
+            // printf("[Backup] Success: %s -> %s\n", file, backup_name);
+        } else {
+            pdb_log_error("back up aof file error\n");
+            // perror("[Backup] Error");
+        }
+    }
+
+    int fd = open(file, O_RDWR | O_CREAT | O_TRUNC, 0644);
+    if (fd < 0){
+        pdb_log_error("open aof file error, errno: %d, reason: %s\n", errno, strerror(errno));
+    }
+    pdb_log_info("open aof file fd: %d\n", fd);
+    global_dump.dump_fd = fd;
+}
 
 int pdb_aof_load(const char* file){
     int time_used;
     struct timeval tv_begin, tv_end;
     gettimeofday(&tv_begin, NULL);
 
-    int fd = global_dump.dump_fd;
+    int fd = open(file, O_RDWR | O_CREAT, 0644);
+    if (fd < 0){
+        pdb_log_error("open aof error, errno: %d, reason: %s\n", errno, strerror(errno));
+    }
 
     struct stat st;
     if (fstat(fd, &st) < 0 || st.st_size == 0) {
         // file is empty
+        pdb_open_aof_file(file);
+        pdb_log_info("aof file is empty\n");
         return 0; 
     }
     size_t total_size = st.st_size;
@@ -240,6 +286,7 @@ int pdb_aof_load(const char* file){
     const char* mapped_buf = (const char*)mmap(NULL, total_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (mapped_buf == MAP_FAILED) {
         pdb_log_error("mmap error\n");
+        close(fd);
         return -1;
     }
 
@@ -284,6 +331,8 @@ int pdb_aof_load(const char* file){
     munmap((void*)mapped_buf, total_size);
     close(fd);
 
+    pdb_open_aof_file(file);
+
     gettimeofday(&tv_end, NULL);
     time_used = TIME_SUB_MS(tv_end, tv_begin);
     pdb_log_info("RDB load(file size: %lld), time used: %d ms\n", (long long)st.st_size, time_used);
@@ -292,27 +341,27 @@ int pdb_aof_load(const char* file){
 
 load_err:
     munmap((void*)mapped_buf, total_size);
-    // close(fd);
+    close(fd);
     pdb_log_error("aof load error: deserialize error\n");
     return -1;
 }
 
 
 
-int pdb_aof_write_to_written_buffer(char* msg, size_t len){
-    if (!global_dump.is_aof || !global_dump.is_aof_written){
-        return PDB_OK;
-    }
+// int pdb_aof_write_to_written_buffer(char* msg, size_t len){
+//     if (!global_dump.is_aof || !global_dump.is_aof_written){
+//         return PDB_OK;
+//     }
     
-    if (global_dump.is_aof_written){
-        if (strstr(msg, "SAVE")){
-            return PDB_OK;
-        }
-        char* aof_written_buffer_data = (char*)pdb_malloc(len + 1); // '\0'
-        memcpy(aof_written_buffer_data, msg, len);
-        aof_written_buffer_data[len] = '\0';
-        pdb_list_insert(&(global_dump.aof_rewrite_buffer), aof_written_buffer_data);
-    }
+//     if (global_dump.is_aof_written){
+//         if (strstr(msg, "SAVE")){
+//             return PDB_OK;
+//         }
+//         char* aof_written_buffer_data = (char*)pdb_malloc(len + 1); // '\0'
+//         memcpy(aof_written_buffer_data, msg, len);
+//         aof_written_buffer_data[len] = '\0';
+//         pdb_list_insert(&(global_dump.aof_rewrite_buffer), aof_written_buffer_data);
+//     }
     
-    return PDB_OK;
-}
+//     return PDB_OK;
+// }

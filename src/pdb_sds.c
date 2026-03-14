@@ -1,5 +1,7 @@
 #include "pdb_sds.h"
 
+
+
 /**
  * A collection of functions to get, set, determine SDS type.
  * `pdb_req_sds_type`: select the appropriate SDS type based on the given length.
@@ -281,11 +283,11 @@ static pdb_sds _pdb_enlarge_sds(pdb_sds s, size_t add_size, int greedy){
 }
 
 pdb_sds pdb_enlarge_sds_greedy(pdb_sds s, size_t add_size){
-    return _pdb_enlarge_sds(s, add_size, 1);
+    return _pdb_enlarge_sds(s, add_size + 1, 1);    // +1 : '\0'
 }
 
 pdb_sds pdb_enlarge_sds_no_greedy(pdb_sds s, size_t add_size){
-    return _pdb_enlarge_sds(s, add_size, 0);
+    return _pdb_enlarge_sds(s, add_size + 1, 0);  // +1: '\0'
 }
 
 
@@ -430,11 +432,14 @@ void pdb_sds_range(pdb_sds s, ssize_t start, ssize_t end){
  * If 'increment' > 0, the length of 's' increases.
  */
 void pdb_sds_len_increment(pdb_sds s, ssize_t increment){
-    unsigned char type = pdb_get_sds_type(s);
-    if (*s == '\177'){
-        printf(" ");
+    size_t alloc = pdb_get_sds_alloc(s);
+    size_t len = pdb_get_sds_len(s);
+    if (len + increment + 1 > alloc){
+        // pdb_log_error("sds increment error\n");
     }
-    size_t new_len = pdb_get_sds_len(s) + increment;
+
+    unsigned char type = pdb_get_sds_type(s);
+    size_t new_len = len + increment;
     assert(new_len >= 0);
     pdb_set_sds_len(s, new_len);
 

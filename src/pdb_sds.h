@@ -64,7 +64,6 @@ struct __attribute__ ((__packed__)) pdb_sds_64_s{
 #define PDB_HDR_PTR(T, s)     ((struct pdb_sds_##T##_s*)(((char*)(s)) - (sizeof(struct pdb_sds_##T##_s))))
 
 
-
 int pdb_get_sds_type(pdb_sds s);
 size_t pdb_get_sds_len(pdb_sds s);
 size_t pdb_get_sds_avail(pdb_sds s);

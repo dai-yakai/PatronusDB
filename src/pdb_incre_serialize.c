@@ -8,6 +8,10 @@
 int pdb_incre_serialize(void* dataStructure, const char* key, char* buf, size_t buf_len, size_t* offset, uint8_t opcode) {
     pdb_value* value = NULL;
     buf_len = buf_len - 64;
+    if (buf_len < 0){
+        pdb_log_error("buf_len < 0 after -16\n");
+        return PDB_ERROR;
+    }
 
     // 🚩 步骤 1: 身份识别逻辑
     char* parent_key = NULL;
@@ -139,9 +143,9 @@ int pdb_incre_deserialize(const char* buf, size_t buf_len, size_t* offset){
             pdb_log_debug("read bitmap error\n");
         }
 
-        pdb_log_info("key:%s\n", key);
-        pdb_log_info("bit_offset: %d\n", bit_offset);
-        pdb_log_info("val: %d\n", val);
+        // pdb_log_info("key:%s\n", key);
+        // pdb_log_info("bit_offset: %d\n", bit_offset);
+        // pdb_log_info("val: %d\n", val);
         pdb_value* value = pdb_hash_get(&global_hash, key);
         if (value == NULL){
             pdb_sds sds = pdb_get_new_sds(PDB_INIT_BTIMAP_LENGTH);

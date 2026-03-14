@@ -6,7 +6,7 @@ int _pdb_append(char* buf, size_t buf_len, size_t* offset, void* data, size_t da
         return PDB_RETURN_PARAM_ERROR;
     }
     if (*offset + data_len > buf_len){
-        pdb_log_info("offset: %d, data_len: %d, buf_len: %d\n", *offset, data_len, buf_len);
+        pdb_log_info("offset: %zu, data_len: %zu, buf_len: %zu\n", *offset, data_len, buf_len);
         return PDB_RETURN_PARAM_ERROR; // 防溢出
     } 
     
@@ -83,7 +83,7 @@ int _pdb_append_set(char* buf, size_t buf_len, size_t* offset, pdb_set* set) {
     uint8_t set_type = set->flag;
     if (_pdb_append_uint8(buf, buf_len, offset, set_type) < 0) return -1;
     long count = set->count;
-    pdb_log_debug("set count: %ld\n", count);
+    // pdb_log_debug("set count: %ld\n", count);
     if (_pdb_append_long(buf, buf_len, offset, count) < 0) return -1;
 
     if (set->flag == PDB_SET_ENCODING_INTSET) {
@@ -170,6 +170,7 @@ int pdb_serialize_array(char* buf, size_t buf_len, size_t* offset, pdb_array_t* 
 }
 
 int pdb_serialize_hash(char* buf, size_t buf_len, size_t* offset, pdb_hash_t* hash) {
+    // pdb_log_info("hash_count: %d\n", hash->count);
     if (hash->count == 0)   return PDB_RETURN_OK;
     
     if (_pdb_append_uint8(buf, buf_len, offset, PDB_OPCODE_HASH) < 0) return -1;

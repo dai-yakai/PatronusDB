@@ -37,10 +37,11 @@ static void pdb_write_to_slave(int fd, char* msg, int msg_len){
 
 static int process_read_buffer(struct conn_info* c, msg_handler handler){
     int fd = c->fd;
-    while(c->read_pos > 0){
+    size_t processed = 0;
+    while(c->read_pos > processed){
         // pdb_log_info("c->read_pos: %d\n", c->read_pos);
 		int bulk_length = 0;
-		size_t package_len = check_resp_integrity(c->read_buffer, c->read_pos, &bulk_length);
+		size_t package_len = check_resp_integrity(c->read_buffer + processed, c->read_pos - processed, &bulk_length);
 		
 
 		if (bulk_length > PDB_PROTO_IO_BUFFER_LENGTH){
@@ -50,6 +51,7 @@ static int process_read_buffer(struct conn_info* c, msg_handler handler){
 		
 		if (package_len == PDB_HALF_PACKAGE){
 			// pdb_log_debug("process_read_buffer receive half package\n");
+            break;
 			return PDB_HALF_PACKAGE;
 		}else if (package_len == PDB_PROTOCAL_ERROR){
 			// pdb_log_debug("process_read_buffer receive error protocal\n%s\n", c->read_buffer);
@@ -65,19 +67,21 @@ static int process_read_buffer(struct conn_info* c, msg_handler handler){
 		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
 		// Write response directly into `c->write_buffer` to avoid extra allocating.
 		// printf("LEN BEFORE: %zu\n", pdb_get_sds_len(c->read_buffer));
-        int response_len = handler(fd, c->read_buffer, package_len, c->write_buffer + c->write_pos);
+        int response_len = handler(fd, c->read_buffer + processed, package_len, c->write_buffer + c->write_pos);
         // printf("LEN after: %zu\n", pdb_get_sds_len(c->read_buffer));
 		if (response_len > 0){
 			c->write_pos += response_len;
 			pdb_sds_len_increment(c->write_buffer, response_len);
 		}
+
+        processed += package_len;
 		// pdb_log_info("c->write_pos: %d\n", c->write_pos);
 		
 		// deal with AOF
 		// pdb_aof_buffer_append(c->read_buffer, package_len);
 		// pdb_aof_write_to_written_buffer(c->read_buffer, package_len);
         // printf("DEBUG before range: c=%p, read_buf=%p, write_buf=%p\n", (void*)c, (void*)c->read_buffer, (void*)c->write_buffer);
-		pdb_sds_range(c->read_buffer, package_len, -1);
+		// pdb_sds_range(c->read_buffer, package_len, -1);
 
         // printf("--- Visualized ---\n");
         // for (size_t i = 0; i < package_len; i++) {
@@ -89,12 +93,17 @@ static int process_read_buffer(struct conn_info* c, msg_handler handler){
         // }
         // printf("\n\n");
 
-		c->read_pos -= package_len;
+		// c->read_pos -= package_len;
 		
 		if (c->is_big_package == 1){
 			c->is_big_package = -1;
 		}
 	}
+
+    if (processed > 0) {
+        pdb_sds_range(c->read_buffer, processed, -1);
+        c->read_pos -= processed;
+    }
 
 	return PDB_OK;
 }
@@ -109,24 +118,17 @@ void server_reader(void *arg) {
     fcntl(fd, F_SETFL, flags | O_NONBLOCK);
 
     while (1) {
-        size_t read_len = PDB_PROTO_IO_BUFFER_LENGTH;
+        // expand read buffer
         size_t avail_len = pdb_get_sds_avail(c->read_buffer);
+        size_t used_len = pdb_get_sds_len(c->read_buffer);
         assert(avail_len >= 0);
 
-        int nread;
-
-        if (c->is_big_package){
-            read_len = c->bulk_length;
+        if (avail_len == 0){
+            pdb_enlarge_sds_greedy(c->read_buffer, used_len * 2);
         }
-
-        if (avail_len < read_len + 2){
-            size_t remaining_length = read_len + 2 - avail_len;		// +2:\r\n
-            read_len = remaining_length;
-            // pdb_log_info("read_len: %d\n", read_len);
-            c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, read_len);
-        }
-
-        ret = recv(fd, c->read_buffer + c->read_pos, read_len, 0);
+        avail_len = pdb_get_sds_avail(c->read_buffer) - 1;   
+        // pdb_log_info("read_len: %d\n", read_len);
+        ret = recv(fd, c->read_buffer + c->read_pos, avail_len, 0);
 
         if (ret < 0) {
             if (errno == EAGAIN || errno == EWOULDBLOCK) {
@@ -137,10 +139,16 @@ void server_reader(void *arg) {
         } else if (ret == 0) {
             break; 
         }
+        
+        // pdb_log_info("recv: %d\n", ret);
         c->read_pos += ret;
         pdb_sds_len_increment(c->read_buffer, ret);
         process_read_buffer(c, handler);
         
+        // if (c->write_pos < 8 * 1024){
+        //     return;
+        // }
+
         int sent = send(fd, c->write_buffer, c->write_pos, 0);
         if (sent > 0) {
             pdb_sds_range(c->write_buffer, sent, -1);
@@ -148,6 +156,7 @@ void server_reader(void *arg) {
         } else if (sent < 0 && errno != EAGAIN) {
             break;
         }
+        // pdb_log_info("send: %d\n", sent);
         
     }
 }

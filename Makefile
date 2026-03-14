@@ -6,8 +6,12 @@ BPFTOOL   := /usr/sbin/bpftool
 INCLUDES  := -I./src -I./NtyCo/core/ -I/usr/include/x86_64-linux-gnu
 EXTRA_CFLAGS := -D DATA_STRUCTURE_TEST=0
 
+ASAN_FLAGS := -fsanitize=address -fno-omit-frame-pointer -O0
+
 CFLAGS    := -g $(INCLUDES)
 CFLAGS    += $(EXTRA_CFLAGS)
+# CFLAGS    += $(ASAN_FLAGS)
+
 LDFLAGS   := -L./NtyCo/
 
 LIBS      := -lntyco -lpthread -ldl -luring -libverbs -lbpf -lelf -lz

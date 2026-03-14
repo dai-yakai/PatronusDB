@@ -119,15 +119,17 @@ int pdb_rbtree_set_entry(struct pt_regs *ctx) {
  * int pdb_bitmap_set_(struct pdb_bitmap* bitmap, uint64_t offset, int val, int* old_value)
  *                          RDI,                    RSI(si),          RDX...
  */
-SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_bitmap_set")
+SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_bitmap_set_")
 int pdb_bitmap_add_entry(struct pt_regs *ctx) {
     void* bitmap_ptr = (void *)ctx->di; 
     if (!bitmap_ptr) return 0;
 
-    char *key_ptr = NULL;
-    long ret = bpf_probe_read_user(&key_ptr, sizeof(key_ptr), bitmap_ptr);
-    
-    if (ret != 0 || !key_ptr) return 0;
+    // bpf_printk("TRIGGERED: bitmap_ptr=%p\n", bitmap_ptr);
+
+    // char *key_ptr = NULL;
+    // long ret = bpf_probe_read_user(&key_ptr, sizeof(key_ptr), bitmap_ptr);
+    // bpf_printk("TRIGGERED: ret=%ld, key_Ptr: %p\n", ret, key_ptr);
+    // if (ret != 0 || !key_ptr) return 0;
     // bpf_printk("uprobe bitmap: bitmap_ptr=%p, key_ptr=%p\n", bitmap_ptr, key_ptr);
 
     uint64_t offset = ctx->si;
@@ -141,7 +143,7 @@ int pdb_bitmap_add_entry(struct pt_regs *ctx) {
     e->val = val;
 
     bpf_probe_read_user_str(&e->key, sizeof(e->key), (char *)bitmap_ptr + 16);
-    bpf_printk("uprobe bitmap: e->key=%s\n", e->key);
+    // bpf_printk("uprobe bitmap: e->key=%s, e->val=%d, e->offset:%d\n", e->key, e->val, e->offset);
 
     bpf_ringbuf_submit(e, 0);
     return 0;

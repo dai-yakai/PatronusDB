@@ -13,6 +13,7 @@ config_entry conf_table[] = {
     {"max_memory",      CONF_TYPE_INT,      &global_conf.max_memory},
     {"persistence",     CONF_TYPE_STRING,   &global_conf.persistence},
     {"is_aof",          CONF_TYPE_BOOL,     &global_conf.is_aof},
+    {"is_backup",       CONF_TYPE_BOOL,     &global_conf.is_backup},
     {NULL,              0,                  NULL}
 };
 

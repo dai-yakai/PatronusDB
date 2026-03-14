@@ -565,7 +565,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     len = sprintf(response, "%s\r\n", value_get);
                 }
             }
-            pdb_decre_value(value);
+            // pdb_decre_value(value);
             break;
 
         case PDB_CMD_RMSET:
@@ -652,7 +652,6 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 } else if (ret == PDB_DATASTRUCTURE_OK){
                     len = sprintf(response, "OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_EXIST){
-                    printf("112222\n");
                     len = sprintf(response, "EXIST\r\n");
                 }
             }
@@ -736,7 +735,6 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_hash_exist(&global_hash, key);
             if(response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_EXIST){
-                    printf("222222\n");
                     len = sprintf(response, "EXIST\r\n");
                 } else{
                     len = sprintf(response, "NO EXIST\r\n");
@@ -1056,7 +1054,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 size_t key_len = strlen(key) + 1;
                 char* parent = pdb_malloc(key_len);
                 strcpy(parent, key);
-                parent[key_len] = '\0';
+                parent[key_len - 1] = '\0';
                 ((pdb_hash_t*)set->ptr)->parent_key = parent;
             }
 
@@ -1275,7 +1273,6 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 
                     _exit(0);
                 }else if (pid > 0){
-                    printf("2222\n");
                     // father thread
                     if (response != NULL)   len = sprintf(response, "OK\r\n");
                 }else{
@@ -1718,11 +1715,10 @@ int pdb_protocol(int fd, char* msg, int length, char* out){
         free(rmsg);
         return -1;
     }
-
+    char* p_tokens[3];
     // allocate `tokens` based on `count`(the num of tokens)
     char** tokens;
     if (count < 3){
-        char* p_tokens[3];
         tokens = p_tokens;
     }else{
         tokens = (char**)pdb_malloc(sizeof(char*) * (count + 2));  

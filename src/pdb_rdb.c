@@ -2,12 +2,17 @@
 
 
 int pdb_rdb_load(const char* file){
+    int fd = open(file, O_RDWR | O_CREAT | O_APPEND, 0644);
+    if (fd < 0){
+        pdb_log_error("open aof file error, errno: %d, reason: %s\n", errno, strerror(errno));
+    }
+    global_dump.dump_fd = fd;
 
     int time_used;
     struct timeval tv_begin, tv_end;
     gettimeofday(&tv_begin, NULL);
 
-    int fd = global_dump.dump_fd;
+    fd = global_dump.dump_fd;
     // open(file, O_RDONLY);
     // if (fd < 0) {
     //     pdb_log_error("RDB file not found or cannot be opened: %s\n", file);
@@ -82,7 +87,8 @@ load_err:
 
 int pdb_rdb_array_dump(pdb_array_t* arr, const char* file){
     assert(arr != NULL && file != NULL);
-    
+    if (arr->used_count == 0)   return PDB_OK;
+
     int fd = global_dump.dump_fd;
     // open(file, O_RDWR | O_CREAT, 0644);
     if (fd < 0) {
@@ -92,6 +98,7 @@ int pdb_rdb_array_dump(pdb_array_t* arr, const char* file){
 
     struct stat st;
     if (fstat(fd, &st) < 0) {
+        pdb_log_error("array dump fstat error\n");
         // close(fd);
         return -1;
     }
@@ -99,12 +106,14 @@ int pdb_rdb_array_dump(pdb_array_t* arr, const char* file){
 
     size_t max_virtual_size = 100ULL * 1024 * 1024 * 1024; // 100GB
     if (ftruncate(fd, max_virtual_size) != 0) {
+        pdb_log_error("array dump ftruncate error, errno: %d, reason: %s\n", errno, strerror(errno));
         // close(fd);
         return -1;
     }
 
     char* mapped_buf = (char*)mmap(NULL, max_virtual_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
     if (mapped_buf == MAP_FAILED) {
+        pdb_log_error("array dump map error\n");
         // close(fd);
         return -1;
     }
@@ -155,6 +164,7 @@ int pdb_rdb_array_dump(pdb_array_t* arr, const char* file){
 
 int pdb_rdb_hash_dump(pdb_hash_t* h, const char* file){
     assert(h != NULL && file != NULL);
+    if (h->count == 0)  return PDB_OK;
 
     int fd = global_dump.dump_fd;
     // open(file, O_RDWR | O_CREAT, 0644);
@@ -249,7 +259,7 @@ int pdb_rdb_hash_dump(pdb_hash_t* h, const char* file){
 
 int pdb_rdb_rbtree_dump(pdb_rbtree_t* rbtree, const char* file){
     assert(rbtree != NULL && file != NULL);
-
+    if (rbtree->node_count == 0)    return PDB_OK;
 
     int fd = global_dump.dump_fd;
     // open(file, O_RDWR | O_CREAT, 0644);
@@ -317,7 +327,7 @@ int pdb_rdb_dump(const char* file){
 
     int ret = pdb_rdb_array_dump(&global_array, file);
     if (ret != PDB_OK) {
-        pdb_log_error("array dump error\n");
+        pdb_log_error("array dump error, ret: %d\n", ret);
         return ret;
     }
 
@@ -342,7 +352,7 @@ int pdb_rdb_dump(const char* file){
     uint8_t end_of_file = PDB_OPCODE_EOF;
     int len = write(fd, &end_of_file, 1);
     if (len < 0){
-        pdb_log_error("write EOF error\n");
+        pdb_log_error("write(fd: %d) EOF error, errno: %d, reason: %s\n", fd, errno, strerror(errno));
         ret = PDB_ERROR;
         return ret;
     }

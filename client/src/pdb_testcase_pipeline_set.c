@@ -148,7 +148,7 @@ void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const 
     }
 }
 
-void testcase_100w(int connfd){
+static void testcase_100w_set(int connfd){
     int count = 1000000;
     int i = 0;
     int response_count = 0;
@@ -332,6 +332,64 @@ void testcase_100w(int connfd){
 #endif    
 }   
 
+void testcase_100w_delete(int connfd){
+    printf("#### DELETE BEGIN ###\N");
+    int count = 1000000;
+    int i = 0;
+    int response_count = 0;
+    int batch_start_i = 0; 
+    
+    char batch_buf[8192];
+    int batch_len = 0;
+
+    char key[64];
+    char val[64];
+    int k_len, v_len;
+
+    for(i = 0; i < count; i++){
+        k_len = sprintf(key, "DAI%d", i);  
+        v_len = sprintf(val, "%d", i);     
+        
+        batch_len += sprintf(batch_buf + batch_len, 
+            "*3\r\n$4\r\nRDEL\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",  
+            k_len, key, v_len, val);
+        
+        k_len = sprintf(key, "TAO%d", i);
+        v_len = sprintf(val, "%d", i);
+        
+        batch_len += sprintf(batch_buf + batch_len, 
+            "*3\r\n$4\r\nRSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n", 
+            k_len, key, v_len, val);
+        
+        k_len = sprintf(key, "TAO%d", i);
+        batch_len += sprintf(batch_buf + batch_len, 
+            "*2\r\n$4\r\nRDEL\r\n$%d\r\n%s\r\n", k_len, key);
+        
+        response_count += 3;
+        
+        if (batch_len > 4096 || response_count >= SEND_BATCH) { 
+            if (batch_len > 0) {
+                pipeline_set_send_msg(connfd, batch_buf, batch_len);
+                batch_len = 0;
+            }
+        }
+        
+        if (response_count >= SEND_BATCH) {
+            // 🚀 修改点 2：传入 start_i 和结构类型
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+            batch_start_i += (response_count / 3); // 步进游标
+            response_count = 0;
+        }
+    }
+    
+    if (batch_len > 0) {
+        pipeline_set_send_msg(connfd, batch_buf, batch_len);
+    }
+    if (response_count > 0) {
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+    }
+}
+
 
 // ./testcase 192.168.127.222 8888
 int pdb_testcase_pipeline_set(char* ip, int port){
@@ -342,7 +400,8 @@ int pdb_testcase_pipeline_set(char* ip, int port){
         exit(-1);
     }
 
-    testcase_100w(connfd);
+    testcase_100w_set(connfd);
+    testcase_100w_delete(connfd);
 
     return 0;
 }

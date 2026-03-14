@@ -10,7 +10,7 @@
 #include "pdb_conf.h"
 
 #define ENABLE_MEMPOOL      1
-#define ENABLE_JEMALLOC     1
+#define ENABLE_JEMALLOC     0
 
 #define MEMPOOL_SIZE        1024*1024*10
 

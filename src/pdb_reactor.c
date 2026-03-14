@@ -141,8 +141,10 @@ static int process_read_buffer(int fd, msg_handler handler){
 			return PDB_PROTOCAL_ERROR;
 		}
 
-		pdb_write_to_slave(fd, c->read_buffer, package_len);
-
+		if (global_conf.is_replication){
+			pdb_write_to_slave(fd, c->read_buffer, package_len);
+		}
+		
 		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
 		// Write response directly into `c->write_buffer` to avoid extra allocating.
 		int response_len = handler(fd, c->read_buffer, package_len, c->write_buffer + c->write_pos);

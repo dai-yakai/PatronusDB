@@ -52,7 +52,7 @@ void init_pdb_engine(){
         // pdb_init_aof(global_conf.dump_dir);
         
         ret = pdb_aof_load(global_conf.dump_dir);
-        pdb_log_info("pdb_aof_load ret: %d\n", ret);
+        // pdb_log_info("pdb_aof_load ret: %d\n", ret);
     }
     if (ret == PDB_OK){
         if (global_conf.is_aof == 0){
@@ -79,7 +79,8 @@ int main(int argc, char* argv[]){
     printf("\033[36m%s\033[0m\n", logo);
 
     loadServerConfig("./PatronusDB.conf");
-    pdb_log_debug("is aof: %d\n", global_conf.is_aof);
+
+    // pdb_log_debug("is backup: %d\n", global_conf.is_backup);
     init_pdb_engine();
     // pdb_ebpf_init();
 

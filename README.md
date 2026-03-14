@@ -70,10 +70,8 @@ make
 
 # PDB Data Types
 
-* **Array**：
-* **Hash Table**：
-* **Rbtree**：
-* **Bitmap**：
+* **Array、HASH、RBtree**
+* **Bitmap**：A high-performance, space-efficient data structure that leverages bit-level mapping to manage massive datasets with minimal memory footprint and near-instantaneous membership queries.
 * **Set**: A collection of unique elements implemented using an internal hash-set to provide $O(1)$ membership testing.
 * **Sorted set**: A hybrid structure combining a Hash Table and a Skip List. It supports score-based ranking and range retrieval, maintaining elements in a sorted state with $$O(\log N)$$ efficiency.
 
@@ -124,35 +122,89 @@ is_aof no
 
 * **QPS**
   * **Reactor**
-
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
-  | malloc |  |  |  |  |  |  |
+  | malloc | 417536 | 515198 | 32258 | 587889 | 449842 | 865051 |
   | mempool | 519750 | 694444 | 34482 | 729394 | 453103 | 821692 |
-  | jemalloc |  |        |  |  |  |  |
+  | jemalloc | 549450 | 700770 | 30303 | 751879 | 467508 | 815660 |
   
   
   * **Ntyco**
   
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
-  | malloc |  |  |  |  |  |  |
-  | mempool | 519750 | 694444 | 34482 | 729394 | 453103 | 821692 |
-  | jemalloc |  |        |  |  |  |  |
+  | malloc | 170823 | 237812 | 31250 | 220994 | 144571 | 214546 |
+  | mempool | 171644 | 239635 | 32258 | 308261 | 131856 | 222667 |
+  | jemalloc | 151308 | 311817 | 33333 | 229147 | 142877 | 263019 |
   
   * **io_uring**
   
   | 内存模型 | RBTree | Hash | Array | Set | Sorted set | Bitmap |
   |  :--:  | :--:  | :--: |  :--:  |  :--:  |  :--:  |  :--:  |
-  | malloc |  |  |  |  |  |  |
-  | mempool | 519750 | 694444 | 34482 | 729394 | 453103 | 821692 |
-  | jemalloc |  |        |  |  |  |  |
+  | malloc | 674763 | 884173 | 27777 | 977517 | 419111 | 929368 |
+  | mempool | 695894 | 832639 | 28571 | 1233045 |   533049   | 1101321 |
+  | jemalloc | 675219 | 916590 | 28571 | 826446  | 614628 | 831255 |
 
 * **Persistence**
 
-  
+  1. RDB load time: 107,706,534 B    ----   1389ms
 
 * **Replication**
 
-  rdb 107M-1126ms
+  1. RDB 107M   --------   385ms
 
+* **memery**
+
+  1. **Test Method**(./client/src/pdb_testcase_pipeline_set.c): The test begins by inserting two items and deleting one per loop for 1M iterations to measure the **peak value**. This is followed by a phase of inserting one and deleting two until complete clearance, where the **valley value** is recorded.
+  
+  2. **Test Result** (malloc): 
+  
+     * **htop**: 
+     
+       ​    init: 1.84G
+     
+       ​    peak: 2.13G
+     
+       ​    valley: 2.13G
+     
+     * **Valgrind Massif**: 
+  	| malloc |  total(B)   | useful-heap(B) | extra-heap(B) |
+  	|  :--:  | :--:  |  :--:  |  :--:  |
+  	| peak value | 307,218,912 | 207,968,907 | 99,250,005 |
+  	| valley value | 41,159,224 |   39,656,975   | 1,502,249 |
+  
+  3. **Test Result**(jemalloc): 
+  
+     * **htop**: 
+  
+       ​    init: 1.81G
+  
+       ​    peak: 2.02G
+  
+       ​    valley: 2.02G
+     
+     
+        * **Valgrind Massif**: 
+     
+  
+  |    malloc    |  total(B)   | useful-heap(B) | extra-heap(B) |
+  | :----------: | :---------: | :------------: | :-----------: |
+  |  peak value  | 221,218,336 |  156,460,703   |  64,757,633   |
+  | valley value | 40,122,536  |   38,878,873   |   1,243,663   |
+  
+  4. **Test Result**(mempool):
+  
+     * **htop**:
+  
+       ​    init:1.69G
+  
+       ​    peak:1.88G
+  
+       ​    valley: 1.88G
+  
+     * **Valgrind Massif**:
+  
+     |    malloc    |  total(B)   | useful-heap(B) | extra-heap(B) |
+     | :----------: | :---------: | :------------: | :-----------: |
+     |  peak value  | 230,879,608 |  230,837,899   |    41,709     |
+     | valley value | 230,879,568 |  230,837,869   |    41,699     |

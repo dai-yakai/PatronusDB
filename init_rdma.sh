@@ -50,7 +50,7 @@ echo -e "${YELLOW}[INFO] Detected active physical network interface: ${ACTIVE_IF
 
 # Set MTU to 4096
 echo -e "${YELLOW}[INFO] Setting MTU of ${ACTIVE_IFACE} to 4096...${NC}"
-ip link set dev "$ACTIVE_IFACE" mtu 4096
+ip link set dev "$ACTIVE_IFACE" mtu 4200
 if [ $? -ne 0 ]; then
     echo -e "${RED}[ERROR] Failed to set MTU to 4096 on ${ACTIVE_IFACE}. High MTU might not be supported by the driver.${NC}"
 fi
