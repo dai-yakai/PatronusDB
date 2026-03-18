@@ -121,7 +121,7 @@ int _pdb_append_sset(char* buf, size_t buf_len, size_t* offset, struct pdb_sorte
 int _pdb_append_bitmap(char* buf, size_t buf_len, size_t* offset, struct pdb_bitmap* bitmap) {
     pdb_sds s = bitmap->data;
     size_t len = pdb_get_sds_len(s);
-    pdb_log_info("_pdb_append_bitmap: %d\n", len);
+    // pdb_log_info("_pdb_append_bitmap: %d\n", len);
     if (_pdb_append_size_t(buf, buf_len, offset, len) < 0) return -1;
     if (len > 0) {
         if (_pdb_append(buf, buf_len, offset, s, len) < 0) return -1;

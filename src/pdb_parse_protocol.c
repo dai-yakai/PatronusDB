@@ -585,7 +585,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             len = 0;
             for (i = 1; i < count; i++){
                 key = tokens[i];
-                value = pdb_array_get(&global_array, key);
+                value = pdb_rbtree_get(&global_rbtree, key);
                 value_get = pdb_parse_value_to_string(value);
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     if (value_get == NULL) {
@@ -1254,7 +1254,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 global_dump.is_aof = 1;
                 pdb_init_aof();
                 pdb_ebpf_init();
-                if (response != NULL)   len = sprintf(response, "OK\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
                 break;
             }else{
                 // RDB dump
@@ -1274,10 +1274,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     _exit(0);
                 }else if (pid > 0){
                     // father thread
-                    if (response != NULL)   len = sprintf(response, "OK\r\n");
+                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
                 }else{
                     perror("fork failed");
-                    if (response != NULL)   len = sprintf(response, "SAVE FAILED\r\n");
+                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "SAVE FAILED\r\n");
                 }
                 break;
             }
@@ -1300,7 +1300,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 // 512M
                 global_master_snapshot = pdb_rdma_create_snapshot("rxe0", 512 * 1024 * 1024);
                 if (!global_master_snapshot) {
-                    pdb_log_info("master send +RDMA_READY\n");
+                    // pdb_log_info("master send +RDMA_READY\n");
                     if (response != NULL) len = sprintf(response, "-ERR RDMA Snapshot init failed\r\n");
                     break;
                 }
@@ -1566,7 +1566,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
         case PDB_CMD_INCRE_SYN: 
         {
             // master receive ZINCRE_SYN from salve node.
-            pdb_log_info("master receive ZINCRE_SYN, increment channel success\n");
+            // pdb_log_info("master receive ZINCRE_SYN, increment channel success\n");
             
             for (i = 0; i < REPLICATION_NUM; i++){
                 if (global_replication->fd[i] == 0){
@@ -1630,7 +1630,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             if (response != NULL) len = 0;
 
             conn_list[fd]->is_incre_ready = 1;
-            pdb_log_debug("is_incre_ready, fd %d, %d\n", fd, conn_list[fd]->is_incre_ready);
+            // pdb_log_debug("is_incre_ready, fd %d, %d\n", fd, conn_list[fd]->is_incre_ready);
             break;
         }
 
@@ -1638,7 +1638,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
         {
             // slave node 
             if (global_conf.is_slave) {
-                pdb_log_info("slave node receive ZINCRE_ACK, parsing master info...\n");
+                // pdb_log_info("slave node receive ZINCRE_ACK, parsing master info...\n");
                 
                 if (!tokens[1] || !tokens[2] || !tokens[3] || !tokens[4]) break;
                 incre_slave_conn->vaddr_str = strtoull(tokens[5], NULL, 10);
@@ -1654,9 +1654,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 if (pdb_rdma_connect_qp(incre_slave_conn, &master_info) == 0) {
                     is_incre_channel_active = 1;
                     last_pull_time_ms = get_now_ms();
-                    pdb_log_info("✅ [SLAVE] Incremental Channel UP! QP transitioned to RTS.\n");
+                    // pdb_log_info("[SLAVE] Incremental Channel UP! QP transitioned to RTS.\n");
                 } else {
-                    pdb_log_error("❌ [SLAVE] Failed to connect incremental QP to Master!\n");
+                    pdb_log_error("[SLAVE] Failed to connect incremental QP to Master!\n");
                 }
 
                 if (response != NULL) len = 0;

@@ -354,6 +354,16 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 				if (ret == PDB_DISCONNECT){
 					// conn disconnect
 					pdb_delete_conn_list(connfd);
+					if (!global_conf.is_slave){
+						int i = 0;
+						for (i = 0; i < REPLICATION_NUM; i++){
+							if (global_replication->fd[i] == connfd){
+								global_replication->fd[i] = 0;
+								global_replication->slave_num--;
+							}
+						}
+					}
+					
 					epoll_ctl(epfd, EPOLL_CTL_DEL, connfd, NULL);
 				}
 			} 

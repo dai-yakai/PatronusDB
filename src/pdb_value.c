@@ -120,6 +120,7 @@ pdb_value* pdb_create_value(void* value, int type, ...){
                 v->type = PDB_VALUE_TYPE_STRING;
                 size_t len = strlen(value);
                 char* cvalue = pdb_malloc(len + 1);
+                strcpy(cvalue, value);
                 cvalue[len] = '\0';
                 v->ptr = cvalue;
             }

@@ -95,10 +95,10 @@ pdb_rdma_snapshot_ctx* pdb_rdma_create_snapshot(const char* dev_name, size_t poo
     snap->mr = ibv_reg_mr(snap->pd, snap->pool.base_addr, snap->pool.total_size, access_flags);
     if (!snap->mr) goto cleanup_pd;
 
-    printf("[DEBUG-MR] Base:%p | MR_Addr:%p | Lkey:%u | Rkey:%u\n", 
-        snap->pool.base_addr, snap->mr->addr, snap->mr->lkey, snap->mr->rkey);
+    //printf("[DEBUG-MR] Base:%p | MR_Addr:%p | Lkey:%u | Rkey:%u\n", 
+        // snap->pool.base_addr, snap->mr->addr, snap->mr->lkey, snap->mr->rkey);
 
-    printf("🔥 [RDMA SNAPSHOT] Global Snapshot Created! Size: %zu Bytes, RefCount: %d\n", pool_size, snap->ref_count);
+    // printf("🔥 [RDMA SNAPSHOT] Global Snapshot Created! Size: %zu Bytes, RefCount: %d\n", pool_size, snap->ref_count);
     return snap;
 
 cleanup_pd:      ibv_dealloc_pd(snap->pd);
@@ -167,7 +167,7 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     conn->local_info.lid = port_attr.lid;
     ibv_query_gid(snap->ctx, PDB_RDMA_PORT, PDB_RDMA_GID_IDX, (union ibv_gid *)&conn->local_info.gid);
 
-    printf("🔗 [RDMA CONN] Slave Connection Context Created! QPN: %u\n", conn->local_info.qpn);
+    pdb_log_info("[RDMA CONN] Slave Connection Context Created! QPN: %u\n", conn->local_info.qpn);
     return conn;
 
 cleanup_qp: ibv_destroy_qp(conn->qp);
@@ -178,7 +178,7 @@ cleanup:    snap->ref_count--; free(conn); return NULL;
 
 void pdb_rdma_destroy_conn(pdb_rdma_conn_ctx* conn) {
     if (!conn) return;
-    printf("🔌 [RDMA CONN] Tearing down connection to QPN %u\n", conn->local_info.qpn);
+    pdb_log_info("[RDMA CONN] Tearing down connection to QPN %u\n", conn->local_info.qpn);
     
     if (conn->qp) ibv_destroy_qp(conn->qp);
     if (conn->cq) ibv_destroy_cq(conn->cq);
@@ -209,29 +209,29 @@ int pdb_rdma_serialize(pdb_rdma_snapshot_ctx* rdma){
     buf = (char*)rdma->pool.base_addr;
     buf_len = rdma->pool.total_size; 
 
-    printf("📦 [MASTER] Starting global serialization for RDMA Heist...\n");
+    pdb_log_info("[MASTER] Starting global serialization for RDMA Heist...\n");
 
     ret = pdb_serialize_hash(buf, buf_len, &offset, &global_hash);
     if (ret != PDB_RDMA_OK) {
-        printf("❌ [MASTER] Failed to serialize global_hash at offset: %zu\n", offset);
+        pdb_log_error("[MASTER] Failed to serialize global_hash at offset: %zu\n", offset);
         return ret;
     }
 
     ret = pdb_serialize_rbtree(buf, buf_len, &offset, &global_rbtree);
     if (ret != PDB_RDMA_OK) {
-        printf("❌ [MASTER] Failed to serialize global_rbtree at offset: %zu\n", offset);
+        pdb_log_error("[MASTER] Failed to serialize global_rbtree at offset: %zu\n", offset);
         return ret;
     }
 
     ret = pdb_serialize_array(buf, buf_len, &offset, &global_array);
     if (ret != PDB_RDMA_OK) {
-        printf("❌ [MASTER] Failed to serialize global_array at offset: %zu\n", offset);
+        pdb_log_error("[MASTER] Failed to serialize global_array at offset: %zu\n", offset);
         return ret;
     }
 
     eof_marker = PDB_OPCODE_EOF;
     if (offset + sizeof(uint8_t) > buf_len) {
-        printf("❌ [MASTER] Buffer overflow while writing EOF marker!\n");
+        pdb_log_error("[MASTER] Buffer overflow while writing EOF marker!\n");
         return PDB_RDMA_PARAM_ERROR;
     }
     memcpy(buf + offset, &eof_marker, sizeof(uint8_t));
@@ -239,7 +239,7 @@ int pdb_rdma_serialize(pdb_rdma_snapshot_ctx* rdma){
 
     *(rdma->pool.used_offset) = offset; 
 
-    printf("✅ [MASTER] Serialization complete. Exact Snapshot size: %zu bytes.\n", offset);
+    pdb_log_info("[MASTER] Serialization success. Exact Snapshot size: %zu bytes.\n", offset);
     return PDB_RDMA_OK;
 }
 
