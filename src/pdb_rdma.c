@@ -449,7 +449,7 @@ void _execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vad
 
     __builtin_ia32_sfence();
     if (ibv_post_send(slave_conn->qp, &wr[0], &bad_wr) != 0) {
-        printf("❌ [FATAL] ibv_post_send failed!\n");
+        pdb_log_error("ibv_post_send failed!\n");
         return;
     }
     gettimeofday(&t_post, NULL);
