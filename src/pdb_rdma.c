@@ -258,19 +258,19 @@ int pdb_rdma_deserialize(pdb_rdma_snapshot_ctx* rdma){
     int ret;
 
     if (rdma == NULL || rdma->pool.base_addr == NULL || rdma->pool.used_offset == 0) {
-        printf("❌ [SLAVE] Invalid RDMA context or empty memory pool.\n");
+        pdb_log_error("Invalid RDMA context or empty memory pool.\n");
         return PDB_RDMA_PARAM_ERROR;
     }
 
     buf = (const char*)rdma->pool.base_addr;
     buf_len = *(rdma->pool.used_offset); 
 
-    printf("📦 [SLAVE] Hardware Heist complete. Rebuilding %zu bytes to memory database...\n", buf_len);
+    // printf("📦 [SLAVE] Hardware Heist complete. Rebuilding %zu bytes to memory database...\n", buf_len);
 
     while (!is_eof && offset < buf_len) {
         
         if (offset + sizeof(uint8_t) > buf_len) {
-            printf("❌ [FATAL] Unexpected end of stream while waiting for Opcode!\n");
+            pdb_log_error("Unexpected end of stream while waiting for Opcode!\n");
             return PDB_RDMA_PARAM_ERROR;
         }
         memcpy(&opcode, buf + offset, sizeof(uint8_t));
@@ -278,36 +278,36 @@ int pdb_rdma_deserialize(pdb_rdma_snapshot_ctx* rdma){
 
         switch (opcode) {
             case PDB_OPCODE_HASH:
-                printf(" ↳ Routing to Hash Deserializer...\n");
+                // printf(" ↳ Routing to Hash Deserializer...\n");
                 ret = pdb_deserialize_hash(buf, buf_len, &offset, &global_hash);
                 if (ret != PDB_RDMA_OK) return ret;
                 break;
 
             case PDB_OPCODE_RBTREE:
-                printf(" ↳ Routing to RBTree Deserializer...\n");
+                // printf(" ↳ Routing to RBTree Deserializer...\n");
                 ret = pdb_deserialize_rbtree(buf, buf_len, &offset, &global_rbtree);
                 if (ret != PDB_RDMA_OK) return ret;
                 break;
 
             case PDB_OPCODE_ARRAY:
-                printf(" ↳ Routing to Array Deserializer...\n");
+                // printf(" ↳ Routing to Array Deserializer...\n");
                 ret = pdb_deserialize_array(buf, buf_len, &offset, &global_array);
                 if (ret != PDB_RDMA_OK) return ret;
                 break;
 
             case PDB_OPCODE_EOF:
-                printf("🏁 [SLAVE] Reached EOF marker safely. Full synchronization complete!\n");
+                pdb_log_info("[SLAVE] Reached EOF marker safely. Full synchronization complete!\n");
                 is_eof = 1; 
                 break;
 
             default:
-                printf("❌ [FATAL] Corrupted snapshot! Unknown opcode (0x%02X) at offset: %zu\n", opcode, offset - 1);
+                pdb_log_error("Corrupted snapshot! Unknown opcode (0x%02X) at offset: %zu\n", opcode, offset - 1);
                 return PDB_RDMA_PARAM_ERROR;
         }
     }
 
     if (!is_eof) {
-        printf("❌ [FATAL] Stream ended abruptly without EOF marker! Database state may be corrupted.\n");
+        pdb_log_error("Stream ended abruptly without EOF marker! Database state may be corrupted.\n");
         return PDB_RDMA_PARAM_ERROR;
     }
 
@@ -326,7 +326,6 @@ void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vadd
     struct timeval t_start, t_alloc, t_post, t_poll;
     gettimeofday(&t_start, NULL);
 
-    // 1. 内存分配 (O(1) 指针移动，极快)
     void* local_buffer = pdb_rdma_pool_alloc(slave_conn->snap, data_size);
     if (!local_buffer) {
         printf("❌ [FATAL] Slave RDMA pool out of memory!\n");
@@ -334,39 +333,34 @@ void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vadd
     }
     gettimeofday(&t_alloc, NULL);
 
-    // 2. 构造 WR 链表
-    // 我们准备 NUM_CHUNKS 个 WR 和 SGE，让网卡流水线作业
     struct ibv_send_wr wr[NUM_CHUNKS];
     struct ibv_sge sge[NUM_CHUNKS];
     struct ibv_send_wr *bad_wr = NULL;
     
     size_t chunk_size = data_size / NUM_CHUNKS;
     
-    printf("[SLAVE RDMA] Chunking %zu bytes into %d segments...\n", data_size, NUM_CHUNKS);
+    // printf("[SLAVE RDMA] Chunking %zu bytes into %d segments...\n", data_size, NUM_CHUNKS);
 
     for (int i = 0; i < NUM_CHUNKS; i++) {
         size_t current_offset = i * chunk_size;
         size_t current_len = (i == NUM_CHUNKS - 1) ? (data_size - current_offset) : chunk_size;
 
-        // 设置当前分片的本地存储位置 (SGE)
         sge[i].addr = (uintptr_t)local_buffer + current_offset;
         sge[i].length = current_len;
         sge[i].lkey = slave_conn->snap->mr->lkey;
 
-        // 设置当前分片的远程读取位置 (WR)
         memset(&wr[i], 0, sizeof(struct ibv_send_wr));
         wr[i].wr_id = i; 
         wr[i].opcode = IBV_WR_RDMA_READ;
         wr[i].sg_list = &sge[i];
         wr[i].num_sge = 1;
 
-        // 只有最后一个 WR 设置 SIGNALED，这样 CQ 只会产生一个完成事件
         if (i == NUM_CHUNKS - 1) {
             wr[i].send_flags = IBV_SEND_SIGNALED;
             wr[i].next = NULL; 
         } else {
             wr[i].send_flags = 0;
-            wr[i].next = &wr[i+1]; // 串联到下一个
+            wr[i].next = &wr[i+1];
         }
 
         wr[i].wr.rdma.remote_addr = remote_vaddr + current_offset;
@@ -375,24 +369,22 @@ void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vadd
 
 
     __builtin_ia32_sfence();
-    // 3. 一次性提交所有请求
     if (ibv_post_send(slave_conn->qp, &wr[0], &bad_wr) != 0) {
         printf("❌ [FATAL] ibv_post_send failed!\n");
         return;
     }
     gettimeofday(&t_post, NULL);
 
-    // 4. 高效轮询 CQ
     struct ibv_wc wc;
     int num_comp = 0;
     while (num_comp == 0) {
         num_comp = ibv_poll_cq(slave_conn->cq, 1, &wc);
-        // 使用 pause 指令降低 CPU 功耗并减少对内存总线的干扰，提升 DMA 效率
         __builtin_ia32_pause(); 
     }
     gettimeofday(&t_poll, NULL);
 
-    // 5. 性能报告
+    
+    // test report
     if (wc.status != IBV_WC_SUCCESS) {
         printf("❌ [FATAL] RDMA READ Failed! Status: %s\n", ibv_wc_status_str(wc.status));
     } else {
@@ -413,7 +405,6 @@ void _execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vad
     struct timeval t_start, t_alloc, t_post, t_poll;
     gettimeofday(&t_start, NULL);
 
-    // 1. 内存分配 (O(1) 指针移动，极快)
     void* local_buffer = incre_slave_snap->pool.base_addr;
     if (!local_buffer) {
         printf("❌ [FATAL] Slave RDMA pool out of memory!\n");
@@ -421,39 +412,34 @@ void _execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vad
     }
     gettimeofday(&t_alloc, NULL);
 
-    // 2. 构造 WR 链表
-    // 我们准备 NUM_CHUNKS 个 WR 和 SGE，让网卡流水线作业
     struct ibv_send_wr wr[NUM_CHUNKS];
     struct ibv_sge sge[NUM_CHUNKS];
     struct ibv_send_wr *bad_wr = NULL;
     
     size_t chunk_size = data_size / NUM_CHUNKS;
     
-    printf("[SLAVE RDMA] Chunking %zu bytes into %d segments...\n", data_size, NUM_CHUNKS);
+    // printf("[SLAVE RDMA] Chunking %zu bytes into %d segments...\n", data_size, NUM_CHUNKS);
 
     for (int i = 0; i < NUM_CHUNKS; i++) {
         size_t current_offset = i * chunk_size;
         size_t current_len = (i == NUM_CHUNKS - 1) ? (data_size - current_offset) : chunk_size;
 
-        // 设置当前分片的本地存储位置 (SGE)
         sge[i].addr = (uintptr_t)local_buffer + current_offset;
         sge[i].length = current_len;
         sge[i].lkey = slave_conn->snap->mr->lkey;
 
-        // 设置当前分片的远程读取位置 (WR)
         memset(&wr[i], 0, sizeof(struct ibv_send_wr));
         wr[i].wr_id = i; 
         wr[i].opcode = IBV_WR_RDMA_READ;
         wr[i].sg_list = &sge[i];
         wr[i].num_sge = 1;
 
-        // 只有最后一个 WR 设置 SIGNALED，这样 CQ 只会产生一个完成事件
         if (i == NUM_CHUNKS - 1) {
             wr[i].send_flags = IBV_SEND_SIGNALED;
             wr[i].next = NULL; 
         } else {
             wr[i].send_flags = 0;
-            wr[i].next = &wr[i+1]; // 串联到下一个
+            wr[i].next = &wr[i+1];
         }
 
         wr[i].wr.rdma.remote_addr = remote_vaddr + current_offset;
@@ -462,24 +448,21 @@ void _execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vad
 
 
     __builtin_ia32_sfence();
-    // 3. 一次性提交所有请求
     if (ibv_post_send(slave_conn->qp, &wr[0], &bad_wr) != 0) {
         printf("❌ [FATAL] ibv_post_send failed!\n");
         return;
     }
     gettimeofday(&t_post, NULL);
 
-    // 4. 高效轮询 CQ
     struct ibv_wc wc;
     int num_comp = 0;
     while (num_comp == 0) {
         num_comp = ibv_poll_cq(slave_conn->cq, 1, &wc);
-        // 使用 pause 指令降低 CPU 功耗并减少对内存总线的干扰，提升 DMA 效率
         __builtin_ia32_pause(); 
     }
     gettimeofday(&t_poll, NULL);
 
-    // 5. 性能报告
+    // test report
     if (wc.status != IBV_WC_SUCCESS) {
         printf("❌ [FATAL] RDMA READ Failed! Status: %s\n", ibv_wc_status_str(wc.status));
     } else {
@@ -493,9 +476,7 @@ void _execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vad
     }
 }
 
-/**
- * 必须配合更新的连接逻辑：提升 Read 深度
- */
+
 int pdb_rdma_connect_qp(pdb_rdma_conn_ctx* conn, pdb_rdma_conn_info* remote_info) {
     if (!conn || !remote_info) return -1;
     struct ibv_qp_attr attr;
