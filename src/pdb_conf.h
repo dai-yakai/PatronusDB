@@ -22,6 +22,8 @@ typedef struct server_config_s{
     bool is_aof;
     bool is_backup;
 
+    int log_level;
+
     int max_memory;
 }server_config;
 

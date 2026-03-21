@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/socket.h>
+#include <jemalloc/jemalloc.h>
 
 #include "pdb_array.h"
 #include "pdb_hash.h"
@@ -22,6 +23,7 @@
 #include "pdb_rdma.h"
 #include "pdb_conninfo.h"
 #include "pdb_replication.h"
+#include "pdb_malloc.h"
 
 extern pdb_rdma_conn_ctx* slave_conn;
 extern uint64_t remote_vaddr;
@@ -32,6 +34,8 @@ extern pdb_rdma_snapshot_ctx* incre_slave_snap;
 extern pdb_rdma_snapshot_ctx* incre_master_snap;
 extern pdb_rdma_conn_ctx* incre_slave_conn;
 extern pdb_rdma_conn_ctx* incre_master_conn;
+
+extern pdb_memory_manager* global_memory_manager;
 
 char* find_crlf(char* start, int remaining_len);
 int pdb_split_token(char* msg, int len, char* tokens[]);

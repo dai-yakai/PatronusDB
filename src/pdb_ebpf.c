@@ -1,5 +1,3 @@
-// src/pdb_ebpf.c
-
 /**
  * We utilize eBPF uprobes to intercept database mutation in real-time.
  * Upon each increment, the `handle_event` callback is triggered to
@@ -9,17 +7,19 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <bpf/libbpf.h>
+#include <stdint.h>
+
+#include "pdb_aof.h"
 #include "pdb_delta.skel.h"
 #include "pdb_log.h"
 #include "pdb_sds.h"
-#include "pdb_ebpf.h"
 #include "pdb_rdma.h"
 #include "pdb_conninfo.h"
 
+#define PDB_MAX_KEY_LEN 64
+
 static struct pdb_delta_bpf* skel;
 static struct ring_buffer* rb = NULL;
-extern pdb_rdma_snapshot_ctx* incre_master_snap;
-pdb_ebpf_ring_t g_ebpf_ring = {0};
 
 extern int pdb_array_set();
 extern int pdb_rbtree_set();
@@ -40,79 +40,7 @@ struct dirty_key_event {
     int val;
 };
 
-/**
- * queue
- */
-typedef struct pdb_retry_node {
-    void *dataStructure;
-    char key[256];      // store key
-    uint8_t opcode;
-    struct pdb_retry_node *next;
-} pdb_retry_node_t;
 
-typedef struct {
-    pdb_retry_node_t *head;
-    pdb_retry_node_t *tail;
-    size_t count;
-    pthread_mutex_t lock;
-} pdb_retry_queue_t;
-
-static pdb_retry_queue_t g_retry_queue = {NULL, NULL, 0, PTHREAD_MUTEX_INITIALIZER};
-
-void pdb_push_to_retry_queue(void *ds, const char *key, uint8_t opcode) {
-    // pdb_log_debug("key: %s\n", key);
-    pdb_retry_node_t *new_node = malloc(sizeof(pdb_retry_node_t));
-    if (!new_node) {
-        pdb_log_error("Retry queue: malloc failed\n");
-        return;
-    }
-
-    new_node->dataStructure = ds;
-    strncpy(new_node->key, key, sizeof(new_node->key) - 1);
-    new_node->opcode = opcode;
-    new_node->next = NULL;
-
-    pthread_mutex_lock(&g_retry_queue.lock);
-    if (g_retry_queue.tail == NULL) {
-        g_retry_queue.head = g_retry_queue.tail = new_node;
-    } else {
-        g_retry_queue.tail->next = new_node;
-        g_retry_queue.tail = new_node;
-    }
-    g_retry_queue.count++;
-    pthread_mutex_unlock(&g_retry_queue.lock);
-}
-
-static int process_single_retry() {
-    pthread_mutex_lock(&g_retry_queue.lock);
-    if (g_retry_queue.head == NULL) {
-        pthread_mutex_unlock(&g_retry_queue.lock);
-        return 0; 
-    }
-
-    pdb_retry_node_t *node = g_retry_queue.head;
-    int ret = pdb_rdma_incremental_append(node->dataStructure, node->key, node->opcode);
-    
-    if (ret == 0) {
-        g_retry_queue.head = node->next;
-        if (g_retry_queue.head == NULL) g_retry_queue.tail = NULL;
-        g_retry_queue.count--;
-        pthread_mutex_unlock(&g_retry_queue.lock);
-        free(node);
-        return 1; 
-    } else if (ret == -3) {
-        pthread_mutex_unlock(&g_retry_queue.lock);
-        return -1; 
-    } else {
-        g_retry_queue.head = node->next;
-        if (g_retry_queue.head == NULL) g_retry_queue.tail = NULL;
-        g_retry_queue.count--;
-        pthread_mutex_unlock(&g_retry_queue.lock);
-        // pdb_log_debug("Dropped poison key: %s\n", (char*)node->key);
-        free(node);
-        return 1; 
-    }
-}
 
 ////////////////////////////////////////////////////
 static int handle_event(void *ctx, void *data, size_t data_sz) {
@@ -151,7 +79,6 @@ int pdb_ebpf_init() {
     }
     
     size_t dynamic_offset = (size_t)pdb_hash_set - (size_t)hash_info.dli_fbase;
-    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_hash_set_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_hash_set_entry,
         false,
@@ -176,7 +103,6 @@ int pdb_ebpf_init() {
     }
     
     dynamic_offset = (size_t)pdb_array_set- (size_t)array_info.dli_fbase;
-    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_array_set_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_array_set_entry,
         false,
@@ -200,7 +126,6 @@ int pdb_ebpf_init() {
     }
     
     dynamic_offset = (size_t)pdb_rbtree_set - (size_t)rbtree_info.dli_fbase;
-    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_rbtree_set_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_rbtree_set_entry,
         false,
@@ -223,7 +148,6 @@ int pdb_ebpf_init() {
     }
     
     dynamic_offset = (size_t)pdb_bitmap_set_ - (size_t)bitmap_info.dli_fbase;
-    // printf("DEBUG: Dynamic Offset Calculated: 0x%zx\n", dynamic_offset);
     skel->links.pdb_bitmap_add_entry = bpf_program__attach_uprobe(
         skel->progs.pdb_bitmap_add_entry,
         false,
@@ -236,16 +160,13 @@ int pdb_ebpf_init() {
         return -1;
     }
 
-
     rb = ring_buffer__new(bpf_map__fd(skel->maps.rb), handle_event, NULL, NULL);
     if (!rb) return -3;
 
     return 0;
 }
 
-
 void pdb_ebpf_poll() {
-    // pdb_log_debug("pdb_ebpf_poll\n");
     int ret = ring_buffer__poll(rb, 0);
     return;
 }

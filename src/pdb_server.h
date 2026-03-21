@@ -26,7 +26,7 @@
 
 #define ENABLE_PRINT_PDB        0
 #define ENABLE_THREADPOOL       0
-#define ENABLE_MEMPOOL          1
+#define ENABLE_MEMPOOL          0
 
 #ifndef DATA_STRUCTURE_TEST
 #define DATA_STRUCTURE_TEST     1

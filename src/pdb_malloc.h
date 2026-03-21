@@ -4,13 +4,14 @@
 #include <stdlib.h>
 #include <malloc.h>
 #include <assert.h>
+#include <unistd.h>
 
 #include "pdb_mempool_freelist.h"
 #include "pdb_log.h"
 #include "pdb_conf.h"
 
-#define ENABLE_MEMPOOL      1
-#define ENABLE_JEMALLOC     0
+#define ENABLE_MEMPOOL      0
+#define ENABLE_JEMALLOC     1
 
 #define MEMPOOL_SIZE        1024*1024*10
 
@@ -21,10 +22,16 @@
 extern size_t used_memory;
 extern struct mp_pool_s* global_mempool;
 
+typedef struct pdb_memory_manager{
+    size_t used_memory;
+    size_t used_memory_rss;
+} pdb_memory_manager;
+
 void* pdb_malloc(size_t size);
 void* pdb_realloc(void* ptr, size_t size);
 void pdb_mem_init(size_t size);
 void pdb_mem_destroy();
 void pdb_free(void* ptr, size_t size);
+void pdb_init_global_memory_manager();
 
 #endif

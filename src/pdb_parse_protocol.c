@@ -36,7 +36,10 @@ const char* command[] = {
     
     "EXIT", "SAVE", "NSAVE", 
     // syn
-    "ZSYN", "ZRDMA_READY", "ZSYN_OOB", "ZOOB_ACK" 
+    "ZSYN", "ZRDMA_READY", "ZSYN_OOB", "ZOOB_ACK",
+    // mem
+    "GETUSEDMEM", "GETUSEDMEMRSS",
+    "PING"
 };
 
 
@@ -117,6 +120,12 @@ enum{
 
     PDB_CMD_INCRE_SYN,
     PDB_CMD_INCRE_ACK,
+
+    // mem
+    PDB_CMD_MEM_USED,
+    PDB_CMD_MEM_RSS,
+
+    PDB_CMD_PING,
 
 
 
@@ -220,6 +229,9 @@ int pdb_parser_cmd(const char* cmd_str) {
 
         case 'G':
             if (strcmp(cmd_str, "GET") == 0)    return PDB_CMD_GET;
+            if (strcmp(cmd_str, "GETUSEDMEM") == 0)         return PDB_CMD_MEM_USED;
+            if (strcmp(cmd_str, "GETUSEDMEMRSS") == 0)      return PDB_CMD_MEM_RSS;
+
             break;
 
         case 'H':
@@ -281,6 +293,10 @@ int pdb_parser_cmd(const char* cmd_str) {
             if (strcmp(cmd_str, "BITPOS") == 0)      return PDB_CMD_BITMAP_POS;
             break;
 
+        case 'P':
+            if (strcmp(cmd_str, "PING") == 0)        return PDB_CMD_PING;
+            break;
+
         case 'Z':
             if (strcmp(cmd_str, "ZSYN") == 0)           return PDB_CMD_SYN;
             if (strcmp(cmd_str, "ZSYN_OOB") == 0)       return PDB_CMD_SYNC_OOB;
@@ -302,7 +318,8 @@ int pdb_parser_cmd(const char* cmd_str) {
  * Return total length if `buf` contains a valid and complete package.
  */
 int check_resp_integrity(const char *buf, int len, int* bulk_length) {
-	if (buf[0] != '*') {
+	if (len == 0)   return PDB_HALF_PACKAGE; 
+    if (buf[0] != '*') {
         return PDB_PROTOCAL_ERROR;
     }
     if (len < 4){
@@ -380,7 +397,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
     int cmd = pdb_parser_cmd(tokens[0]);
     if (cmd == PDB_ERROR){
         // Receive error cmd
-        len = sprintf(response, "Receive error cmd\r\n");
+        len = sprintf(response, "-ERR unknown command\r\n");
         return len;
     }
 
@@ -435,6 +452,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
     char** res_range;
 
     switch(cmd){
+        case PDB_CMD_PING:
+            if (response != NULL){
+                len = sprintf(response, "+PONG\r\n");
+            }
+            break;
+
+
         // array
         case PDB_CMD_SET:
             raw_value = tokens[2];
@@ -443,11 +467,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_array_set(&global_array, key, value);         
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_EXIST){
-                    len = sprintf(response, "EXIST AND MOD\r\n");
+                    len = sprintf(response, "+EXIST AND MOD\r\n");
                 }
             }
 
@@ -460,9 +484,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             value_get = pdb_parse_value_to_string(value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (value_get == NULL){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }else {
-                    len = sprintf(response, "%s\r\n", value_get);
+                    len = sprintf(response, "+%s\r\n", value_get);
                 }
             }
             pdb_decre_value(value);
@@ -470,15 +494,18 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
 
         case PDB_CMD_MGET:
             len = 0;
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response + len, "*%d\r\n", count - 1);
+            }
             for (i = 1; i < count; i++){
                 key = tokens[i];
                 value = pdb_array_get(&global_array, key);
                 value_get = pdb_parse_value_to_string(value);
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    if (value == NULL) {
-                        len += sprintf(response + len, "ERROR\r\n");
+                    if (value_get == NULL) {
+                        len += sprintf(response + len, "$-1\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", value_get);
+                        len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(value_get), value_get);
                     }
                 }
             }
@@ -488,9 +515,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_array_mset(&global_array, tokens, count - 1);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 }
             }
             break;
@@ -499,11 +526,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_array_del(&global_array, key);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             break;
@@ -514,11 +541,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_array_mod(&global_array, key, value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             break;
@@ -527,9 +554,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_array_exist(&global_array, key);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_EXIST){
-                    len = sprintf(response, "EXIST\r\n");
+                    len = sprintf(response, "+EXIST\r\n");
                 } else{
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             break;
@@ -542,13 +569,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_rbtree_set(&global_rbtree, key, value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_MALLOC_NULL){
-                    len = sprintf(response, "MEMORY EXCEEDS MAX_MEMORY\r\n");
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_EXIST){
-                    len = sprintf(response, "EXIST\r\n");
+                    len = sprintf(response, "+EXIST\r\n");
                 }
             }
             pdb_decre_value(value);
@@ -560,9 +587,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
 
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (value_get == NULL){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }else {
-                    len = sprintf(response, "%s\r\n", value_get);
+                    len = sprintf(response, "+%s\r\n", value_get);
                 }
             }
             // pdb_decre_value(value);
@@ -572,26 +599,29 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_rbtree_mset(&global_rbtree, tokens, count - 1);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_MALLOC_NULL){
-                    len = sprintf(response, "MEMORY EXCEEDS MAX_MEMORY\r\n");
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 }
             }
             break;
 
         case PDB_CMD_RMGET:
             len = 0;
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response + len, "*%d\r\n", count - 1);
+            }
             for (i = 1; i < count; i++){
                 key = tokens[i];
                 value = pdb_rbtree_get(&global_rbtree, key);
                 value_get = pdb_parse_value_to_string(value);
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     if (value_get == NULL) {
-                        len += sprintf(response + len, "NO EXIST\r\n");
+                        len += sprintf(response + len, "$-1\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", value_get);
+                        len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(value_get), value_get);
                     }
                 }
             }
@@ -601,11 +631,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_rbtree_del(&global_rbtree, key);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             break;
@@ -615,13 +645,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_rbtree_mod(&global_rbtree, key, value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_MALLOC_NULL){
-                    len = sprintf(response, "MEMORY EXCEEDS MAX_MEMORY\r\n");
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             pdb_decre_value(value);
@@ -631,9 +661,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_rbtree_exist(&global_rbtree, key);
             if(response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_EXIST){
-                    len = sprintf(response, "EXIST\r\n");
+                    len = sprintf(response, "+EXIST\r\n");
                 } else{
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             break;
@@ -646,13 +676,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_hash_set(&global_hash, key, value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_MALLOC_NULL){
-                    len = sprintf(response, "MEMORY EXCEEDS MAX_MEMORY\r\n");
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_EXIST){
-                    len = sprintf(response, "EXIST\r\n");
+                    len = sprintf(response, "+EXIST\r\n");
                 }
             }
             pdb_decre_value(value);
@@ -663,24 +693,27 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             value_get = pdb_parse_value_to_string(value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (value_get == NULL){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }else {
-                    len = sprintf(response, "%s\r\n", value_get);
+                    len = sprintf(response, "+%s\r\n", value_get);
                 }
             }
             break;
 
         case PDB_CMD_HMGET:
             len = 0;
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response + len, "*%d\r\n", count - 1);
+            }
             for (i = 1; i < count; i++){   
                 key = tokens[i];
                 value = pdb_hash_get(&global_hash, key);
                 value_get = pdb_parse_value_to_string(value);
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     if (value_get == NULL) {
-                        len += sprintf(response + len, "NO EXIST\r\n");
+                        len += sprintf(response + len, "$-1\r\n");
                     } else {
-                        len += sprintf(response + len, "%s\r\n", value_get);
+                        len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(value_get), value_get);
                     }
                 }
             }
@@ -690,11 +723,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_hash_mset(&global_hash, tokens, count - 1);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_MALLOC_NULL){
-                    len = sprintf(response, "MEMORY EXCEEDS MAX_MEMORY\r\n");
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
                 } else if (ret < 0){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == 0){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 }
             }
             break;
@@ -703,11 +736,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_hash_del(&global_hash, key);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_OK){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
 
@@ -719,13 +752,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_hash_mod(&global_hash, key, value);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_MALLOC_NULL){
-                    len = sprintf(response, "MEMORY EXCEEDS MAX_MEMORY\r\n");
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
                 } else if (ret < 0){
-                    len = sprintf(response, "ERROR\r\n");
+                    len = sprintf(response, "+ERROR\r\n");
                 } else if (ret == 0){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 } else{
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             pdb_decre_value(value);
@@ -735,9 +768,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_hash_exist(&global_hash, key);
             if(response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_EXIST){
-                    len = sprintf(response, "EXIST\r\n");
+                    len = sprintf(response, "+EXIST\r\n");
                 } else{
-                    len = sprintf(response, "NO EXIST\r\n");
+                    len = sprintf(response, "+NO EXIST\r\n");
                 }
             }
             break;  
@@ -755,7 +788,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             // pdb_log_info("BITSET\n");
             if (count != 4){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "Protocol Error: Valilate RESP protocal\r\n");
+                    len = sprintf(response, "+Protocol Error: Valilate RESP protocal\r\n");
                     break;
                 }
                 pdb_log_info("BITMAPSET: receive error protocol\n");
@@ -771,13 +804,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     switch(value->type){
                         case PDB_VALUE_TYPE_SET:
                         {
-                            len = sprintf(response, "EXIST key in set\r\n");
+                            len = sprintf(response, "+EXIST key in set\r\n");
                             break;
                         }
 
                         case PDB_VALUE_TYPE_SORTEDSET:
                         {
-                            len = sprintf(response, "EXIST key in sortedSet\r\n");
+                            len = sprintf(response, "+EXIST key in sortedSet\r\n");
                             break;
                         }
                     }
@@ -805,7 +838,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
 
             if (ret == PDB_OK){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "OK\n");
+                    len = sprintf(response, "+OK\n");
                 }
             }
             break;
@@ -814,7 +847,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             // BITGET key offset
             if (count != 3){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "Protocol Error: Valilate RESP protocal\r\n");
+                    len = sprintf(response, "+Protocol Error: Valilate RESP protocal\r\n");
                     break;
                 }
                 pdb_log_info("BITMAPSET: receive error protocol\n");
@@ -826,7 +859,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             
             if (value == NULL){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "Unavailable key\r\n");
+                    len = sprintf(response, "+Unavailable key\r\n");
                 }
                 break;
             }
@@ -836,7 +869,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             bitmap_value = pdb_bitmap_get(sds, offset);
             // pdb_log_debug("bitmap_value: %d\n", bitmap_value);
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len = sprintf(response, "%d\r\n", bitmap_value);
+                len = sprintf(response, "+%d\r\n", bitmap_value);
             }
 
             break;
@@ -847,13 +880,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             sds = pdb_parse_value_to_string(value);
             if (sds == NULL){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "unavailable key\r\n");
+                    len = sprintf(response, "+unavailable key\r\n");
                     break;
                 }
             }
             bitmap_count = pdb_bitmap_count(sds);
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len = sprintf(response, "%d\r\n", bitmap_count);
+                len = sprintf(response, "+%d\r\n", bitmap_count);
             }
             break;
 
@@ -863,7 +896,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             sds = pdb_parse_value_to_string(value);
             if (sds == NULL){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "unavailable key\r\n");
+                    len = sprintf(response, "+unavailable key\r\n");
                     break;
                 }
             }
@@ -873,7 +906,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             start = strtoull(tokens[3], &endptr, 10);
             pos = pdb_bitmap_pos(sds, bitmap_pos_value, start);
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len = sprintf(response, "%ld\r\n", pos);
+                len = sprintf(response, "+%ld\r\n", pos);
             }
             break;
 
@@ -921,7 +954,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             res_val->ptr = result_sds; 
             
             if (response != NULL && !is_slave_to_master_response(fd)) {
-                len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "+OK\r\n");
             }
             break;
         }
@@ -949,7 +982,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             member = tokens[2];
             score = atof(tokens[3]);
             ret = pdb_sortedSet_add(sset, member, score);
-            if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
+            if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+OK\r\n");
             break;
 
         case PDB_CMD_SSET_SCORE:
@@ -957,16 +990,16 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key = tokens[1];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EIXST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EIXST\r\n");
                 break;
             }
             sset = value->ptr;
             member = tokens[2];
             score = pdb_sortedSet_search(sset, member, &success);
             if (success == PDB_DATASTRUCTURE_NOEXIST){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
             }else {
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "%f\r\n", score);
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+%f\r\n", score);
             }
             break;
 
@@ -977,15 +1010,15 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             member = tokens[2];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             sset = value->ptr;
             ret = pdb_sortedSet_incre(sset, member, increment);
             if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
             }else if (ret == PDB_DATASTRUCTURE_OK){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+OK\r\n");
             }
 
             break;
@@ -996,15 +1029,15 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             member = tokens[2];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             sset = value->ptr;
             rank = pdb_sortedSet_rank(sset, member, &success);
             if (success == PDB_DATASTRUCTURE_NOEXIST){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
             }else if (success == PDB_DATASTRUCTURE_EXIST){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "%lu\r\n", rank);
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+%lu\r\n", rank);
             }
 
             break;
@@ -1014,7 +1047,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key = tokens[1];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             sset = value->ptr;
@@ -1022,8 +1055,12 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             sset_stop = atoi(tokens[3]);
 
             res_range = pdb_sortedSet_get_revrange(sset, sset_start, sset_stop);
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response + len, "+");
+            }
+
             for (i = 0; i < sset_stop - sset_start + 1; i++){
-                printf("%s\n", res_range[i]);
+                // printf("%s\n", res_range[i]);
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     len += sprintf(response + len, "%s\r\n", res_range[i]);
                 }
@@ -1063,7 +1100,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             }
             if (ret != PDB_DATASTRUCTURE_ERROR){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "OK\r\n");
+                    len = sprintf(response, "+OK\r\n");
                 }
             }
             break;
@@ -1073,19 +1110,19 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key = tokens[1];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             set = (pdb_set*)value->ptr;
             for (i = 2; i < count; i++){
                 ret = pdb_set_delete(set, tokens[i]);
                 if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                     break;
                 }
             }
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len = sprintf(response, "OK\r\n");
+                len = sprintf(response, "+OK\r\n");
             }
             
             break;
@@ -1095,13 +1132,13 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key = tokens[1];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             set = (struct pdb_set*)value->ptr;
             set_el_count = pdb_set_get_count(set);
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len = sprintf(response, "%ld\r\n", set_el_count);
+                len = sprintf(response, "+%ld\r\n", set_el_count);
             }
             break;
 
@@ -1111,17 +1148,17 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             value = pdb_hash_get(&global_hash, key);
             raw_value = tokens[2];
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             set = (struct pdb_set*)value->ptr;
             ret = pdb_set_search(set, raw_value);
             if (ret == PDB_DATASTRUCTURE_EXIST){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+EXIST\r\n");
             }else if (ret == PDB_DATASTRUCTURE_NOEXIST){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
             }else {
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "ERROR\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+ERROR\r\n");
             }
             break;
 
@@ -1130,15 +1167,15 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key = tokens[1];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             set = (struct pdb_set*)value->ptr;
             value_get = pdb_set_random_pop(set);
             if (value_get == NULL)  {
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "EMPTY\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+EMPTY\r\n");
             }else{
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "%s\r\n", value_get);
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+%s\r\n", value_get);
             } 
             break;
 
@@ -1148,10 +1185,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             pop_count = atoi(tokens[2]);
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "NO EXIST\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
             set = (struct pdb_set*)value->ptr;
+            if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response, "+");
             for (i = 0; i < pop_count; i++){
                 value_get = pdb_set_random_pop(set);
                 len += sprintf(response + len, "%s\r\n", value_get);
@@ -1165,6 +1203,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             value1 = pdb_hash_get(&global_hash, key1);
             value2 = pdb_hash_get(&global_hash, key2);
             set = pdb_set_inter(value1->ptr, value2->ptr);
+
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response, "+");
+            }
             
             if (set->flag == PDB_SET_ENCODING_INTSET){
                 struct pdb_intset* intset = set->ptr;
@@ -1194,6 +1236,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             value1 = pdb_hash_get(&global_hash, key1);
             value2 = pdb_hash_get(&global_hash, key2);
             set = pdb_set_union(value1->ptr, value2->ptr);
+
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response, "+");
+            }
             
             if (set->flag == PDB_SET_ENCODING_INTSET){
                 struct pdb_intset* intset = set->ptr;
@@ -1224,6 +1270,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             value2 = pdb_hash_get(&global_hash, key2);
             set = pdb_set_differ(value1->ptr, value2->ptr);
             
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                len += sprintf(response, "+");
+            }
+
             if (set->flag == PDB_SET_ENCODING_INTSET){
                 struct pdb_intset* intset = set->ptr;
                 for (i = 0; i < intset->len; i++){
@@ -1298,7 +1348,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /****************************************************************** */
             if (global_master_snapshot == NULL) {
                 // 512M
-                global_master_snapshot = pdb_rdma_create_snapshot("rxe0", 512 * 1024 * 1024);
+                global_master_snapshot = pdb_rdma_create_snapshot("rxe0", PDB_RDMA_MEMPOOL_SIZE);
                 if (!global_master_snapshot) {
                     // pdb_log_info("master send +RDMA_READY\n");
                     if (response != NULL) len = sprintf(response, "-ERR RDMA Snapshot init failed\r\n");
@@ -1510,11 +1560,21 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 }
             }
 
+            for (i = 0; i < REPLICATION_NUM; i++){
+                if (global_replication->fd[i] == 0){
+                    global_replication->fd[i] = fd;
+                    global_replication->slave_num++;
+                }
+                break;
+            }
+
             char ok_buf[64];
             int ok_len = sprintf(ok_buf, "*1\r\n$7\r\nZRDB_OK\r\n");
             write(fd, ok_buf, ok_len);
             
             if (response != NULL) len = 0;
+
+            conn_list[fd]->is_incre_ready = 1;
             break;
         }
 
@@ -1525,154 +1585,45 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             pdb_log_info("slave node receive ZRDB_OK\n");
             // slave node
             if (global_conf.is_slave) {
-                incre_slave_snap = pdb_rdma_create_snapshot("rxe0", 4 * 1024 * 1024);  // 4M
-                if (!incre_slave_snap) break;
-                incre_slave_conn = pdb_rdma_create_conn(incre_slave_snap);
-                if (!incre_slave_conn) break;
-
-                // 提前挂载 RECV WR，准备接收 Master 未来发来的 IMM 立即数
-                pdb_rdma_post_recv_monitor(incre_slave_conn);
-
-                char gid_str[33];
-                _gid_to_str(incre_slave_conn->local_info.gid, gid_str);
-
-                char vaddr_str[64], rkey_str[32], qpn_str[32], psn_str[32], lid_str[32];
-                int vaddr_len = sprintf(vaddr_str, "%llu", (unsigned long long)incre_slave_snap->mr->addr);
-                int rkey_len  = sprintf(rkey_str, "%u", incre_slave_snap->mr->rkey);
-                int qpn_len   = sprintf(qpn_str, "%u", incre_slave_conn->local_info.qpn);
-                int psn_len   = sprintf(psn_str, "%u", incre_slave_conn->local_info.psn);
-                int lid_len   = sprintf(lid_str, "%hu", incre_slave_conn->local_info.lid);
-                int gid_len   = strlen(gid_str);
-
-                char incre_buf[512];
-                int incre_len = sprintf(incre_buf, 
-                    "*7\r\n"
-                    "$10\r\nZINCRE_SYN\r\n"
-                    "$%d\r\n%s\r\n$%d\r\n%s\r\n"
-                    "$%d\r\n%s\r\n$%d\r\n%s\r\n"
-                    "$%d\r\n%s\r\n$%d\r\n%s\r\n",
-                    vaddr_len, vaddr_str, rkey_len, rkey_str,
-                    qpn_len, qpn_str, psn_len, psn_str,
-                    lid_len, lid_str, gid_len, gid_str
-                );
-
-                write(fd, incre_buf, incre_len);
-                if (response != NULL) len = 0;
-            }
-            break;
-        }
-
-        /** increment syn master*/
-        case PDB_CMD_INCRE_SYN: 
-        {
-            // master receive ZINCRE_SYN from salve node.
-            // pdb_log_info("master receive ZINCRE_SYN, increment channel success\n");
-            
-            for (i = 0; i < REPLICATION_NUM; i++){
-                if (global_replication->fd[i] == 0){
-                    global_replication->fd[i] = fd;
-                    global_replication->slave_num++;
-                }
-                break;
-            }
-        
-            if (incre_master_snap == NULL) {
-                incre_master_snap = pdb_rdma_create_snapshot("rxe0", 4 * 1024 * 1024);
-            }
-            pdb_rdma_conn_ctx* master_incre_conn = pdb_rdma_create_conn(incre_master_snap);
-
-            uint64_t slave_vaddr = strtoull(tokens[1], NULL, 10);
-            uint32_t slave_rkey  = (uint32_t)strtoul(tokens[2], NULL, 10);
-            
-            pdb_rdma_conn_info slave_info;
-            memset(&slave_info, 0, sizeof(slave_info));
-            slave_info.qpn = atoi(tokens[3]);
-            slave_info.psn = atoi(tokens[4]);
-            slave_info.lid = atoi(tokens[5]);
-            _str_to_gid(tokens[6], slave_info.gid);
-
-            if (pdb_rdma_connect_qp(master_incre_conn, &slave_info) == 0) {
-                conn_list[fd]->incre_rdma_conn = master_incre_conn;
-                conn_list[fd]->incre_remote_vaddr = slave_vaddr;
-                conn_list[fd]->incre_remote_rkey = slave_rkey;
-                conn_list[fd]->is_syncing_incremental = 1;
-
-                // 🚩 核心修复：把 Master 增量 QP 的参数打包发给 Slave
-                char gid_str[33];
-                _gid_to_str(master_incre_conn->local_info.gid, gid_str);
-                
-                char qpn_str[32], psn_str[32], lid_str[32];
-                int qpn_len = sprintf(qpn_str, "%u", master_incre_conn->local_info.qpn);
-                int psn_len = sprintf(psn_str, "%u", master_incre_conn->local_info.psn);
-                int lid_len = sprintf(lid_str, "%hu", master_incre_conn->local_info.lid);
-                int gid_len = strlen(gid_str);
-
-                char vaddr_str[64], rkey_str[32];
-                int vaddr_len = sprintf(vaddr_str, "%llu", (unsigned long long)incre_master_snap->mr->addr);
-                int rkey_len  = sprintf(rkey_str, "%u", incre_master_snap->mr->rkey);
-
-                char ack_buf[512];
-                // 格式: *5\r\n $10\r\n ZINCRE_ACK\r\n <qpn> <psn> <lid> <gid>
-                int ack_len = sprintf(ack_buf, 
-                    "*7\r\n"
-                    "$10\r\nZINCRE_ACK\r\n"
-                    "$%d\r\n%s\r\n" // qpn
-                    "$%d\r\n%s\r\n" // psn
-                    "$%d\r\n%s\r\n" // lid
-                    "$%d\r\n%s\r\n" // gid
-                    "$%d\r\n%s\r\n" // vaddr 
-                    "$%d\r\n%s\r\n", // rkey 
-                    qpn_len, qpn_str, psn_len, psn_str, lid_len, lid_str, gid_len, gid_str,
-                    vaddr_len, vaddr_str, rkey_len, rkey_str
-                );
-                int ret = write(fd, ack_buf, ack_len);
-            }
-            if (response != NULL) len = 0;
-
-            conn_list[fd]->is_incre_ready = 1;
-            // pdb_log_debug("is_incre_ready, fd %d, %d\n", fd, conn_list[fd]->is_incre_ready);
-            break;
-        }
-
-        case PDB_CMD_INCRE_ACK:
-        {
-            // slave node 
-            if (global_conf.is_slave) {
-                // pdb_log_info("slave node receive ZINCRE_ACK, parsing master info...\n");
-                
-                if (!tokens[1] || !tokens[2] || !tokens[3] || !tokens[4]) break;
-                incre_slave_conn->vaddr_str = strtoull(tokens[5], NULL, 10);
-                incre_slave_conn->rkey_str  = (uint32_t)strtoul(tokens[6], NULL, 10);
-                
-                pdb_rdma_conn_info master_info;
-                memset(&master_info, 0, sizeof(master_info));
-                master_info.qpn = atoi(tokens[1]);
-                master_info.psn = atoi(tokens[2]);
-                master_info.lid = atoi(tokens[3]);
-                _str_to_gid(tokens[4], master_info.gid);
-
-                if (pdb_rdma_connect_qp(incre_slave_conn, &master_info) == 0) {
-                    is_incre_channel_active = 1;
-                    last_pull_time_ms = get_now_ms();
-                    // pdb_log_info("[SLAVE] Incremental Channel UP! QP transitioned to RTS.\n");
-                } else {
-                    pdb_log_error("[SLAVE] Failed to connect incremental QP to Master!\n");
-                }
-
-                if (response != NULL) len = 0;
-
                 conn_list[fd]->is_incre_ready = 1;
             }
+
             break;
         }
-            
+
+        // MEM
+        case PDB_CMD_MEM_USED:
+        {
+            if (response != NULL){
+                len = sprintf(response, "%ld\r\n", global_memory_manager->used_memory);
+                uint64_t epoch = 1;
+                size_t sz = sizeof(epoch);
+                mallctl("epoch", &epoch, &sz, &epoch, sz);
+
+                size_t jemalloc_allocated = 0;
+                size_t len = sizeof(jemalloc_allocated);
+                mallctl("stats.allocated", &jemalloc_allocated, &len, NULL, 0);
+
+                printf("PDB used_memory: %zu, Jemalloc allocated: %zu\n", 
+                        global_memory_manager->used_memory, jemalloc_allocated);
+            }
+            break;
+        }
+
+        case PDB_CMD_MEM_RSS:
+        {
+            if (response != NULL){
+                len = sprintf(response, "%ld\r\n", global_memory_manager->used_memory_rss);
+            }
+            break;
+        }
 
         case PDB_CMD_EXIT:
             return -99;
 
         default:
             if (response != NULL){
-                ret = sprintf(response, "cmd error\r\n");
+                ret = sprintf(response, "-ERR unknown command\r\n");
             }
             pdb_log_info("Receive error cmd\n");
             break;

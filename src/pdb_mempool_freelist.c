@@ -3,13 +3,14 @@
 
 static void* _mp_malloc_tracked(struct mp_pool_s* pool, size_t size) {
     assert(size > 0);
-    // printf("DEBUG: malloc size=%zu, pool=%p\n", size, (void*)pool);
+
     size_t total_size = size + sizeof(struct mp_chunk_record_s);
     char* p = (char*)malloc(total_size);
     if (!p) return NULL;
 
+    // head insert
     struct mp_chunk_record_s* record = (struct mp_chunk_record_s*)p;
-    record->ptr = p;
+    // record->ptr = p;
     record->next = pool->chunk_head;
     pool->chunk_head = record;
 
@@ -90,8 +91,7 @@ static void* _mp_refill(struct mp_pool_s* pool, size_t n) {
 }
 
 
-struct mp_pool_s* pdb_mp_create_freelist_pool(size_t size) {
-    assert(size > 0);
+struct mp_pool_s* pdb_mp_create_freelist_pool() {
     struct mp_pool_s* pool = (struct mp_pool_s*)malloc(sizeof(struct mp_pool_s));
     if (!pool) return NULL;
     memset(pool, 0, sizeof(struct mp_pool_s));
@@ -104,7 +104,7 @@ void pdb_mp_destory_freelist_pool(struct mp_pool_s* pool) {
     struct mp_chunk_record_s* cur = pool->chunk_head;
     while (cur) {
         struct mp_chunk_record_s* next = cur->next;
-        if (cur->ptr) free(cur->ptr);
+        // if (cur->ptr) free(cur->ptr);
         free(cur);
         cur = next;
     }
@@ -118,6 +118,7 @@ void* pdb_mp_freelist_alloc(struct mp_pool_s* pool, size_t size) {
 
     size_t real_size = size + MP_HEADER_SIZE;
     
+    // large alloc
     if (real_size > (size_t)MP_MAX_BYTES) {
         void* p = malloc(real_size);
         if (!p) return NULL;
@@ -125,8 +126,8 @@ void* pdb_mp_freelist_alloc(struct mp_pool_s* pool, size_t size) {
         return (char*)p + MP_HEADER_SIZE;
     }
 
-    size_t aligned_size = MP_ROUND_UP(real_size);
-    
+    // small alloc
+    size_t aligned_size = MP_ROUND_UP(real_size); 
     if (aligned_size < sizeof(union mp_obj_u)) {
         aligned_size = sizeof(union mp_obj_u);
     }
@@ -135,6 +136,8 @@ void* pdb_mp_freelist_alloc(struct mp_pool_s* pool, size_t size) {
     union mp_obj_u* result = *my_free_list;
 
     if (result == NULL) {
+        // no small room for alloc
+        // make room for small alloc
         void* r = _mp_refill(pool, aligned_size);
         if (!r) return NULL;
         *(size_t*)r = aligned_size; 

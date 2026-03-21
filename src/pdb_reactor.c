@@ -22,6 +22,7 @@
 
 
 #define MAX_PORTS				1
+#define ENBALE_DPDK				1
 
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
@@ -32,7 +33,6 @@ int send_cb(int fd, msg_handler handler);
 extern int pdb_ebpf_poll();
 
 int epfd = 0;
-
 
 
 int set_event(int fd, int event, int flag) {
@@ -80,6 +80,12 @@ int accept_cb(int fd, msg_handler handler) {
 		pdb_log_error("accept errno: %d --> %s\n", errno, strerror(errno));
 		return -1;
 	}
+
+	int optval = 1;
+    if (setsockopt(clientfd, IPPROTO_TCP, TCP_NODELAY, &optval, sizeof(optval)) == -1) {
+        pdb_log_error("setsockopt TCP_NODELAY failed: %s\n", strerror(errno));
+    }
+
 	int flags = fcntl(clientfd, F_GETFL, 0);
     if (flags == -1) return -1;
     fcntl(clientfd, F_SETFL, flags | O_NONBLOCK);
@@ -138,6 +144,8 @@ static int process_read_buffer(int fd, msg_handler handler){
 		}else if (package_len == PDB_PROTOCAL_ERROR){
 			pdb_log_debug("process_read_buffer receive error protocal\n%s\n", c->read_buffer);
 			memcpy(c->write_buffer + c->write_pos, "protocal error\r\n", 17);
+			// discard error buffer
+			
 			return PDB_PROTOCAL_ERROR;
 		}
 
@@ -152,11 +160,6 @@ static int process_read_buffer(int fd, msg_handler handler){
 			c->write_pos += response_len;
 			pdb_sds_len_increment(c->write_buffer, response_len);
 		}
-		// pdb_log_info("c->write_pos: %d\n", c->write_pos);
-		
-		// deal with AOF
-		// pdb_aof_buffer_append(c->read_buffer, package_len);
-		// pdb_aof_write_to_written_buffer(c->read_buffer, package_len);
 
 		pdb_sds_range(c->read_buffer, package_len, -1);
 		c->read_pos -= package_len;
@@ -170,6 +173,28 @@ static int process_read_buffer(int fd, msg_handler handler){
 }
 
 
+int send_cb(int fd, msg_handler handler) {
+	// pdb_log_debug("send_cb : %d, write_buffer: %s\n", fd, conn_list[fd]->write_buffer);
+	struct conn_info* c = conn_list[fd];
+	// if (c->write_pos > 3*1024){
+	// }
+
+	int ret = send(fd, c->write_buffer, c->write_pos, 0);
+	if (ret < 0){
+		pdb_log_error("send error\n");
+		return PDB_ERROR;
+	}else if (ret > 0){
+		// pdb_log_info("send success: %d\n", ret);
+		pdb_sds_range(c->write_buffer, ret, -1);
+		c->write_pos -= ret;
+	}
+    
+	// set_event(fd, EPOLLIN, 0);
+	
+	return PDB_OK;
+}
+
+
 int recv_cb(int fd, msg_handler handler){
 	struct conn_info* c = conn_list[fd];
 	// pdb_log_info("read_buffer: %d, write_buffer:%d\n", pdb_get_sds_alloc(c->read_buffer), pdb_get_sds_alloc(c->write_buffer));
@@ -178,7 +203,7 @@ int recv_cb(int fd, msg_handler handler){
 	size_t avail_len = pdb_get_sds_avail(c->read_buffer);
 	assert(avail_len >= 0);
 
-	int nread;
+	int nread = 0;
 
 	if (c->is_big_package){
 		read_len = c->bulk_length;
@@ -209,31 +234,16 @@ int recv_cb(int fd, msg_handler handler){
 		}		
 	}
 
-	set_event(c->fd, EPOLLOUT, 0);
-	
-	return PDB_OK;
-}
-
-
-int send_cb(int fd, msg_handler handler) {
-	// pdb_log_debug("send_cb : %d, write_buffer: %s\n", fd, conn_list[fd]->write_buffer);
-	struct conn_info* c = conn_list[fd];
-	if (c->write_pos > 3*1024){
-		int ret = send(fd, c->write_buffer, c->write_pos, 0);
-		if (ret < 0){
-			pdb_log_error("send error\n");
-			return PDB_ERROR;
-		}else if (ret > 0){
-			// pdb_log_info("send success: %d\n", ret);
-			pdb_sds_range(c->write_buffer, ret, -1);
-			c->write_pos -= ret;
-		}
+	int ret = send_cb(fd, handler);
+	if (ret != PDB_OK){
+		pdb_log_error("send error\n");
 	}
-    
-	set_event(fd, EPOLLIN, 0);
+
+	// set_event(c->fd, EPOLLOUT, 0);
 	
 	return PDB_OK;
 }
+
 
 int init_server(unsigned short port) {
 	int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -258,6 +268,7 @@ int init_server(unsigned short port) {
 
 	return sockfd;
 }
+
 
 void init_replication_slave_to_master_conn_list(int fd){
 	int flags = fcntl(fd, F_GETFL, 0);
@@ -288,8 +299,8 @@ void init_replication_slave_to_master_conn_list(int fd){
     conn_list[fd]->client_port = global_conf.master_port;
 }
 
+
 extern int is_incre_ready;
-extern pdb_rdma_snapshot_ctx* incre_master_snap;
 int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler response_handler){
     epfd = epoll_create(1);
 
@@ -348,9 +359,9 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 			struct conn_info* c = conn_list[connfd];
 			if (events[i].events & EPOLLIN) {
 				int ret = c->recv_callback(connfd, request_handler);
-				if (ret < 0){
-					pdb_log_debug("EPOLLIN call_back return error\n");
-				}				
+				// if (ret < 0){
+				// 	pdb_log_debug("EPOLLIN call_back return error\n");
+				// }				
 				if (ret == PDB_DISCONNECT){
 					// conn disconnect
 					pdb_delete_conn_list(connfd);
@@ -376,11 +387,7 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 					epoll_ctl(epfd, EPOLL_CTL_DEL, connfd, NULL);
 				}
 			}
-
-			
 		}
-		
-		
 	}
     
     return 0;

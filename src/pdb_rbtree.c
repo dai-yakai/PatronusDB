@@ -294,28 +294,17 @@ rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
 	return y;
 }
 
-rbtree_node *rbtree_search(rbtree *T, KEY_TYPE key) {
-	// printf("rbtree_search: key, %s\n", key);
+rbtree_node* rbtree_search(rbtree *T, KEY_TYPE key) {
 	rbtree_node *node = T->root;
 	while (node != T->nil) {
-#if ENABLE_KEY_CHAR
-		if (strcmp(key, node->key) < 0) {
+		int cmp = strcmp(key, node->key);
+		if (cmp < 0) {
 			node = node->left;
-		} else if (strcmp(key, node->key) > 0) {
+		} else if (cmp > 0) {
 			node = node->right;
 		} else {
 			return node;
 		}
-
-#else
-		if (key < node->key) {
-			node = node->left;
-		} else if (key > node->key) {
-			node = node->right;
-		} else {
-			return node;
-		}	
-#endif
 	}
 	return T->nil;
 }

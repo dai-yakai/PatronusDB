@@ -6,9 +6,12 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "pdb_conf.h"
+
 void _pdb_log_debug_impl(const char* file, int line, const char* func, const char* fmt, ...);
 void _pdb_log_info_impl(const char* file, int line, const char* func, const char* fmt, ...);
 void _pdb_log_error_impl(const char* file, int line, const char* func, const char* fmt, ...);
+void pdb_log_init();
 
 
 #define pdb_log_debug(fmt, ...) \

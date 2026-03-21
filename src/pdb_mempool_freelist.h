@@ -46,7 +46,7 @@ struct mp_pool_s {
     struct mp_chunk_record_s* chunk_head; // 记录所有从OS申请的块
 };
 
-struct mp_pool_s* pdb_mp_create_freelist_pool(size_t size);
+struct mp_pool_s* pdb_mp_create_freelist_pool();
 void pdb_mp_destory_freelist_pool(struct mp_pool_s* pool);
 void* pdb_mp_freelist_alloc(struct mp_pool_s* pool, size_t size);
 void* pdb_mp_freelist_realloc(struct mp_pool_s* pool, void* ptr, size_t size);

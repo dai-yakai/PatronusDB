@@ -14,7 +14,7 @@ CFLAGS    += $(EXTRA_CFLAGS)
 
 LDFLAGS   := -L./NtyCo/
 
-LIBS      := -lntyco -lpthread -ldl -luring -libverbs -lbpf -lelf -lz
+LIBS      := -lntyco -lpthread -ldl -luring -libverbs -lbpf -lelf -lz -ljemalloc
 
 SRC_DIR   := src
 OBJ_DIR   := obj

@@ -14,6 +14,7 @@ config_entry conf_table[] = {
     {"persistence",     CONF_TYPE_STRING,   &global_conf.persistence},
     {"is_aof",          CONF_TYPE_BOOL,     &global_conf.is_aof},
     {"is_backup",       CONF_TYPE_BOOL,     &global_conf.is_backup},
+    {"log_level",       CONF_TYPE_INT,      &global_conf.log_level},
     {NULL,              0,                  NULL}
 };
 
@@ -81,7 +82,7 @@ void loadServerConfig(const char *filename) {
         }
         
         if (!found) {
-            printf("[Warning] Unknown directive: %s\n", key);
+            printf("[ERROR] Unknown directive: %s\n", key);
         }
     }
     fclose(fp);

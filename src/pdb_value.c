@@ -55,7 +55,7 @@ pdb_sds pdb_parse_value_to_string(pdb_value* value){
         {
             // TODO
             char buf[64];
-            snprintf(buf, 64, "%d", (int)(value->ptr));
+            snprintf(buf, 64, "%ld", (intptr_t)(value->ptr));
             pdb_sds s = pdb_get_new_sds2(buf);
             return s;
         }
