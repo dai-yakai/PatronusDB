@@ -48,7 +48,7 @@ int mset_verify_response(int fd) {
         return -1;
     }
     buffer[n] = '\0';
-    if (strncmp(buffer, "OK", 2) == 0) {
+    if (strncmp(buffer, "+OK", 2) == 0) {
         return 0; // 成功
     }else if (strncmp(buffer, "ERROR", 5) == 0){
         return 1;

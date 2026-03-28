@@ -44,11 +44,13 @@ struct pdb_set* pdb_set_create_with_key(char* key){
     set->ptr = intset;
     set->count = 0;
 
-    char* tmp_key = pdb_malloc(strlen(key) + 1);
-    strcpy(tmp_key, key);
-    set->key = tmp_key;
-    // pdb_log_debug("set_key: %s\n", set->key);
-
+    if (key != NULL){
+        char* tmp_key = pdb_malloc(strlen(key) + 1);
+        strcpy(tmp_key, key);
+        set->key = tmp_key;
+    }
+    set->key = NULL;
+    
     return set;
 }
 
@@ -216,7 +218,6 @@ struct pdb_set* pdb_set_union(struct pdb_set* set1, struct pdb_set* set2){
 
 struct pdb_set* pdb_set_differ(struct pdb_set* set1, struct pdb_set* set2){
     pdb_set* res = pdb_set_create();
-
     if (set1->flag == PDB_SET_ENCODING_INTSET && set2->flag == PDB_SET_ENCODING_INTSET){
         pdb_intset_destroy(res->ptr);
         res->ptr = pdb_intset_difference(set1->ptr, set2->ptr);

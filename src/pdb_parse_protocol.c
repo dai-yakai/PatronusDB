@@ -310,6 +310,19 @@ int pdb_parser_cmd(const char* cmd_str) {
     return PDB_ERROR; // can not find the command
 }
 
+static inline int parse_resp_int(const char **p, const char *end) {
+    int val = 0;
+    const char *curr = *p;
+    
+    while (curr < end && *curr >= '0' && *curr <= '9') {
+        val = val * 10 + (*curr - '0');
+        curr++;
+    }
+    
+    *p = curr;
+    return val;
+}
+
 /**
  * Check for a complete package in 'buf' and return its total length.
  * 
@@ -318,59 +331,48 @@ int pdb_parser_cmd(const char* cmd_str) {
  * Return total length if `buf` contains a valid and complete package.
  */
 int check_resp_integrity(const char *buf, int len, int* bulk_length) {
-	if (len == 0)   return PDB_HALF_PACKAGE; 
-    if (buf[0] != '*') {
-        return PDB_PROTOCAL_ERROR;
-    }
-    if (len < 4){
-        return PDB_HALF_PACKAGE; 
-    }
-    if (buf[0] != '*') {
-		return PDB_PROTOCAL_ERROR;
-	} 
+	if (len < 4) return PDB_HALF_PACKAGE; 
+    if (buf[0] != '*') return PDB_PROTOCAL_ERROR;
 
-    const char *curr = buf;
+    const char *curr = buf + 1; 
     const char *end = buf + len;
 
-    // Parsing the num of tokens
-    // pdb_log_info("resp check: %s\n", buf);
-    const char *crlf = strstr(curr, "\r\n");
-    if (!crlf || crlf >= end) {
-		return PDB_HALF_PACKAGE;
-    }
+    int count = parse_resp_int(&curr, end);
 
-    int count = atoi(curr + 1);
-    curr = crlf + 2;
+    if (curr + 1 >= end) return PDB_HALF_PACKAGE;
+    if (*curr != '\r' || *(curr + 1) != '\n') return PDB_PROTOCAL_ERROR;
+    curr += 2; 
+
+    int max_bulk = bulk_length ? *bulk_length : 0;
 
     for (int i = 0; i < count; i++) {
-        if (curr >= end){
-            return PDB_HALF_PACKAGE;
-        } 
-        if (*curr != '$' && *curr == '\0'){
-			return PDB_HALF_PACKAGE;
-		}
-        if (*curr != '$'){
-			return PDB_PROTOCAL_ERROR;
-		}
+        if (curr >= end) return PDB_HALF_PACKAGE;
+        if (*curr != '$') return PDB_PROTOCAL_ERROR;
+        curr++; 
 
-        crlf = strstr(curr, "\r\n");
-        if (!crlf || crlf >= end) {
-            return PDB_HALF_PACKAGE;
+        int bulk_len = parse_resp_int(&curr, end);
+
+        if (curr + 1 >= end) return PDB_HALF_PACKAGE;
+        if (*curr != '\r' || *(curr + 1) != '\n') return PDB_PROTOCAL_ERROR;
+        curr += 2; 
+
+        if (bulk_len > max_bulk) {
+            max_bulk = bulk_len;
         }
-
-		int bulk_len = atoi(curr + 1);
-		if (bulk_length != NULL){
-			*bulk_length = bulk_len > *bulk_length ? bulk_len : *bulk_length;
-		}
-		
-        curr = crlf + 2;
 
         if (curr + bulk_len + 2 > end) {
             return PDB_HALF_PACKAGE; 
         }
+        
+        // if (curr[bulk_len] != '\r' || curr[bulk_len + 1] != '\n') return PDB_PROTOCAL_ERROR;
              
         curr += bulk_len + 2; 
     }
+
+    if (bulk_length) {
+        *bulk_length = max_bulk;
+    }
+    
     return (int)(curr - buf);
 }
 
@@ -397,7 +399,8 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
     int cmd = pdb_parser_cmd(tokens[0]);
     if (cmd == PDB_ERROR){
         // Receive error cmd
-        len = sprintf(response, "-ERR unknown command\r\n");
+        pdb_log_info("unkown command: %s\n", tokens[0]);
+        len = sprintf(response, "-ERR unknown command: %s\r\n", tokens[0]);
         return len;
     }
 
@@ -515,7 +518,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ret = pdb_array_mset(&global_array, tokens, count - 1);
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
-                    len = sprintf(response, "+ERROR\r\n");
+                    len = sprintf(response, "-ERROR: mset error\r\n");
+                } else if (ret == PDB_DATASTRUCTURE_EXIST){
+                    len = sprintf(response, "-ERROR: exist key\r\n");  
                 } else if (ret == PDB_DATASTRUCTURE_OK){
                     len = sprintf(response, "+OK\r\n");
                 }
@@ -838,7 +843,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
 
             if (ret == PDB_OK){
                 if (response != NULL && !is_slave_to_master_response(fd)){
-                    len = sprintf(response, "+OK\n");
+                    len = sprintf(response, "+OK\r\n");
                 }
             }
             break;
@@ -875,9 +880,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             break;
 
         case PDB_CMD_BITMAP_COUNT:
+        {
             // BITCOUNT key 
             value = pdb_hash_get(&global_hash, key);
-            sds = pdb_parse_value_to_string(value);
+            struct pdb_bitmap* bitmap = (struct pdb_bitmap*)pdb_parse_value_to_string(value);
+            sds = bitmap->data;
             if (sds == NULL){
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     len = sprintf(response, "+unavailable key\r\n");
@@ -889,11 +896,14 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 len = sprintf(response, "+%d\r\n", bitmap_count);
             }
             break;
+        }
 
         case PDB_CMD_BITMAP_POS:
+        {
             // BITPOS key value start
             value = pdb_hash_get(&global_hash, key);
-            sds = pdb_parse_value_to_string(value);
+            struct pdb_bitmap* bitmap = (struct pdb_bitmap*)pdb_parse_value_to_string(value);
+            sds = bitmap->data;
             if (sds == NULL){
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     len = sprintf(response, "+unavailable key\r\n");
@@ -909,6 +919,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 len = sprintf(response, "+%ld\r\n", pos);
             }
             break;
+        }
 
         case PDB_CMD_BITMAP_OP:
             // BITOP option[AND, OR, XOR, NOT] result_key key1 key2
@@ -916,42 +927,72 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             char* option_token = tokens[1];
             char* result_key = tokens[2];
             char* key1 = tokens[3];
-            char* key2 = tokens[4];
+            char* key2;
+            if (count > 4){
+                key2 = tokens[4];
+            }
+            
             int option = 0;
             
             if (!strcmp(option_token, "AND")) option = BITOP_AND;
             else if (!strcmp(option_token, "OR")) option = BITOP_OR;
             else if (!strcmp(option_token, "XOR")) option = BITOP_XOR;
+            else if (!strcmp(option_token, "NOT")) option = BITOP_NOT;
+            else {
+                if (response != NULL && !is_slave_to_master_response(fd)) len = sprintf(response, "-ERR: error option\r\n");
+                break;
+            }
 
             pdb_value* res_val = pdb_hash_get(&global_hash, result_key);
+            struct pdb_bitmap* result_bitmap;
             pdb_sds result_sds;
             
             if (res_val == NULL) {
                 result_sds = pdb_get_new_sds(PDB_INIT_BTIMAP_LENGTH);
-                res_val = pdb_create_value(result_sds, PDB_VALUE_TYPE_BITMAP); // ✨ 补上这句命脉！
+                bitmap = pdb_bitmap_create(result_key, result_sds);
+
+                strcpy(bitmap->parent_key, result_key);
+                res_val = pdb_create_value(bitmap, PDB_VALUE_TYPE_BITMAP);
+
                 pdb_hash_set(&global_hash, result_key, res_val);     
                 pdb_decre_value(res_val);
             } else {
-                result_sds = pdb_parse_value_to_string(res_val);
+                struct pdb_bitmap* bitmap = (struct pdb_bitmap*)pdb_parse_value_to_string(res_val);
+                result_sds = bitmap->data;
             }
-            
+
+            // bitmap1
             pdb_value* val1_obj = pdb_hash_get(&global_hash, key1);
             if (val1_obj == NULL) {
-                if (response != NULL && !is_slave_to_master_response(fd)) len = sprintf(response, "unavailable key1\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd)) len = sprintf(response, "-ERR: unavailable key1\r\n");
                 break;
             }
-            pdb_sds value1 = pdb_parse_value_to_string(val1_obj);
+            struct pdb_bitmap* bitmap1 = (struct pdb_bitmap*)pdb_parse_value_to_string(val1_obj);
+            pdb_sds value1 = bitmap1->data;
             
+            // NOT
+            if (option == BITOP_NOT){
+                pdb_bitmap_bitop(option, &result_sds, value1, NULL);
+                ((struct pdb_bitmap*)(res_val->ptr))->data = result_sds; 
+            
+                if (response != NULL && !is_slave_to_master_response(fd)) {
+                    len = sprintf(response, "+OK\r\n");
+                }
+                break;
+            }
+
+            // bitmap2
             pdb_value* val2_obj = pdb_hash_get(&global_hash, key2);
             if (val2_obj == NULL) {
-                if (response != NULL && !is_slave_to_master_response(fd)) len = sprintf(response, "unavailable key2\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd)) len = sprintf(response, "-ERR: unavailable key2\r\n");
                 break;
             }
-            pdb_sds value2 = pdb_parse_value_to_string(val2_obj);
+            struct pdb_bitmap* bitmap2 = (struct pdb_bitmap*)pdb_parse_value_to_string(val2_obj);
+            pdb_sds value2 = bitmap2->data;
             
             pdb_bitmap_bitop(option, &result_sds, value1, value2);
             
-            res_val->ptr = result_sds; 
+            ((struct pdb_bitmap*)(res_val->ptr))->data = result_sds; 
             
             if (response != NULL && !is_slave_to_master_response(fd)) {
                 len = sprintf(response, "+OK\r\n");
@@ -1047,6 +1088,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key = tokens[1];
             value = pdb_hash_get(&global_hash, key);
             if (value == NULL){
+                printf("no exist\n");
                 if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+NO EXIST\r\n");
                 break;
             }
@@ -1056,14 +1098,20 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
 
             res_range = pdb_sortedSet_get_revrange(sset, sset_start, sset_stop);
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len += sprintf(response + len, "+");
+                int count = sset_stop - sset_start + 1;
+                len += sprintf(response + len, "*%d\r\n", count);
             }
 
             for (i = 0; i < sset_stop - sset_start + 1; i++){
-                // printf("%s\n", res_range[i]);
-                if (response != NULL && !is_slave_to_master_response(fd)){
-                    len += sprintf(response + len, "%s\r\n", res_range[i]);
-                }
+                if (res_range[i] != NULL){
+                    if (response != NULL && !is_slave_to_master_response(fd)){
+                        len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(res_range[i]), res_range[i]);
+                    }
+                }else{
+                    if (response != NULL && !is_slave_to_master_response(fd)){
+                        len += sprintf(response + len, "$-1\r\n");
+                    }
+                } 
             }
 
             break;
@@ -1189,10 +1237,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 break;
             }
             set = (struct pdb_set*)value->ptr;
-            if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response, "+");
+            if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response, "*%d\r\n", pop_count);
             for (i = 0; i < pop_count; i++){
                 value_get = pdb_set_random_pop(set);
-                len += sprintf(response + len, "%s\r\n", value_get);
+                len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(value_get), value_get);
             }
             break;
 
@@ -1202,10 +1250,16 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key2 = tokens[2];
             value1 = pdb_hash_get(&global_hash, key1);
             value2 = pdb_hash_get(&global_hash, key2);
-            set = pdb_set_inter(value1->ptr, value2->ptr);
+            if (value1 == NULL || value2 == NULL){
+                if (response != NULL && !is_slave_to_master_response(fd)){
+                    len += sprintf(response, "-ERROR: unknown key: %s and %s\r\n", key1, key2);
+                }
+                break;
+            }
 
+            set = pdb_set_inter(value1->ptr, value2->ptr);
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len += sprintf(response, "+");
+                len += sprintf(response, "*%ld\r\n", set->count);
             }
             
             if (set->flag == PDB_SET_ENCODING_INTSET){
@@ -1213,14 +1267,14 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 for (i = 0; i < intset->len; i++){
                     char buf[64];
                     snprintf(buf, sizeof(buf), "%" PRId64, _pdb_intset_get(intset, i));
-                    if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "%s\r\n", buf);
+                    if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(buf), buf);
                 }
             } else if (set->flag == PDB_SET_ENCODING_HASHTABLE){
                 hashtable_t* hash = set->ptr;
                 for (i = 0; i < hash->max_slots; i++){
                     hashnode_t* node = hash->nodes[i];
                     while(node != NULL){
-                        if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "%s\r\n", node->key);
+                        if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(node->key), node->key);
                         node = node->next;
                     }
                 }
@@ -1235,10 +1289,16 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key2 = tokens[2];
             value1 = pdb_hash_get(&global_hash, key1);
             value2 = pdb_hash_get(&global_hash, key2);
+            if (value1 == NULL || value2 == NULL){
+                if (response != NULL && !is_slave_to_master_response(fd)){
+                    len += sprintf(response, "-ERROR: unknown key: %s and %s\r\n", key1, key2);
+                }
+                break;
+            }
             set = pdb_set_union(value1->ptr, value2->ptr);
 
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len += sprintf(response, "+");
+                len += sprintf(response, "*%ld\r\n", set->count);
             }
             
             if (set->flag == PDB_SET_ENCODING_INTSET){
@@ -1246,14 +1306,14 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 for (i = 0; i < intset->len; i++){
                     char buf[64];
                     snprintf(buf, sizeof(buf), "%" PRId64, _pdb_intset_get(intset, i));
-                    if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "%s\r\n", buf);
+                    if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(buf), buf);
                 }
             } else if (set->flag == PDB_SET_ENCODING_HASHTABLE){
                 hashtable_t* hash = set->ptr;
                 for (i = 0; i < hash->max_slots; i++){
                     hashnode_t* node = hash->nodes[i];
                     while(node != NULL){
-                        if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "%s\r\n", node->key);
+                        if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(node->key), node->key);
                         node = node->next;
                     }
                 }
@@ -1268,25 +1328,31 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             key2 = tokens[2];
             value1 = pdb_hash_get(&global_hash, key1);
             value2 = pdb_hash_get(&global_hash, key2);
+            if (value1 == NULL || value2 == NULL){
+                if (response != NULL && !is_slave_to_master_response(fd)){
+                    len += sprintf(response, "-ERROR: unknown key: %s and %s\r\n", key1, key2);
+                }
+                break;
+            }
             set = pdb_set_differ(value1->ptr, value2->ptr);
             
             if (response != NULL && !is_slave_to_master_response(fd)){
-                len += sprintf(response, "+");
+                len += sprintf(response, "*%ld\r\n", set->count);
             }
 
             if (set->flag == PDB_SET_ENCODING_INTSET){
                 struct pdb_intset* intset = set->ptr;
                 for (i = 0; i < intset->len; i++){
-                    char buf[64];
+                    char buf[64] = {0};
                     snprintf(buf, sizeof(buf), "%" PRId64, _pdb_intset_get(intset, i));
-                    if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "%s\r\n", buf);
+                    if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(buf), buf);
                 }
             } else if (set->flag == PDB_SET_ENCODING_HASHTABLE){
                 hashtable_t* hash = set->ptr;
                 for (i = 0; i < hash->max_slots; i++){
                     hashnode_t* node = hash->nodes[i];
                     while(node != NULL){
-                        if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "%s\r\n", node->key);
+                        if (response != NULL && !is_slave_to_master_response(fd))   len += sprintf(response + len, "$%zu\r\n%s\r\n", strlen(node->key), node->key);
                         node = node->next;
                     }
                 }

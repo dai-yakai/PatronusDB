@@ -1,5 +1,48 @@
 #include "pdb_rbtree.h"
 
+// hash algrithm
+static inline uint64_t dictGenHashFunction(const void * key, int len) {
+    const uint64_t m = 0xc6a4a7935bd1e995ULL;
+    const int r = 47;
+    uint64_t seed = 0x1234567890ABCDEFULL; 
+
+    uint64_t h = seed ^ (len * m);
+
+    const uint64_t * data = (const uint64_t *)key;
+    const uint64_t * end = data + (len / 8);
+
+    while (data != end) {
+        uint64_t k = *data++;
+
+        k *= m;
+        k ^= k >> r;
+        k *= m;
+
+        h ^= k;
+        h *= m;
+    }
+
+    const unsigned char * data2 = (const unsigned char *)data;
+    switch (len & 7) {
+        case 7: h ^= ((uint64_t)data2[6]) << 48;
+        case 6: h ^= ((uint64_t)data2[5]) << 40;
+        case 5: h ^= ((uint64_t)data2[4]) << 32;
+        case 4: h ^= ((uint64_t)data2[3]) << 24;
+        case 3: h ^= ((uint64_t)data2[2]) << 16;
+        case 2: h ^= ((uint64_t)data2[1]) << 8;
+        case 1: h ^= ((uint64_t)data2[0]);
+                h *= m;
+    };
+
+    h ^= h >> r;
+    h *= m;
+    h ^= h >> r;
+
+    return h;
+}
+
+
+
 pdb_rbtree_t global_rbtree;
 rbtree_node *rbtree_mini(rbtree *T, rbtree_node *x) {
 	// printf("rbtree_mini: %d\n",  x == NULL);
@@ -32,7 +75,6 @@ rbtree_node *rbtree_successor(rbtree *T, rbtree_node *x) {
 
 
 void rbtree_left_rotate(rbtree *T, rbtree_node *x) {
-
 	rbtree_node *y = x->right;  // x  --> y  ,  y --> x,   right --> left,  left --> right
 
 	x->right = y->left; //1 1
@@ -55,7 +97,6 @@ void rbtree_left_rotate(rbtree *T, rbtree_node *x) {
 
 
 void rbtree_right_rotate(rbtree *T, rbtree_node *y) {
-
 	rbtree_node *x = y->left;
 
 	y->left = x->right;
@@ -77,7 +118,6 @@ void rbtree_right_rotate(rbtree *T, rbtree_node *y) {
 }
 
 void rbtree_insert_fixup(rbtree *T, rbtree_node *z) {
-
 	while (z->parent->color == RED) { //z ---> RED
 		if (z->parent == z->parent->parent->left) {
 			rbtree_node *y = z->parent->parent->right;
@@ -123,57 +163,88 @@ void rbtree_insert_fixup(rbtree *T, rbtree_node *z) {
 	T->root->color = BLACK;
 }
 
-
 void rbtree_insert(rbtree *T, rbtree_node *z) {
+    rbtree_node *y = T->nil;
+    rbtree_node *x = T->root;
 
-	rbtree_node *y = T->nil;
-	rbtree_node *x = T->root;
+    z->hash_value = dictGenHashFunction(z->key, strlen((char*)z->key));
 
-	while (x != T->nil) {
-		y = x;
-#if ENABLE_KEY_CHAR
+    while (x != T->nil) {
+        y = x;
+        if (z->hash_value < x->hash_value) {
+            x = x->left;
+        } else if (z->hash_value > x->hash_value) {
+            x = x->right;
+        } else {
+            int cmp = strcmp(z->key, x->key);
+            if (cmp < 0) {
+                x = x->left;
+            } else if (cmp > 0) {
+                x = x->right;
+            } else {
+                return ; // 节点已存在
+            }
+        }
+    }
 
-		if (strcmp(z->key, x->key) < 0) {
-			x = x->left;
-		} else if (strcmp(z->key, x->key) > 0) {
-			x = x->right;
-		} else {
-			return ;
-		}
+    z->parent = y;
+    
+    if (y == T->nil) {
+        T->root = z;
+    } else if (z->hash_value < y->hash_value) { 
+        y->left = z;
+    } else if (z->hash_value > y->hash_value) { 
+        y->right = z;
+    } else {
+        if (strcmp(z->key, y->key) < 0) {
+            y->left = z;
+        } else {
+            y->right = z;
+        }
+    }
 
-#else
-		if (z->key < x->key) {
-			x = x->left;
-		} else if (z->key > x->key) {
-			x = x->right;
-		} else { //Exist
-			return ;
-		}
-#endif
-	}
+    z->left = T->nil;
+    z->right = T->nil;
+    z->color = RED;
 
-	z->parent = y;
-	if (y == T->nil) {
-		T->root = z;
-#if ENABLE_KEY_CHAR
-	} else if (strcmp(z->key, y->key) < 0) {
-#else
-	} else if (z->key < y->key) {
-#endif
-		y->left = z;
-	} else {
-		y->right = z;
-	}
-
-	z->left = T->nil;
-	z->right = T->nil;
-	z->color = RED;
-
-	rbtree_insert_fixup(T, z);
+    rbtree_insert_fixup(T, z);
 }
 
-void rbtree_delete_fixup(rbtree *T, rbtree_node *x) {
 
+// void rbtree_insert(rbtree *T, rbtree_node *z) {
+// 	rbtree_node *y = T->nil;
+// 	rbtree_node *x = T->root;
+
+// 	z->hash_value = dictGenHashFunction(z->key, strlen((char*)z->key));
+
+// 	while (x != T->nil) {
+// 		y = x;
+// 		if (strcmp(z->key, x->key) < 0) {
+// 			x = x->left;
+// 		} else if (strcmp(z->key, x->key) > 0) {
+// 			x = x->right;
+// 		} else {
+// 			return ;
+// 		}
+// 	}
+
+// 	z->parent = y;
+// 	if (y == T->nil) {
+// 		T->root = z;
+// 	} else if (strcmp(z->key, y->key) < 0) {
+// 		y->left = z;
+// 	} else {
+// 		y->right = z;
+// 	}
+
+// 	z->left = T->nil;
+// 	z->right = T->nil;
+// 	z->color = RED;
+
+// 	rbtree_insert_fixup(T, z);
+// }
+
+void rbtree_delete_fixup(rbtree *T, rbtree_node *x) {
 	while ((x != T->root) && (x->color == BLACK)) {
 		if (x == x->parent->left) {
 
@@ -207,7 +278,6 @@ void rbtree_delete_fixup(rbtree *T, rbtree_node *x) {
 			}
 
 		} else {
-
 			rbtree_node *w = x->parent->left;
 			if (w->color == RED) {
 				w->color = BLACK;
@@ -215,12 +285,10 @@ void rbtree_delete_fixup(rbtree *T, rbtree_node *x) {
 				rbtree_right_rotate(T, x->parent);
 				w = x->parent->left;
 			}
-
 			if ((w->left->color == BLACK) && (w->right->color == BLACK)) {
 				w->color = RED;
 				x = x->parent;
 			} else {
-
 				if (w->left->color == BLACK) {
 					w->right->color = BLACK;
 					w->color = RED;
@@ -235,7 +303,6 @@ void rbtree_delete_fixup(rbtree *T, rbtree_node *x) {
 
 				x = T->root;
 			}
-
 		}
 	}
 
@@ -243,7 +310,6 @@ void rbtree_delete_fixup(rbtree *T, rbtree_node *x) {
 }
 
 rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
-
 	rbtree_node *y = T->nil;
 	rbtree_node *x = T->nil;
 
@@ -269,10 +335,6 @@ rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
 	}
 
 	if (y != z) {
-#if ENABLE_KEY_CHAR
-		// if (z->key) pdb_free(z->key, strlen(z->key) + 1);
-        // if (z->value) pdb_free(z->value, strlen(z->value) + 1);
-
 		void *tmp = z->key;
 		z->key = y->key;
 		y->key = tmp;
@@ -280,11 +342,6 @@ rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
 		tmp = z->value;
 		z->value= y->value;
 		y->value = tmp;
-
-#else
-		z->key = y->key;
-		z->value = y->value;
-#endif
 	}
 
 	if (y->color == BLACK) {
@@ -295,17 +352,34 @@ rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
 }
 
 rbtree_node* rbtree_search(rbtree *T, KEY_TYPE key) {
+	uint64_t target_hash = dictGenHashFunction(key, strlen(key));
+
 	rbtree_node *node = T->root;
 	while (node != T->nil) {
-		int cmp = strcmp(key, node->key);
-		if (cmp < 0) {
-			node = node->left;
-		} else if (cmp > 0) {
-			node = node->right;
-		} else {
-			return node;
-		}
+		if (target_hash < node->hash_value) {
+            node = node->left;
+        } else if (target_hash > node->hash_value) {
+            node = node->right;
+        } else {
+            int cmp = strcmp(key, node->key);
+            if (cmp < 0) {
+                node = node->left;
+            } else if (cmp > 0) {
+                node = node->right;
+            } else {
+                return node; 
+            }
+        }
+		// int cmp = strcmp(key, node->key);
+		// if (cmp < 0) {
+		// 	node = node->left;
+		// } else if (cmp > 0) {
+		// 	node = node->right;
+		// } else {
+		// 	return node;
+		// }
 	}
+	// no exist
 	return T->nil;
 }
 
@@ -343,9 +417,7 @@ void pdb_rbtree_destroy(pdb_rbtree_t* inst){
 	rbtree_node *node = NULL;
 
 	while (!(node = inst->root)) {
-		
 		rbtree_node *mini = rbtree_mini(inst, node);
-		
 		rbtree_node *cur = rbtree_delete(inst, mini);
 		
 		if (cur->key) pdb_free(cur->key, -1);
@@ -354,11 +426,9 @@ void pdb_rbtree_destroy(pdb_rbtree_t* inst){
 		pdb_free(cur, -1);
 		
 	}
-
 	pdb_free(inst->nil, -1);
 
 	return ;
-
 }
 
 /**
@@ -432,7 +502,7 @@ int pdb_rbtree_del(pdb_rbtree_t* inst, char* key){
 	if (!inst || !key) return -1;
 
 	rbtree_node *node = rbtree_search(inst, key);
-	if (node == NULL) return PDB_DATASTRUCTURE_NOEXIST; // no exist
+	if (node == NULL || node == inst->nil) return PDB_DATASTRUCTURE_NOEXIST; // no exist
 	
 	rbtree_node *cur = rbtree_delete(inst, node);
 	if (cur->key) {

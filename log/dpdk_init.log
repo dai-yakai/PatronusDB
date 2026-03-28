@@ -1,0 +1,160 @@
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==8017==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000008 (pc 0x565322debfa7 bp 0x000000000000 sp 0x7ffe5babaa40 T0)
+==8017==The signal is caused by a READ memory access.
+==8017==Hint: address points to the zero page.
+    #0 0x565322debfa6 in fget_write (/home/dai/PatronusDB/pdb_server+0x427fa6)
+    #1 0x565322e08da3 in kern_writev (/home/dai/PatronusDB/pdb_server+0x444da3)
+    #2 0x565322de0f41 in ff_write (/home/dai/PatronusDB/pdb_server+0x41cf41)
+    #3 0x565322d9ff32 in pdb_init_dpdk src/pdb_server.c:51
+    #4 0x565322da0348 in init_pdb_engine src/pdb_server.c:105
+    #5 0x565322da038b in main src/pdb_server.c:121
+    #6 0x7ff0925c2082 in __libc_start_main ../csu/libc-start.c:308
+    #7 0x565322d9667d in _start (/home/dai/PatronusDB/pdb_server+0x3d267d)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/home/dai/PatronusDB/pdb_server+0x427fa6) in fget_write
+==8017==ABORTING
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==8069==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000008 (pc 0x560928702fa7 bp 0x000000000000 sp 0x7ffc66576e60 T0)
+==8069==The signal is caused by a READ memory access.
+==8069==Hint: address points to the zero page.
+    #0 0x560928702fa6 in fget_write (/home/dai/PatronusDB/pdb_server+0x427fa6)
+    #1 0x56092871fda3 in kern_writev (/home/dai/PatronusDB/pdb_server+0x444da3)
+    #2 0x5609286f7f41 in ff_write (/home/dai/PatronusDB/pdb_server+0x41cf41)
+    #3 0x5609286b6f32 in pdb_init_dpdk src/pdb_server.c:51
+    #4 0x5609286b7348 in init_pdb_engine src/pdb_server.c:105
+    #5 0x5609286b738e in main src/pdb_server.c:121
+    #6 0x7f0cf3c7a082 in __libc_start_main ../csu/libc-start.c:308
+    #7 0x5609286ad67d in _start (/home/dai/PatronusDB/pdb_server+0x3d267d)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/home/dai/PatronusDB/pdb_server+0x427fa6) in fget_write
+==8069==ABORTING
+AddressSanitizer:DEADLYSIGNAL
+=================================================================
+==8191==ERROR: AddressSanitizer: SEGV on unknown address 0x000000000008 (pc 0x55e0b2d2d027 bp 0x000000000000 sp 0x7ffc6d2aeda0 T0)
+==8191==The signal is caused by a READ memory access.
+==8191==Hint: address points to the zero page.
+    #0 0x55e0b2d2d026 in fget_write (/home/dai/PatronusDB/pdb_server+0x428026)
+    #1 0x55e0b2d49e23 in kern_writev (/home/dai/PatronusDB/pdb_server+0x444e23)
+    #2 0x55e0b2d21fc1 in ff_write (/home/dai/PatronusDB/pdb_server+0x41cfc1)
+    #3 0x55e0b2ce0f32 in pdb_init_dpdk src/pdb_server.c:51
+    #4 0x55e0b2ce13c6 in init_pdb_engine src/pdb_server.c:108
+    #5 0x55e0b2ce140c in main src/pdb_server.c:124
+    #6 0x7f0d40682082 in __libc_start_main ../csu/libc-start.c:308
+    #7 0x55e0b2cd767d in _start (/home/dai/PatronusDB/pdb_server+0x3d267d)
+
+AddressSanitizer can not provide additional info.
+SUMMARY: AddressSanitizer: SEGV (/home/dai/PatronusDB/pdb_server+0x428026) in fget_write
+==8191==ABORTING
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-28 20:43:09
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface

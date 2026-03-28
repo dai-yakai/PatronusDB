@@ -299,7 +299,12 @@ int pdb_sortedSet_incre(struct pdb_sorted_set* Sset, char* key, double increment
     if (value == NULL){
         return PDB_DATASTRUCTURE_NOEXIST;
     }
+    double old_score = *((double*)value->ptr);
+    double new_score = *((double*)value->ptr) + increment;
+
+    pdb_skiplist_delete(Sset->list, key, old_score);
     *((double*)value->ptr) += increment;
+    pdb_skiplist_add(Sset->list, key, new_score);
 
     return PDB_DATASTRUCTURE_OK;
 }
@@ -324,6 +329,7 @@ unsigned long pdb_sortedSet_rank(struct pdb_sorted_set* Sset, char* key, int* su
     node = node->level[0].forward;
     rank++;
     if (node != NULL && strcmp(node->key, key) == 0 && node->value == value){
+        *success = PDB_DATASTRUCTURE_EXIST;
         return rank;
     }
 

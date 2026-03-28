@@ -19,6 +19,10 @@
 #include "pdb_sortedSet.h"
 #include "pdb_conninfo.h"
 
+#ifdef ENABLE_DPDK
+#include "pdb_dpdk_hook.h"
+#endif
+
 #define ENABLE_ARRAY            0
 #define ENABLE_RBTREE           1
 #define ENABLE_HASH             1
@@ -26,7 +30,7 @@
 
 #define ENABLE_PRINT_PDB        0
 #define ENABLE_THREADPOOL       0
-#define ENABLE_MEMPOOL          0
+#define ENABLE_MEMPOOL          1
 
 #ifndef DATA_STRUCTURE_TEST
 #define DATA_STRUCTURE_TEST     1

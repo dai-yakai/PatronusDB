@@ -20,9 +20,12 @@
 #include "pdb_aof.h"
 #include "pdb_conninfo.h"
 
-
 #define MAX_PORTS				1
-#define ENBALE_DPDK				1
+
+#ifdef ENABLE_DPDK
+#include "pdb_dpdk_hook.h"
+void ff_mbuf_set_timestamp(void *m, unsigned long long t) { return; }
+#endif
 
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
@@ -301,22 +304,8 @@ void init_replication_slave_to_master_conn_list(int fd){
 
 
 extern int is_incre_ready;
-int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler response_handler){
-    epfd = epoll_create(1);
-
-	int i = 0;
-
-	// listen fd
-	for (i = 0; i < MAX_PORTS; i++) {
-		int sockfd = init_server(port + i);
-		conn_list[sockfd] = (struct conn_info*)pdb_malloc(sizeof(struct conn_info));
-		memset(conn_list[sockfd], 0, sizeof(struct conn_info));
-		
-		conn_list[sockfd]->fd = sockfd;
-		conn_list[sockfd]->recv_callback = accept_cb;
-		
-		set_event(sockfd, EPOLLIN, 1);
-	}
+int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handler response_handler){
+	
 
 	// initialize slave to master connection
 	pdb_init_replication();
@@ -365,7 +354,7 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 				if (ret == PDB_DISCONNECT){
 					// conn disconnect
 					pdb_delete_conn_list(connfd);
-					if (!global_conf.is_slave){
+					if (global_conf.is_replication && !global_conf.is_slave){
 						int i = 0;
 						for (i = 0; i < REPLICATION_NUM; i++){
 							if (global_replication->fd[i] == connfd){
@@ -389,6 +378,91 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 			}
 		}
 	}
-    
-    return 0;
+
+	return 0;
+}
+
+#ifdef ENABLE_DPDK
+static msg_handler g_request_handler;
+static msg_handler g_response_handler;
+
+int pdb_dpdk_loop(void* arg){
+	pdb_init_replication();
+
+	struct epoll_event events[1024] = {0};
+	int nready = epoll_wait(epfd, events, 1024, 0);
+
+	if (global_dump.is_aof){
+		pdb_ebpf_poll();
+	}
+	pdb_is_aof_sqe_complete();
+
+	int i = 0;
+	for (i = 0; i < nready; i ++) {
+		int connfd = events[i].data.fd;
+		struct conn_info* c = conn_list[connfd];
+		if (events[i].events & EPOLLIN) {
+			int ret = c->recv_callback(connfd, g_request_handler);
+			// if (ret < 0){
+			// 	pdb_log_debug("EPOLLIN call_back return error\n");
+			// }				
+			if (ret == PDB_DISCONNECT){
+				// conn disconnect
+				pdb_delete_conn_list(connfd);
+				if (global_conf.is_replication && !global_conf.is_slave){
+					int i = 0;
+					for (i = 0; i < REPLICATION_NUM; i++){
+						if (global_replication->fd[i] == connfd){
+							global_replication->fd[i] = 0;
+							global_replication->slave_num--;
+						}
+					}
+				}
+				
+				epoll_ctl(epfd, EPOLL_CTL_DEL, connfd, NULL);
+			}
+		} 
+
+		if (events[i].events & EPOLLOUT) {
+			int ret = c->send_callback(connfd, g_response_handler);
+			if (ret == PDB_DISCONNECT){
+				// destroy_conn_info(connfd);
+				pdb_delete_conn_list(connfd);
+				epoll_ctl(epfd, EPOLL_CTL_DEL, connfd, NULL);
+			}
+		}
+	}
+
+	return 0;
+}
+#endif
+
+int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler response_handler){
+#ifdef ENABLE_DPDK
+	g_request_handler = request_handler;
+	g_response_handler = response_handler;
+#endif
+
+	epfd = epoll_create(1);
+	int i = 0;
+
+	// listen fd
+	for (i = 0; i < MAX_PORTS; i++) {
+		int sockfd = init_server(port + i);
+		conn_list[sockfd] = (struct conn_info*)pdb_malloc(sizeof(struct conn_info));
+		memset(conn_list[sockfd], 0, sizeof(struct conn_info));
+		
+		conn_list[sockfd]->fd = sockfd;
+		conn_list[sockfd]->recv_callback = accept_cb;
+		
+		set_event(sockfd, EPOLLIN, 1);
+	}
+
+#ifdef ENABLE_DPDK
+	ff_run(pdb_dpdk_loop, NULL);
+#else
+	return pdb_reactor_loop(port, request_handler, response_handler);
+#endif
+
+	return 0;
 }

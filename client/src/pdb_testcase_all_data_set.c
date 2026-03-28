@@ -53,7 +53,7 @@ static void verify_write_responses(int fd, int start_idx, int expect_count, cons
             if (line_end > current && *(line_end - 1) == '\r') *(line_end - 1) = '\0';
             else *line_end = '\0';
 
-            if (strcmp(current, "OK") != 0) {
+            if (strcmp(current, "+OK") != 0) {
                 int fail_idx = start_idx + received_count;
                 printf("\n\n============================================\n");
                 printf("\033[1;31m[FATAL ERROR] Write Verification Failed!\033[0m\n");

@@ -18,6 +18,56 @@ void dest_pdb_engine(void){
 
 }
 
+int pdb_init_dpdk(){
+    int fake_argc = 3;
+    char *fake_argv[3];
+    int ret_dpdk = 0;
+
+    fake_argv[0] = strdup("pdb_server");
+    fake_argv[1] = strdup("--conf");
+    fake_argv[2] = strdup(global_conf.init_dpdk);
+    
+    int saved_stdout = dup(STDOUT_FILENO);
+    int saved_stderr = dup(STDERR_FILENO);
+    int log_fd = open(global_conf.dpdk_log, O_WRONLY | O_APPEND | O_CREAT, 0644);
+    if (log_fd < 0){
+        pdb_log_error("open/create dpdk log error\n");
+    }else{
+        dup2(log_fd, STDOUT_FILENO);
+        dup2(log_fd, STDERR_FILENO);
+    }
+
+    // timestap
+    time_t t = time(NULL);
+    struct tm *tm_info = localtime(&t);
+    char time_buf[64];
+    strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", tm_info);
+    char header_buf[256];
+    int header_len = snprintf(header_buf, sizeof(header_buf), 
+        "\n========================================\n"
+        "PatronusDB DPDK Engine Startup Log\n"
+        "Time: %s\n"
+        "========================================\n\n", 
+        time_buf);
+    syscall(SYS_write, log_fd, header_buf, header_len);
+
+    ret_dpdk = ff_init(fake_argc, fake_argv);
+
+    if (log_fd >= 0){
+        dup2(saved_stdout, STDOUT_FILENO);
+        dup2(saved_stderr, STDERR_FILENO);
+        close(log_fd);
+        close(saved_stdout);
+        close(saved_stderr);
+    }
+
+    free(fake_argv[0]);
+    free(fake_argv[1]);
+    free(fake_argv[2]);
+    
+    return ret_dpdk;
+}
+
 void init_pdb_engine(){
     loadServerConfig("./PatronusDB.conf");
 
@@ -50,6 +100,11 @@ void init_pdb_engine(){
             pdb_log_info("AOF file loading success...\n");
         }   
     }
+
+    // init dpdk env
+#ifdef ENABLE_DPDK
+    int dpdk_ret = pdb_init_dpdk();
+#endif
 }
 
 

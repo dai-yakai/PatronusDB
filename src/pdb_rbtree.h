@@ -35,6 +35,8 @@ struct _rbtree_node {
 	struct _rbtree_node *parent;
 	KEY_TYPE key;
 	void *value;
+
+	uint64_t hash_value;
 } ;
 
 struct _rbtree {

@@ -110,13 +110,18 @@ int pdb_bitmap_count(pdb_sds b){
 /**
  * According to opt, the function will operate src1 & src2、
  *     src1 | src2、src1 ^ src2
- * 
+ * If opt == BITOP_NOT, src2 must be NULL.
  */
 void pdb_bitmap_bitop(int opt, pdb_sds* dest, pdb_sds src1, pdb_sds src2){
     size_t len1 = pdb_get_sds_len(src1);
-    size_t len2 = pdb_get_sds_len(src2);
-    size_t max_len = len1 > len2 ? len1 : len2;
-
+    size_t len2 = 0;
+    size_t max_len = len1;
+    
+    if (opt != BITOP_NOT){
+        len2 = pdb_get_sds_len(src2);
+        max_len = len1 > len2 ? len1 : len2;
+    }
+    
     size_t cur_len = pdb_get_sds_len(*dest);
     if (cur_len < max_len){
         *dest = pdb_enlarge_sds_greedy(*dest, max_len - cur_len);
@@ -142,6 +147,11 @@ void pdb_bitmap_bitop(int opt, pdb_sds* dest, pdb_sds src1, pdb_sds src2){
             unsigned char b1 = i < len1 ? src1[i] : 0;
             unsigned char b2 = i < len2 ? src2[i] : 0;
             (*dest)[i] = b1 ^ b2;
+        }
+    } else if (opt == BITOP_NOT){
+        for (i = 0; i < len1; i++){
+            unsigned char b1 = src1[i];
+            (*dest)[i] = ~b1;
         }
     }
 

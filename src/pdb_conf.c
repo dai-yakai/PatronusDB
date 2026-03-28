@@ -15,6 +15,8 @@ config_entry conf_table[] = {
     {"is_aof",          CONF_TYPE_BOOL,     &global_conf.is_aof},
     {"is_backup",       CONF_TYPE_BOOL,     &global_conf.is_backup},
     {"log_level",       CONF_TYPE_INT,      &global_conf.log_level},
+    {"init_dpdk",       CONF_TYPE_STRING,   &global_conf.init_dpdk},
+    {"dpdk_log",       CONF_TYPE_STRING,    &global_conf.dpdk_log},
     {NULL,              0,                  NULL}
 };
 

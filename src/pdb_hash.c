@@ -7,6 +7,9 @@ pdb_hash_t global_hash;
 * Return idx according to key
 */
 static int _hash(char *key, int size) {
+	if (key == NULL){
+		pdb_log_error("key is NULL\n");
+	}
 	unsigned long hash = 5381;
     int c;
 

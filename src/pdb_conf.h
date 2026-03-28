@@ -25,6 +25,9 @@ typedef struct server_config_s{
     int log_level;
 
     int max_memory;
+
+    char* init_dpdk;
+    char* dpdk_log;
 }server_config;
 
 extern struct server_config_s global_conf;
