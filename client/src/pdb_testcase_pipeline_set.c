@@ -100,7 +100,7 @@ void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const 
         while (1) {
             char *line_end = strchr(current, '\n');
             if (line_end == NULL) {
-                break; // 半包
+                break; 
             }
             int current_resp_len = line_end - current + 1;
             
@@ -109,7 +109,6 @@ void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const 
                 if (current_resp_len > 1 && current[current_resp_len-2] == '\r') 
                     current[current_resp_len-2] = '\0';
 
-                // 🚀 核心逻辑：推算报错的具体命令
                 int fail_i = start_i + (received_count / 3);
                 int cmd_idx = received_count % 3;
                 
@@ -202,9 +201,8 @@ static void testcase_100w_set(int connfd){
         }
         
         if (response_count >= SEND_BATCH) {
-            // 🚀 修改点 2：传入 start_i 和结构类型
             pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
-            batch_start_i += (response_count / 3); // 步进游标
+            batch_start_i += (response_count / 3); 
             response_count = 0;
         }
     }
@@ -333,7 +331,7 @@ static void testcase_100w_set(int connfd){
 }   
 
 void testcase_100w_delete(int connfd){
-    printf("#### DELETE BEGIN ###\N");
+    printf("#### DELETE BEGIN ###\n");
     int count = 1000000;
     int i = 0;
     int response_count = 0;
@@ -375,9 +373,8 @@ void testcase_100w_delete(int connfd){
         }
         
         if (response_count >= SEND_BATCH) {
-            // 🚀 修改点 2：传入 start_i 和结构类型
             pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
-            batch_start_i += (response_count / 3); // 步进游标
+            batch_start_i += (response_count / 3); 
             response_count = 0;
         }
     }

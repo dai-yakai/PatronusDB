@@ -305,8 +305,6 @@ void init_replication_slave_to_master_conn_list(int fd){
 
 extern int is_incre_ready;
 int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handler response_handler){
-	
-
 	// initialize slave to master connection
 	pdb_init_replication();
 	

@@ -21,5 +21,6 @@ int pdb_rdb_array_dump(pdb_array_t* arr, const char* file);
 int pdb_rdb_hash_dump(pdb_hash_t* h, const char* file);
 int pdb_rdb_rbtree_dump(pdb_rbtree_t* rbtree, const char* file);
 int pdb_rdb_dump(const char* file);
+int pdb_rdb_dump_raw(const char* file);
 
 #endif

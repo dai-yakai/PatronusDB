@@ -16,7 +16,9 @@ config_entry conf_table[] = {
     {"is_backup",       CONF_TYPE_BOOL,     &global_conf.is_backup},
     {"log_level",       CONF_TYPE_INT,      &global_conf.log_level},
     {"init_dpdk",       CONF_TYPE_STRING,   &global_conf.init_dpdk},
-    {"dpdk_log",       CONF_TYPE_STRING,    &global_conf.dpdk_log},
+    {"dpdk_log",        CONF_TYPE_STRING,   &global_conf.dpdk_log},
+    {"is_rdma",         CONF_TYPE_BOOL,     &global_conf.is_rdma},
+    {"dump_raw_dir",    CONF_TYPE_STRING,   &global_conf.dump_raw_dir},
     {NULL,              0,                  NULL}
 };
 

@@ -16,8 +16,10 @@ typedef struct server_config_s{
     int master_port;
     char* master_ip;
     int is_slave;
+    bool is_rdma;
 
     char* dump_dir;
+    char* dump_raw_dir;
     char* persistence;
     bool is_aof;
     bool is_backup;

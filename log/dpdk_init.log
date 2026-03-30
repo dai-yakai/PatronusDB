@@ -158,3 +158,3368 @@ kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
 f-stack-0: No addr6 config found.
 f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
 f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 15:03:53
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+TELEMETRY: No legacy callbacks, legacy socket not created
+EAL: Error - exiting with code: 1
+  Cause: No probed ethernet devices
+
+=================================================================
+==10907==ERROR: LeakSanitizer: detected memory leaks
+
+Direct leak of 17 byte(s) in 1 object(s) allocated from:
+    #0 0x7f098b83b3ed in __interceptor_strdup ../../../../src/libsanitizer/asan/asan_interceptors.cc:445
+    #1 0x55dc79b26151 in dpdk_args_setup.constprop.0 (/home/dai/PatronusDB/pdb_server+0x532151)
+    #2 0x6f7475613d657078  (<unknown module>)
+
+SUMMARY: AddressSanitizer: 17 byte(s) leaked in 1 allocation(s).
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 15:04:36
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 15:08:46
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 15:09:17
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 15:13:08
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 15:14:33
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 16:54:58
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 16:59:26
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:04:23
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:05:31
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:06:14
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:06:35
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:08:37
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:08:56
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:09:44
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:11:26
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:18:25
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:19:23
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:19:55
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:21:13
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 17:25:43
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:08:16
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:15:07
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:15:59
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:16:49
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:18:17
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:23:25
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:27:33
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:30:03
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:30:21
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-03-30 19:31:01
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+EAL: Probe PCI driver: net_vmxnet3 (15ad:07b0) device: 0000:03:00.0 (socket -1)
+TELEMETRY: No legacy callbacks, legacy socket not created
+lcore: 0, port: 0, queue: 0
+create mbuf pool on socket 0
+create ring:dispatch_ring_p0_q0 success, 2047 ring entries are now free!
+Port 0 MAC:00:0C:29:03:CE:1A
+Unsupported RSS key length 40 or 52 bytes, use NIC default
+Port 0 modified RSS hash function based on hardware support,requested:0x2003ffffc configured:0x514
+TX TCP&UDP checksum offload supported
+TSO is disabled
+set port 0 to promiscuous mode ok
+
+Checking link statusdone
+Port 0 Link Up - speed 10000 Mbps - full-duplex
+link_elf_lookup_symbol: missing symbol hash table
+link_elf_lookup_symbol: missing symbol hash table
+Timecounters tick every 10.000 msec
+WARNING: Adding ifaddrs to all fibs has been turned off by default. Consider tuning net.add_addr_allfibs if needed
+Attempting to load tcp_bbr
+tcp_bbr is now available
+TCP Hpts created 1 swi interrupt threads and bound 0 to cpus
+Timecounter "ff_clock" frequency 100 Hz quality 1
+TCP_ratelimit: Is now initialized
+kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
+f-stack-0: No addr6 config found.
+f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
+f-stack-0: Successed to register dpdk interface

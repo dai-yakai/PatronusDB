@@ -36,7 +36,7 @@ const char* command[] = {
     
     "EXIT", "SAVE", "NSAVE", 
     // syn
-    "ZSYN", "ZRDMA_READY", "ZSYN_OOB", "ZOOB_ACK",
+    "ZSYN", "ZSYN-SENDFILE", "ZRDMA_READY", "ZSYN_OOB", "ZOOB_ACK",
     // mem
     "GETUSEDMEM", "GETUSEDMEMRSS",
     "PING"
@@ -117,6 +117,7 @@ enum{
     PDB_CMD_SLAVE_REQUIRE,
     PDB_CMD_SLAVE_OOB,
     PDB_CMD_ZRDB_OK,
+    PDB_CMD_SYN_SENDFILE,
 
     PDB_CMD_INCRE_SYN,
     PDB_CMD_INCRE_ACK,
@@ -306,7 +307,8 @@ int pdb_parser_cmd(const char* cmd_str) {
             if (strcmp(cmd_str, "ZRDB_OK") == 0)        return PDB_CMD_ZRDB_OK;
             if (strcmp(cmd_str, "ZINCRE_SYN") == 0)     return PDB_CMD_INCRE_SYN;
             if (strcmp(cmd_str, "ZINCRE_ACK") == 0)     return PDB_CMD_INCRE_ACK; 
-    }
+            if (strcmp(cmd_str, "ZSYN-SENDFILE") == 0)  return PDB_CMD_SYN_SENDFILE;
+        }
     return PDB_ERROR; // can not find the command
 }
 
@@ -804,12 +806,18 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             val = atoi(tokens[3]);
             value = pdb_hash_get(&global_hash, key);
 
+            // printf("bitset: value->type, %d\n", value->type);
             if (value != NULL && value->type != PDB_VALUE_TYPE_BITMAP){
                 if (response != NULL && !is_slave_to_master_response(fd)){
                     switch(value->type){
                         case PDB_VALUE_TYPE_SET:
                         {
                             len = sprintf(response, "+EXIST key in set\r\n");
+                            break;
+                        }
+                        case PDB_VALUE_TYPE_INT:
+                        {
+                            len = sprintf(response, "+EXIST key in hash\r\n");
                             break;
                         }
 
@@ -1378,7 +1386,8 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 if (pid == 0){
                     // child thread
                     pdb_log_info("RDB(child pid: %d) is saving.......\n", pid);
-                    int ret = pdb_rdb_dump(global_conf.dump_dir);
+                    int ret = pdb_rdb_dump_raw(global_conf.dump_raw_dir);
+                    // int ret = pdb_rdb_dump(global_conf.dump_dir);
                     if (ret == PDB_OK){
                         pdb_log_info("RDB saves success\n");
                         // if (response != NULL)   len = sprintf(response, "OK\r\n");
@@ -1390,7 +1399,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     _exit(0);
                 }else if (pid > 0){
                     // father thread
-                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
+                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+OK\r\n");
                 }else{
                     perror("fork failed");
                     if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "SAVE FAILED\r\n");
@@ -1398,12 +1407,31 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 break;
             }
 
-
         /********************************************** */  
         /********************************************** */  
         /***********  SLAVE to MASTER SYNC  *********** */
         /********************************************** */  
         /********************************************** */
+        case PDB_CMD_SYN_SENDFILE:
+        {
+            // master receive "SYN_SENDFILE"
+            int ret = pdb_rdb_dump_raw(global_conf.dump_raw_dir);
+            struct stat file_stat;
+            if (fstat(fd, &file_stat) == -1) {
+                pdb_log_error("rdb file state get error\n");
+            }
+            int dump_fd = open(global_conf.dump_raw_dir, O_RDONLY);
+            if (dump_fd < 0){
+                pdb_log_error("open dump_raw_dir failed: %s\n", strerror(errno));
+            }
+            ssize_t send_len = sendfile(fd, dump_fd, 0, file_stat.st_size);
+            if (send_len == 0){
+                pdb_log_error("sendfile error\n");
+            }
+
+            break;
+        }
+
 
         case PDB_CMD_SYN:  
         {

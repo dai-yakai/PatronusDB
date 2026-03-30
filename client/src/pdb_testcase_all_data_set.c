@@ -10,8 +10,8 @@
 
 #include "pdb_cli_tool.h"
 
-#define BATCH_SIZE 1000
-#define TEST_COUNT 1000
+#define BATCH_SIZE 100000
+#define TEST_COUNT 100000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 #define PIPELINE_BUF_SIZE 256 * 1024  // 128KB 批量发送缓冲区

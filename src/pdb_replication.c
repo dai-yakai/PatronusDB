@@ -36,12 +36,20 @@ void pdb_init_replication(){
             }
 
             master_fd = fd;
-
-            // slave node send SYN to master node: "*1\r\n$4\r\nSYNC\r\n"
-            char* msg = "*1\r\n$4\r\nZSYN\r\n";
-            int ret = send(fd, msg, strlen(msg), 0);
-            if (ret < 0){
-                pdb_log_info("slave send SYN failed\n");
+            if (global_conf.is_rdma){
+                // slave node send SYN to master node: "*1\r\n$4\r\nSYNC\r\n"
+                char* msg = "*1\r\n$4\r\nZSYN\r\n";
+                int ret = send(fd, msg, strlen(msg), 0);
+                if (ret < 0){
+                    pdb_log_info("slave send SYN failed\n");
+                }
+            }else{
+                // master use sendfile()
+                char* msg = "*1\r\n$13\r\nZSYN-SENDFILE\r\n";
+                int ret = send(fd, msg, strlen(msg), 0);
+                if (ret < 0){
+                    pdb_log_info("slave send ZSYN-SENDFILE failed\n");
+                }
             }
         }else{
             // master node
