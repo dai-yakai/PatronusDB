@@ -306,7 +306,7 @@ void init_replication_slave_to_master_conn_list(int fd){
 extern int is_incre_ready;
 int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handler response_handler){
 	// initialize slave to master connection
-	pdb_init_replication();
+	
 	
 	while (1) { // mainloop
 		struct epoll_event events[1024] = {0};
@@ -385,8 +385,6 @@ static msg_handler g_request_handler;
 static msg_handler g_response_handler;
 
 int pdb_dpdk_loop(void* arg){
-	pdb_init_replication();
-
 	struct epoll_event events[1024] = {0};
 	int nready = epoll_wait(epfd, events, 1024, 0);
 
@@ -455,7 +453,7 @@ int reactor_entry(unsigned short port, msg_handler request_handler, msg_handler 
 		
 		set_event(sockfd, EPOLLIN, 1);
 	}
-
+	pdb_init_replication();
 #ifdef ENABLE_DPDK
 	ff_run(pdb_dpdk_loop, NULL);
 #else

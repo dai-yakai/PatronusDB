@@ -3,9 +3,7 @@
 extern int pdb_ebpf_init();
 
 int pdb_response_handler(int fd, char* rmsg, int length, char* out){
-    // printf("rmgs: %lu, length: %d, out: %lu", strlen(rmsg), length, strlen(out));
-    // memcpy(out, rmsg, length);
-    // return strlen(out);
+
 }
 
 void dest_pdb_engine(void){

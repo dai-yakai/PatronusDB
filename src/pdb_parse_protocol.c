@@ -1416,14 +1416,15 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
         {
             // master receive "SYN_SENDFILE"
             int ret = pdb_rdb_dump_raw(global_conf.dump_raw_dir);
-            struct stat file_stat;
-            if (fstat(fd, &file_stat) == -1) {
-                pdb_log_error("rdb file state get error\n");
-            }
             int dump_fd = open(global_conf.dump_raw_dir, O_RDONLY);
             if (dump_fd < 0){
                 pdb_log_error("open dump_raw_dir failed: %s\n", strerror(errno));
             }
+            struct stat file_stat;
+            if (fstat(dump_fd, &file_stat) == -1) {
+                pdb_log_error("rdb file state get error: %s\n", strerror(errno));
+            }
+            
             ssize_t send_len = sendfile(fd, dump_fd, 0, file_stat.st_size);
             if (send_len == 0){
                 pdb_log_error("sendfile error\n");

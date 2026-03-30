@@ -23,11 +23,11 @@ ifeq ($(USE_DPDK), 1)
     DPDK_EXTRA_LIBS := -lssl -lcrypto -lnuma
 endif
 
-ASAN_FLAGS := -fsanitize=address -fno-omit-frame-pointer -O0
+# ASAN_FLAGS := -fsanitize=address -fno-omit-frame-pointer -O0
 
 CFLAGS    := -g $(INCLUDES)
 CFLAGS    += $(EXTRA_CFLAGS)
-CFLAGS    += $(ASAN_FLAGS)
+# CFLAGS    += $(ASAN_FLAGS)
 
 LDFLAGS   := -L./NtyCo/
 

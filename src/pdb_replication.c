@@ -11,7 +11,7 @@ int connect_master(const char* ip, int port) {
     servaddr.sin_addr.s_addr = inet_addr(ip);
 
     if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
-        pdb_log_info("No mater node to connect\n");
+        pdb_log_info("No master node to connect\n");
         return -1;
     }
     return sockfd;
