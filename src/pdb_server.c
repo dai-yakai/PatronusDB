@@ -18,6 +18,7 @@ void dest_pdb_engine(void){
 
 }
 
+#ifdef ENABLE_DPDK
 int pdb_init_dpdk(){
     int fake_argc = 3;
     char *fake_argv[3];
@@ -67,6 +68,7 @@ int pdb_init_dpdk(){
     
     return ret_dpdk;
 }
+#endif
 
 void init_pdb_engine(){
     loadServerConfig("./PatronusDB.conf");

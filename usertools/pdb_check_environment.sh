@@ -48,6 +48,16 @@ else
     echo -e "${RED}NOT FOUND (Required for RDMA replication)${NC}"
 fi
 
+# 4. Check jemalloc
+echo -n "Checking jemalloc"
+if ldconfig -p | grep -q libjemalloc || command -v jemalloc-config &> /dev/null; then
+    JEM_VER=$(jemalloc-config --version 2>/dev/null || echo "Detected")
+    echo -e "${GREEN}INSTALLED ($JEM_VER)${NC}"
+else
+    echo -e "${RED}NOT FOUND (apt install libjemalloc-dev)${NC}"
+fi
+
+# 5. Check RDMA
 echo -n "Checking RDMA Hardware/Devices: "
 if command -v ibv_devices &> /dev/null; then
     DEVICES=$(ibv_devices | grep -v -- "---" | tail -n +2)
