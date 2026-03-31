@@ -290,6 +290,11 @@ int pdb_rdb_dump_raw(const char* file){
     int len = 0;
     int write_len = 0;
 
+    // write begin flag;
+    char send_buf[32] = {0};
+    sprintf(send_buf, "*1\r\n$9\r\nBEGIN_RDB\r\n");
+    write_len = write(fd, send_buf, strlen(send_buf));
+
     // tranverse array
     for (i = 0; i < global_array.used_count; i++){
         if (&(global_array.table[i]) == NULL)  continue;
@@ -542,7 +547,12 @@ int pdb_rdb_dump_raw(const char* file){
     }
 
     pdb_log_info("hash raw dump success\n");
-    close(fd);
 
+    // write endof rdb file
+    memset(send_buf, 0, 32);
+    sprintf(send_buf, "*1\r\n$7\r\nEND_RDB\r\n");
+    write_len = write(fd, send_buf, strlen(send_buf));
+
+    close(fd);
     return PDB_OK;
 }

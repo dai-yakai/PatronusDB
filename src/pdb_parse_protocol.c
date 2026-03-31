@@ -12,6 +12,7 @@ pdb_rdma_conn_ctx* incre_master_conn;
 
 int is_incre_ready = 0;
 
+// ms
 long long get_now_ms() {
     struct timeval tv;
     gettimeofday(&tv, NULL);
@@ -1435,22 +1436,29 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 pdb_log_error("rdb file state get error: %s\n", strerror(errno));
             }
             
-            // send begin flag;
-            char send_buf[32] = {0};
-            sprintf(send_buf, "*1\r\n$9\r\nBEGIN_RDB\r\n");
-            ssize_t send_len =  send(fd, send_buf, 32, 0);
             // send rdb file
-            send_len = sendfile(fd, dump_fd, 0, file_stat.st_size);
-            if (send_len < 0){
-                close(dump_fd);
-                pdb_log_error("sockfd: %d, dump_fd: %d, sendfile error: %s\n", fd, dump_fd, strerror(errno));
+            ssize_t total_len = file_stat.st_size;
+            ssize_t send_len = 0;
+            off_t offset = 0;
+            while(total_len > 0){
+                send_len = sendfile(fd, dump_fd, &offset, file_stat.st_size);
+                total_len -= send_len;
+                if (send_len < 0){
+                    // pdb_log_error("sockfd: %d, dump_fd: %d, sendfile error: %s\n", fd, dump_fd, strerror(errno));
+                    if (errno == EAGAIN || errno == EWOULDBLOCK){
+                        usleep(1000); 
+                        continue;
+                    }else if (errno == EINTR){
+                        continue;
+                    }
+                }
+                if (send_len == 0){
+                    // disconnect
+                    break;
+                }
+                // pdb_log_info("sendfile size: %d, total file size: %d\n", send_len, file_stat.st_size);
             }
-            pdb_log_info("sendfile %d\n", send_len);
-            // send endof rdb file
-            memset(send_buf, 0, 32);
-            sprintf(send_buf, "*1\r\n$7\r\nEND_RDB\r\n");
-            send_len =  send(fd, send_buf, 32, 0);
-
+            
             close(dump_fd);
             break;
         }
@@ -1467,7 +1475,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
         {
             pdb_log_info("slave receive end sendfile\n");
             end_time_sendfile = get_now_ms();
-            pdb_log_info("sendfile used time: %lld\n", end_time_sendfile - begin_time_sendfile);
+            pdb_log_info("sendfile used time: %lld ms\n", end_time_sendfile - begin_time_sendfile);
             break;
         }
 
