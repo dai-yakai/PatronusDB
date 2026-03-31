@@ -1437,7 +1437,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             
             // send begin flag;
             char send_buf[32] = {0};
-            sprintf(send_buf, "*1/r/n$9\r\nBEGIN_RDB\r\n");
+            sprintf(send_buf, "*1\r\n$9\r\nBEGIN_RDB\r\n");
             ssize_t send_len =  send(fd, send_buf, 32, 0);
             // send rdb file
             send_len = sendfile(fd, dump_fd, 0, file_stat.st_size);
@@ -1448,7 +1448,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             pdb_log_info("sendfile %d\n", send_len);
             // send endof rdb file
             memset(send_buf, 0, 32);
-            sprintf(send_buf, "*1/r/n$7\r\nEND_RDB\r\n");
+            sprintf(send_buf, "*1\r\n$7\r\nEND_RDB\r\n");
             send_len =  send(fd, send_buf, 32, 0);
 
             close(dump_fd);
