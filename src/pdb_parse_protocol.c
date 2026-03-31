@@ -20,6 +20,10 @@ long long get_now_ms() {
 long long last_pull_time_ms = 0;
 int is_incre_channel_active = 0;
 
+// only for testing sendfile performence
+static long long begin_time_sendfile;
+static long long end_time_sendfile;
+
 const char* command[] = {
     // array
     "SET", "GET", "DEL", "MOD", "EXIST", "MSET", "MGET", 
@@ -118,6 +122,9 @@ enum{
     PDB_CMD_SLAVE_OOB,
     PDB_CMD_ZRDB_OK,
     PDB_CMD_SYN_SENDFILE,
+    PDB_CMD_SYN_BEGIN_RDB,
+    PDB_CMD_SYN_ENDOF_RDB,
+
 
     PDB_CMD_INCRE_SYN,
     PDB_CMD_INCRE_ACK,
@@ -224,8 +231,10 @@ int pdb_parser_cmd(const char* cmd_str) {
             break;
 
         case 'E':
-            if (strcmp(cmd_str, "EXIT") == 0)   return PDB_CMD_EXIT;
-            if (strcmp(cmd_str, "EXIST") == 0)  return PDB_CMD_EXIST;
+            if (strcmp(cmd_str, "EXIT") == 0)     return PDB_CMD_EXIT;
+            if (strcmp(cmd_str, "EXIST") == 0)    return PDB_CMD_EXIST;
+            if (strcmp(cmd_str, "END_RDB") == 0)  return PDB_CMD_SYN_ENDOF_RDB;
+
             break;
 
         case 'G':
@@ -287,6 +296,7 @@ int pdb_parser_cmd(const char* cmd_str) {
             if (strcmp(cmd_str, "NSAVE") == 0)  return PDB_CMD_NSAVE;
 
         case 'B':
+            if (strcmp(cmd_str, "BEGIN_RDB") == 0)   return PDB_CMD_SYN_BEGIN_RDB;
             if (strcmp(cmd_str, "BITSET") == 0)      return PDB_CMD_BITMAP_SET;
             if (strcmp(cmd_str, "BITGET") == 0)      return PDB_CMD_BITMAP_GET;
             if (strcmp(cmd_str, "BITCOUNT") == 0)    return PDB_CMD_BITMAP_COUNT;
@@ -1425,11 +1435,39 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 pdb_log_error("rdb file state get error: %s\n", strerror(errno));
             }
             
-            ssize_t send_len = sendfile(fd, dump_fd, 0, file_stat.st_size);
-            if (send_len == 0){
-                pdb_log_error("sendfile error\n");
+            // send begin flag;
+            char send_buf[32] = {0};
+            sprintf(send_buf, "*1/r/n$9\r\nBEGIN_RDB\r\n");
+            ssize_t send_len =  send(fd, send_buf, 32, 0);
+            // send rdb file
+            send_len = sendfile(fd, dump_fd, 0, file_stat.st_size);
+            if (send_len < 0){
+                close(dump_fd);
+                pdb_log_error("sockfd: %d, dump_fd: %d, sendfile error: %s\n", fd, dump_fd, strerror(errno));
             }
+            pdb_log_info("sendfile %d\n", send_len);
+            // send endof rdb file
+            memset(send_buf, 0, 32);
+            sprintf(send_buf, "*1/r/n$7\r\nEND_RDB\r\n");
+            send_len =  send(fd, send_buf, 32, 0);
 
+            close(dump_fd);
+            break;
+        }
+
+        // only test sendtofile
+        case PDB_CMD_SYN_BEGIN_RDB:
+        {
+            pdb_log_info("slave receive begin sendfile\n");
+            begin_time_sendfile = get_now_ms();
+            break;
+        }
+        // only test sendtofile
+        case PDB_CMD_SYN_ENDOF_RDB:
+        {
+            pdb_log_info("slave receive end sendfile\n");
+            end_time_sendfile = get_now_ms();
+            pdb_log_info("sendfile used time: %lld\n", end_time_sendfile - begin_time_sendfile);
             break;
         }
 

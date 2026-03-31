@@ -26,6 +26,10 @@
 #include "pdb_replication.h"
 #include "pdb_malloc.h"
 
+#ifdef ENABLE_DPDK
+#include "pdb_dpdk_hook.h"
+#endif
+
 extern pdb_rdma_conn_ctx* slave_conn;
 extern uint64_t remote_vaddr;
 extern uint32_t remote_rkey;

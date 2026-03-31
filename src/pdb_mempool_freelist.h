@@ -6,7 +6,6 @@
 #include <stdio.h>
 #include <assert.h>
 
-
 #include "pdb_core.h"
 #include "pdb_log.h"
 
@@ -15,13 +14,10 @@
 #define MP_MAX_BYTES 4096
 #define MP_NFREELISTS (MP_MAX_BYTES / MP_ALIGN)     // 16个链表
 
-// 向上取整到8的倍数
 #define MP_ROUND_UP(bytes) (((bytes) + MP_ALIGN - 1) & ~(MP_ALIGN - 1))
 
-// 根据大小计算链表索引 (0-15)
 #define MP_FREELIST_INDEX(bytes) (((bytes) + MP_ALIGN - 1) / MP_ALIGN - 1)
 
-// 头部大小，用于记录分配长度
 #define MP_HEADER_SIZE (sizeof(size_t))
 
 // Free List 头节点

@@ -150,7 +150,10 @@ void testcase_write_100w(int fd) {
 
 int pdb_testcase_all_data_set(const char* ip, unsigned short port) {
     int fd = connect_tcpserver(ip, port);
-    if (fd < 0) return -1;
+    if (fd < 0){
+        printf("connect_tcpserver error\n");
+        return -1;
+    } 
     testcase_write_100w(fd);
     close(fd);
     return 0;

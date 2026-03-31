@@ -257,7 +257,6 @@ int init_server(unsigned short port) {
 		return PDB_ERROR;
 	}
 
-
 	struct sockaddr_in servaddr;
 	servaddr.sin_family = AF_INET;
 	servaddr.sin_addr.s_addr = htonl(INADDR_ANY); // 0.0.0.0
@@ -305,13 +304,10 @@ void init_replication_slave_to_master_conn_list(int fd){
 
 extern int is_incre_ready;
 int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handler response_handler){
-	// initialize slave to master connection
-	
-	
 	while (1) { // mainloop
 		struct epoll_event events[1024] = {0};
 		int nready = epoll_wait(epfd, events, 1024, 10);
-
+		
 		if (global_dump.is_aof){
 			pdb_ebpf_poll();
 		}
@@ -346,9 +342,7 @@ int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handl
 			struct conn_info* c = conn_list[connfd];
 			if (events[i].events & EPOLLIN) {
 				int ret = c->recv_callback(connfd, request_handler);
-				// if (ret < 0){
-				// 	pdb_log_debug("EPOLLIN call_back return error\n");
-				// }				
+				
 				if (ret == PDB_DISCONNECT){
 					// conn disconnect
 					pdb_delete_conn_list(connfd);
@@ -398,10 +392,7 @@ int pdb_dpdk_loop(void* arg){
 		int connfd = events[i].data.fd;
 		struct conn_info* c = conn_list[connfd];
 		if (events[i].events & EPOLLIN) {
-			int ret = c->recv_callback(connfd, g_request_handler);
-			// if (ret < 0){
-			// 	pdb_log_debug("EPOLLIN call_back return error\n");
-			// }				
+			int ret = c->recv_callback(connfd, g_request_handler);				
 			if (ret == PDB_DISCONNECT){
 				// conn disconnect
 				pdb_delete_conn_list(connfd);
