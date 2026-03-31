@@ -29,3 +29,7 @@ void print_progress(const char* prefix, int current, int total) {
         fflush(stdout); 
     }
 }
+
+int process_response(){
+    
+}

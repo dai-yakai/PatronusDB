@@ -16,7 +16,7 @@ pdb_rdma_snapshot_ctx* global_master_snapshot = NULL;
 
 // Performance Configuration Constants
 // Divide large data into 16 chunks for parallel fetching
-#define NUM_CHUNKS 16        
+#define NUM_CHUNKS 1024       
 // Corresponding to max_rd_atomic in QP configuration  
 #define RDMA_READ_DEPTH 32
 
@@ -33,7 +33,12 @@ static double get_delta_ms(struct timeval t_start, struct timeval t_end) {
 static void* _alloc_aligned_memory(size_t size) {
     void* ptr = NULL;
     long page_size = sysconf(_SC_PAGESIZE); 
-    if (posix_memalign(&ptr, page_size, size) != 0) return NULL;
+    int ret = posix_memalign(&ptr, page_size, size);
+    if (ret != 0){
+        pdb_log_error("rdma alloc mem error: %s\n", strerror(ret));
+        return NULL;
+    }
+
     memset(ptr, 0, size);
     return ptr;
 }
@@ -65,11 +70,16 @@ pdb_rdma_snapshot_ctx* pdb_rdma_create_snapshot(const char* dev_name, size_t poo
     snap->pool.total_size = pool_size;
     snap->pool.used_offset = pdb_malloc(sizeof(int));
     *(snap->pool.used_offset) = 0;
+    pdb_log_info("pool_size: %zu\n", pool_size);
     snap->pool.base_addr = (char*)_alloc_aligned_memory(pool_size);
-    if (!snap->pool.base_addr) { free(snap); return NULL; }
+    if (!snap->pool.base_addr) { 
+        pdb_log_info("rdma init mempool failed: alloc mem error\n");
+        free(snap); 
+        return NULL; 
+    }
 
     // init 
-    struct ibv_device **dev_list;
+    struct ibv_device** dev_list;
     int num_devices;
     dev_list = ibv_get_device_list(&num_devices);
     if (!dev_list || num_devices == 0) goto cleanup;
@@ -257,8 +267,6 @@ int pdb_rdma_deserialize(pdb_rdma_snapshot_ctx* rdma){
     buf = (const char*)rdma->pool.base_addr;
     buf_len = *(rdma->pool.used_offset); 
 
-    // printf("📦 [SLAVE] Hardware Heist complete. Rebuilding %zu bytes to memory database...\n", buf_len);
-
     while (!is_eof && offset < buf_len) {
         
         if (offset + sizeof(uint8_t) > buf_len) {
@@ -359,8 +367,9 @@ void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vadd
 
 
     __builtin_ia32_sfence();
-    if (ibv_post_send(slave_conn->qp, &wr[0], &bad_wr) != 0) {
-        pdb_log_error("ibv_post_send failed!\n");
+    int ret = ibv_post_send(slave_conn->qp, &wr[0], &bad_wr);
+    if (ret != 0) {
+        pdb_log_error("ibv_post_send failed: %s\n", strerror(ret));
         return;
     }
     gettimeofday(&t_post, NULL);

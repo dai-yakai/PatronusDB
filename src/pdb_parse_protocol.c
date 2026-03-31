@@ -1489,6 +1489,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /****************************************************************** */
             if (global_master_snapshot == NULL) {
                 // 512M
+                pdb_log_info("PDB_RDMA_MEMPOOL_SIZE: %zu\n", PDB_RDMA_MEMPOOL_SIZE);
                 global_master_snapshot = pdb_rdma_create_snapshot("rxe0", PDB_RDMA_MEMPOOL_SIZE);
                 if (!global_master_snapshot) {
                     // pdb_log_info("master send +RDMA_READY\n");
@@ -1517,7 +1518,6 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             char gid_str[33];
             _gid_to_str(conn->local_info.gid, gid_str);
 
-            
             // master reply RDMA_READY
             // RDMA_READY <vaddr> <rkey> <size> <qpn> <psn> <lid> <gid_str>\r\n
             if (response != NULL) {

@@ -59,7 +59,7 @@ static void verify_write_responses(int fd, int start_idx, int expect_count, cons
                 printf("\033[1;31m[FATAL ERROR] Write Verification Failed!\033[0m\n");
                 printf("Data Structure : %s\n", ds_type);
                 printf("Failed Index   : %d\n", fail_idx);
-                printf("Expected Reply : OK\n");
+                printf("Expected Reply : +OK\n");
                 printf("Actual Reply   : %s\n", current);
                 printf("============================================\n");
                 exit(-1); 
@@ -97,7 +97,6 @@ void testcase_write_100w(int fd) {
         gettimeofday(&tv_begin, NULL);
         
         for (int i = 0; i < current_limit; i++) {
-            // 拼接命令 (使用更快的内存拷贝方式)
             int n = 0;
             if (t == 3) { // SET
                 n = sprintf(val, "member:%d", i);

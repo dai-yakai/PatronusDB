@@ -12,13 +12,13 @@
 
 #define MAX_MSG_LENGTH  1024
 #define SEND_BATCH      1024
-#define BLOG_NUM        10
+#define BLOG_NUM        50
 
 #define HASH            1
 #define RBTREE          1
 #define ARRAY           0
 
-#define BLOG_CONTENT_SIZE (20 * 1024 * 1024)
+#define BLOG_CONTENT_SIZE (10 * 1024 * 1024)
 
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
@@ -126,7 +126,7 @@ static void testcase_large_blog(int connfd) {
             exit(-1);
         }
         
-        if (strncmp(result, "OK", 2) == 0) {
+        if (strncmp(result, "+OK", 2) == 0) {
              printf("==> PASS -> Large Blog %d saved\n", i);
         } else {
              printf("==> FAILED -> Blog %d, Response: %s\n", i, result);
@@ -136,11 +136,7 @@ static void testcase_large_blog(int connfd) {
 
     gettimeofday(&tv_end, NULL);
     time_used = TIME_SUB_MS(tv_end, tv_begin);
-    
-    // total_bytes = (long long)BLOG_CONTENT_SIZE * count;
-    // throughput = (double)total_bytes / 1024.0 / 1024.0 / (time_used / 1000.0);
 
-    // printf("Large Blog testcase (RBTREE)--> time_use: %d ms, Throughput: %.2f MB/s\n", time_used, throughput);
 #endif
 
 #if HASH
@@ -176,7 +172,7 @@ static void testcase_large_blog(int connfd) {
             exit(-1);
         }
         
-        if (strncmp(result, "OK", 2) == 0) {
+        if (strncmp(result, "+OK", 2) == 0) {
              printf("==> PASS -> Large Blog %d saved\n", i);
         } else {
              printf("==> FAILED -> Blog %d, Response: %s\n", i, result);
