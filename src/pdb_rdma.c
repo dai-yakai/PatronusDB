@@ -143,7 +143,7 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     qp_attr.send_cq = conn->cq;
     qp_attr.recv_cq = conn->cq;
     qp_attr.qp_type = IBV_QPT_RC;  
-    qp_attr.cap.max_send_wr  = 256;
+    qp_attr.cap.max_send_wr  = 4096;
     qp_attr.cap.max_recv_wr  = 256;
     qp_attr.cap.max_send_sge = 1;
     qp_attr.cap.max_recv_sge = 1;
