@@ -444,6 +444,7 @@ void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn,
                                    void* local_buf_addr) {
     if (!slave_conn || !slave_conn->snap || chunk_size == 0 || !local_buf_addr) return;
 
+    struct timeval t_start, t_alloc, t_post, t_poll;
     uint64_t remote_addr_start = remote_base_vaddr + chunk_offset;
 
     struct ibv_send_wr wr[INTERNAL_CHUNKS];
@@ -490,11 +491,13 @@ void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn,
 
     struct ibv_wc wc;
     int num_comp = 0;
+    gettimeofday(&t_post, NULL);
     while (num_comp == 0) {
         num_comp = ibv_poll_cq(slave_conn->cq, 1, &wc);
         __builtin_ia32_pause();
     }
-
+    gettimeofday(&t_poll, NULL);
+    pdb_log_info("rdma test result: %.3f\n", get_delta_ms(t_post, t_poll));
     if (wc.status != IBV_WC_SUCCESS) {
         pdb_log_error("❌ [THREAD FATAL] RDMA READ Failed! Status: %s (%d)\n", 
                       ibv_wc_status_str(wc.status), wc.status);
