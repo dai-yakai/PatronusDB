@@ -436,3 +436,79 @@ int pdb_rdma_connect_qp(pdb_rdma_conn_ctx* conn, pdb_rdma_conn_info* remote_info
             IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC;
     return ibv_modify_qp(conn->qp, &attr, flags);
 }
+
+#define INTERNAL_CHUNKS 64
+void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn, 
+                                   uint64_t remote_base_vaddr, uint64_t chunk_offset, 
+                                   uint32_t remote_rkey, size_t chunk_size, 
+                                   void* local_buf_addr) {
+    if (!slave_conn || !slave_conn->snap || chunk_size == 0 || !local_buf_addr) return;
+
+    uint64_t remote_addr_start = remote_base_vaddr + chunk_offset;
+
+    struct ibv_send_wr wr[INTERNAL_CHUNKS];
+    struct ibv_sge sge[INTERNAL_CHUNKS];
+    struct ibv_send_wr *bad_wr = NULL;
+
+    size_t per_wr_size = chunk_size / INTERNAL_CHUNKS;
+
+    for (int i = 0; i < INTERNAL_CHUNKS; i++) {
+        size_t current_inner_offset = i * per_wr_size;
+        size_t current_inner_len = (i == INTERNAL_CHUNKS - 1) ? 
+                                   (chunk_size - current_inner_offset) : per_wr_size;
+
+        sge[i].addr = (uintptr_t)local_buf_addr + current_inner_offset;
+        sge[i].length = current_inner_len;
+        sge[i].lkey = slave_conn->snap->mr->lkey;
+
+        memset(&wr[i], 0, sizeof(struct ibv_send_wr));
+        wr[i].wr_id = (uint64_t)i; 
+        wr[i].opcode = IBV_WR_RDMA_READ;
+        wr[i].sg_list = &sge[i];
+        wr[i].num_sge = 1;
+
+        if (i == INTERNAL_CHUNKS - 1) {
+            wr[i].send_flags = IBV_SEND_SIGNALED;
+            wr[i].next = NULL; 
+        } else {
+            wr[i].send_flags = 0;
+            wr[i].next = &wr[i+1];
+        }
+
+        wr[i].wr.rdma.remote_addr = remote_addr_start + current_inner_offset;
+        wr[i].wr.rdma.rkey = remote_rkey;
+    }
+
+    __builtin_ia32_sfence();
+
+    int ret = ibv_post_send(slave_conn->qp, &wr[0], &bad_wr);
+    if (ret != 0) {
+        int err_code = (ret < 0) ? -ret : ret; 
+        pdb_log_error("[THREAD HEIST] ibv_post_send failed: %s (code: %d)\n", strerror(err_code), ret);
+        return;
+    }
+
+    struct ibv_wc wc;
+    int num_comp = 0;
+    while (num_comp == 0) {
+        num_comp = ibv_poll_cq(slave_conn->cq, 1, &wc);
+        __builtin_ia32_pause();
+    }
+
+    if (wc.status != IBV_WC_SUCCESS) {
+        pdb_log_error("❌ [THREAD FATAL] RDMA READ Failed! Status: %s (%d)\n", 
+                      ibv_wc_status_str(wc.status), wc.status);
+    }
+}
+
+void* _heist_worker(void* arg) {
+    heist_thread_arg_t* t_arg = (heist_thread_arg_t*)arg;
+    
+    execute_rdma_read_heist_chunk(t_arg->conn, 
+                                  t_arg->remote_vaddr, 
+                                  t_arg->offset, 
+                                  t_arg->rkey, 
+                                  t_arg->size, 
+                                  t_arg->local_buf);
+    return NULL;
+}

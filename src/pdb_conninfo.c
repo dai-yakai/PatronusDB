@@ -32,8 +32,11 @@ void pdb_insert_conn_list(int fd){
 
 void pdb_delete_conn_list(int fd){
     if (conn_list[fd]->rdma_conn != NULL) {
-        pdb_rdma_destroy_conn(conn_list[fd]->rdma_conn);
-        conn_list[fd]->rdma_conn = NULL;
+        int i = 0;
+        for (i = 0; i < NUM_QPS; i++){
+            pdb_rdma_destroy_conn(conn_list[fd]->rdma_conn[i]);
+            conn_list[fd]->rdma_conn[i] = NULL;
+        }
     }
 
     if (active_conn_num == 1){

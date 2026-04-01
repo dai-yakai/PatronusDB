@@ -14,7 +14,7 @@
 #include "pdb_conf.h"
 #include "pdb_conninfo.h"
 
-
+#define NUM_QPS                 4
 #define PDB_RDMA_MEMPOOL_FULL   -1
 #define PDB_RDMA_PARAM_ERROR    -1
 #define PDB_RDMA_OK             0
@@ -73,6 +73,15 @@ typedef struct {
     size_t length;
 } PdbReadContext;
 
+typedef struct {
+    pdb_rdma_conn_ctx* conn;
+    uint64_t remote_vaddr;
+    uint64_t offset;
+    uint32_t rkey;
+    size_t size;
+    void* local_buf;
+} heist_thread_arg_t;
+
 extern pdb_rdma_snapshot_ctx* global_master_snapshot;
 struct conn_info;
 
@@ -82,6 +91,10 @@ void pdb_rdma_release_snapshot(pdb_rdma_snapshot_ctx* snap); // 减少引用计�
 
 pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap);
 void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vaddr, uint32_t remote_rkey, size_t data_size);
+void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn, 
+                                   uint64_t remote_base_vaddr, uint64_t chunk_offset, 
+                                   uint32_t remote_rkey, size_t chunk_size, 
+                                   void* local_buf_addr);
 int pdb_rdma_connect_qp(pdb_rdma_conn_ctx* conn, pdb_rdma_conn_info* remote_info);
 void pdb_rdma_destroy_conn(pdb_rdma_conn_ctx* conn);
 int pdb_rdma_serialize(pdb_rdma_snapshot_ctx* rdma);

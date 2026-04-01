@@ -56,15 +56,10 @@ typedef struct conn_info {
     // ############## reactor ##############################
     struct sockaddr_in uring_accept_addr;
     socklen_t uirng_accept_len;
-#if 0
-	union {
-		RCALLBACK recv_callback;
-		RCALLBACK accept_callback;
-	} r_action;
-#endif
+
     // ###################################################
     // rdb syn
-    struct pdb_rdma_conn_ctx* rdma_conn;
+    struct pdb_rdma_conn_ctx* rdma_conn[4];
     // incre syn
     int is_incre_ready;
     struct pdb_rdma_conn_ctx*  incre_rdma_conn;
@@ -72,16 +67,12 @@ typedef struct conn_info {
     uint32_t            incre_remote_rkey;
     int                 is_syncing_incremental;
 
-
     int is_slave;                               // 是否为从节点
 
-    // 用于同步过程中，master节点的增量缓冲区
     char* master_to_slave_append_buffer;
     int master_to_slave_append_length;
 
-    // 主从同步是否一直打开
     int is_replication;                 
-    // 从节点刚上线时，进行全量同步的状态该连接正在进行主从同步
     int is_full_replication;                         // 0: 同步完成； 1: 正在同步
 } conn_info_t;
 

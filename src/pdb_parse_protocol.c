@@ -398,6 +398,8 @@ int is_slave_to_master_response(int fd){
     return 0;
 }
 
+extern void* _heist_worker(void* arg);
+
 /**
  * Call the corresponding operator function() based on tokens.
  * If response != NULL, operator result will be written in response.
@@ -1508,48 +1510,52 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                        global_master_snapshot->ref_count);
             }
 
-            pdb_rdma_conn_ctx* conn = pdb_rdma_create_conn(global_master_snapshot);
-            if (!conn) {
-                if (response != NULL) len = sprintf(response, "-ERR RDMA Conn create failed\r\n");
-                break;
+            int i = 0;
+            for (i = 0; i < NUM_QPS; i++){
+                pdb_rdma_conn_ctx* conn = pdb_rdma_create_conn(global_master_snapshot);
+                if (!conn) {
+                    if (response != NULL) len = sprintf(response, "-ERR RDMA Conn create failed\r\n");
+                    break;
+                }
+                conn_list[fd]->rdma_conn[i] = conn;
             }
-            conn_list[fd]->rdma_conn = conn;
 
             char gid_str[33];
-            _gid_to_str(conn->local_info.gid, gid_str);
+            _gid_to_str(conn_list[fd]->rdma_conn[0]->local_info.gid, gid_str);
 
             // master reply RDMA_READY
             // RDMA_READY <vaddr> <rkey> <size> <qpn> <psn> <lid> <gid_str>\r\n
             if (response != NULL) {
-                char vaddr_str[64], rkey_str[32], size_str[64], qpn_str[32], psn_str[32], lid_str[32];  
-                int vaddr_len = sprintf(vaddr_str, "%llu", (unsigned long long)global_master_snapshot->mr->addr);
-                int rkey_len  = sprintf(rkey_str, "%u", global_master_snapshot->mr->rkey);
-                int size_len  = sprintf(size_str, "%zu", *(global_master_snapshot->pool.used_offset));
-                int qpn_len   = sprintf(qpn_str, "%u", conn->local_info.qpn);
-                int psn_len   = sprintf(psn_str, "%u", conn->local_info.psn);
-                int lid_len   = sprintf(lid_str, "%hu", conn->local_info.lid);
-                int gid_len   = strlen(gid_str);
+                char buf[1024];
+                int offset = sprintf(buf, "*14\r\n$11\r\nZRDMA_READY\r\n");
+                
+                char vaddr_str[64];
+                char rkey_str[32];
+                char size_str[64];
+                char lid_str[32];
 
-                if (response != NULL) {
-                    len = sprintf(response, 
-                        "*8\r\n"
-                        "$11\r\nZRDMA_READY\r\n"
-                        "$%d\r\n%s\r\n"
-                        "$%d\r\n%s\r\n"
-                        "$%d\r\n%s\r\n"
-                        "$%d\r\n%s\r\n"
-                        "$%d\r\n%s\r\n"
-                        "$%d\r\n%s\r\n"
-                        "$%d\r\n%s\r\n",
-                        vaddr_len, vaddr_str,
-                        rkey_len,  rkey_str,
-                        size_len,  size_str,
-                        qpn_len,   qpn_str,
-                        psn_len,   psn_str,
-                        lid_len,   lid_str,
-                        gid_len,   gid_str
-                    );
+                // 2. 将整数打印到字符串中，snprintf 的返回值正好就是转换后的字符串长度！
+                int vaddr_len = snprintf(vaddr_str, sizeof(vaddr_str), "%llu", (unsigned long long)global_master_snapshot->mr->addr);
+                int rkey_len  = snprintf(rkey_str, sizeof(rkey_str), "%u", global_master_snapshot->mr->rkey);
+                int size_len  = snprintf(size_str, sizeof(size_str), "%zu", *(global_master_snapshot->pool.used_offset));
+                int lid_len   = snprintf(lid_str, sizeof(lid_str), "%hu", conn_list[fd]->rdma_conn[0]->local_info.lid);
+                int gid_len   = strlen(gid_str); // gid_str 本来就是字符串，直接用 strlen
+
+                // 3. 安全地拼接到大 buf 中
+                offset += sprintf(buf + offset, "$%d\r\n%s\r\n", vaddr_len, vaddr_str);
+                offset += sprintf(buf + offset, "$%d\r\n%s\r\n", rkey_len, rkey_str);
+                offset += sprintf(buf + offset, "$%d\r\n%s\r\n", size_len, size_str);
+                offset += sprintf(buf + offset, "$%d\r\n%s\r\n", lid_len, lid_str);
+                offset += sprintf(buf + offset, "$%d\r\n%s\r\n", gid_len, gid_str);
+
+                for (int i = 0; i < NUM_QPS; i++) {
+                    char qpn_str[32], psn_str[32];
+                    int q_len = sprintf(qpn_str, "%u", conn_list[fd]->rdma_conn[i]->local_info.qpn);
+                    int p_len = sprintf(psn_str, "%u", conn_list[fd]->rdma_conn[i]->local_info.psn);
+                    offset += sprintf(buf + offset, "$%d\r\n%s\r\n$%d\r\n%s\r\n", q_len, qpn_str, p_len, psn_str);
                 }
+                strcpy(response, buf);
+                len = offset;
             }
             break;
         }
@@ -1562,54 +1568,53 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /* slave node receive "RDMA_READY", and reply "ZSYN_OOB" to master node  */
             /*********************************************************************** */
             if (global_conf.is_slave){
-                if (!tokens[1] || !tokens[2] || !tokens[3] || !tokens[4] || !tokens[5] || !tokens[6] || !tokens[7]) break;
-
+                // tokens[1]=vaddr, [2]=rkey, [3]=size, [4]=lid, [5]=gid
+                // [6]=q0, [7]=p0, [8]=q1, [9]=p1 ... 
+                
                 remote_vaddr = strtoull(tokens[1], NULL, 10);
                 remote_rkey  = (uint32_t)strtoul(tokens[2], NULL, 10);
                 pull_size    = (size_t)strtoull(tokens[3], NULL, 10);
-
-                pdb_rdma_conn_info master_info;
-                memset(&master_info, 0, sizeof(master_info));
-                master_info.qpn = (uint32_t)strtoul(tokens[4], NULL, 10);
-                master_info.psn = (uint32_t)strtoul(tokens[5], NULL, 10);
-                master_info.lid = (uint16_t)strtoul(tokens[6], NULL, 10);
-                _str_to_gid(tokens[7], master_info.gid);
+                uint16_t master_lid = (uint16_t)strtoul(tokens[4], NULL, 10);
+                char* master_gid_str = tokens[5];
 
                 pdb_rdma_snapshot_ctx* slave_recv_snapshot = pdb_rdma_create_snapshot("rxe0", pull_size + 4096);
-                if (!slave_recv_snapshot) break;
-
-                slave_conn = pdb_rdma_create_conn(slave_recv_snapshot);
-                if (!slave_conn) break;
-
-                conn_list[fd]->rdma_conn = slave_conn;
-
-                if (pdb_rdma_connect_qp(slave_conn, &master_info) != 0) break;
-
-                char my_gid_str[33];
-                _gid_to_str(slave_conn->local_info.gid, my_gid_str);
                 
-                char qpn_str[32], psn_str[32], lid_str[32];
-                int qpn_len = sprintf(qpn_str, "%u", slave_conn->local_info.qpn);
-                int psn_len = sprintf(psn_str, "%u", slave_conn->local_info.psn);
-                int lid_len = sprintf(lid_str, "%hu", slave_conn->local_info.lid);
-                int gid_len = strlen(my_gid_str);
+                char my_gid_str[33];
+                char qp_payload[512] = {0};
+                int payload_offset = 0;
 
-                // reply "ZSYN_OOB" to master node
-                char oob_buf[512];
+                for (int i = 0; i < NUM_QPS; i++) {
+                    pdb_rdma_conn_info master_info;
+                    memset(&master_info, 0, sizeof(master_info));
+                    master_info.lid = master_lid;
+                    _str_to_gid(master_gid_str, master_info.gid);
+                    master_info.qpn = (uint32_t)strtoul(tokens[6 + i*2], NULL, 10);
+                    master_info.psn = (uint32_t)strtoul(tokens[7 + i*2], NULL, 10);
+
+                    pdb_rdma_conn_ctx* slave_conn = pdb_rdma_create_conn(slave_recv_snapshot);
+                    conn_list[fd]->rdma_conn[i] = slave_conn;
+                    pdb_rdma_connect_qp(slave_conn, &master_info);
+
+                    if (i == 0) _gid_to_str(slave_conn->local_info.gid, my_gid_str);
+
+                    char qpn_str[32], psn_str[32];
+                    int q_len = sprintf(qpn_str, "%u", slave_conn->local_info.qpn);
+                    int p_len = sprintf(psn_str, "%u", slave_conn->local_info.psn);
+                    payload_offset += sprintf(qp_payload + payload_offset, "$%d\r\n%s\r\n$%d\r\n%s\r\n", q_len, qpn_str, p_len, psn_str);
+                }
+
+                // Reply ZSYN_OOB <lid> <gid> <qpn0> <psn0> ... (共 11 个参数)
+                char oob_buf[1024];
+                char lid_str[32];
+                int lid_len = sprintf(lid_str, "%hu", conn_list[fd]->rdma_conn[0]->local_info.lid);
+                
                 int oob_len = sprintf(oob_buf, 
-                    "*5\r\n"
-                    "$8\r\nZSYN_OOB\r\n"
-                    "$%d\r\n%s\r\n"
-                    "$%d\r\n%s\r\n"
-                    "$%d\r\n%s\r\n"
-                    "$%d\r\n%s\r\n",
-                    qpn_len, qpn_str, psn_len, psn_str, lid_len, lid_str, gid_len, my_gid_str
-                );
+                    "*11\r\n$8\r\nZSYN_OOB\r\n"
+                    "$%d\r\n%s\r\n$%d\r\n%s\r\n%s",
+                    lid_len, lid_str, (int)strlen(my_gid_str), my_gid_str, qp_payload);
 
                 write(fd, oob_buf, oob_len);
                 if (response != NULL) len = 0; 
-                
-                // pdb_log_info("[SLAVE REPL] Sent ZSYN_OOB to Master. Waiting for ZOOB_ACK...\n");
             }
             break;
         }
@@ -1621,17 +1626,20 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /***********************      SETP 3      *************************** */
             /* master node receive "ZSYN_OOB", and reply "ZOOB_ACK" to slave node */
             /******************************************************************** */
-            pdb_rdma_conn_ctx* conn = conn_list[fd]->rdma_conn;
-            if (!conn) break; 
+            uint16_t slave_lid = atoi(tokens[1]);
+    
+            for (int i = 0; i < NUM_QPS; i++) {
+                pdb_rdma_conn_ctx* conn = conn_list[fd]->rdma_conn[i];
+                
+                pdb_rdma_conn_info slave_info;
+                memset(&slave_info, 0, sizeof(slave_info));
+                slave_info.lid = slave_lid;
+                _str_to_gid(tokens[2], slave_info.gid);
+                slave_info.qpn = atoi(tokens[3 + i*2]);
+                slave_info.psn = atoi(tokens[4 + i*2]);
 
-            pdb_rdma_conn_info slave_info;
-            memset(&slave_info, 0, sizeof(slave_info));
-            slave_info.qpn = atoi(tokens[1]);
-            slave_info.psn = atoi(tokens[2]);
-            slave_info.lid = atoi(tokens[3]);
-            _str_to_gid(tokens[4], slave_info.gid);
-
-            if (pdb_rdma_connect_qp(conn, &slave_info) != 0) break;
+                pdb_rdma_connect_qp(conn, &slave_info);
+            }
 
             // reply ZOOB_ACK to slave node
             char ack_buf[64];
@@ -1650,30 +1658,49 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /* slave node receive "ZOOB_ACK", heist data and reply "ZSYN_ACK" to master node */
             /******************************************************************** */
             if (global_conf.is_slave) {
-                // pdb_log_info("[SLAVE REPL] Received OOB_ACK. Executing RDMA HEIST!\n");
-                
                 struct conn_info* current_client = conn_list[fd];
-                if (!current_client || !current_client->rdma_conn) break;
+                pdb_rdma_snapshot_ctx* snap = current_client->rdma_conn[0]->snap; // 共用同一个 snap
+                
+                // 1. 在主线程一次性分配好完整内存池
+                void* base_buffer = pdb_rdma_pool_alloc(snap, pull_size);
+                if (!base_buffer) break;
 
-                pdb_rdma_conn_ctx* slave_conn = current_client->rdma_conn;
+                // 2. 切分任务并启动 4 个线程
+                pthread_t threads[NUM_QPS];
+                heist_thread_arg_t t_args[NUM_QPS];
+                size_t chunk_size = pull_size / NUM_QPS;
 
-                execute_rdma_read_heist(slave_conn, remote_vaddr, remote_rkey, pull_size);
-                // pdb_log_info("[SLAVE REPL] Hardware Heist complete. Rebuilding memory database...\n");
+                for (int i = 0; i < NUM_QPS; i++) {
+                    t_args[i].conn = current_client->rdma_conn[i];
+                    t_args[i].remote_vaddr = remote_vaddr;
+                    t_args[i].rkey = remote_rkey;
+                    
+                    t_args[i].offset = i * chunk_size;
+                    // 最后一个线程处理除不尽的余数
+                    t_args[i].size = (i == NUM_QPS - 1) ? (pull_size - t_args[i].offset) : chunk_size; 
+                    t_args[i].local_buf = (char*)base_buffer + t_args[i].offset;
 
-                *(slave_conn->snap->pool.used_offset) = pull_size;
-
-                if (pdb_rdma_deserialize(slave_conn->snap) != PDB_RDMA_OK) {
-                    pdb_log_error("Memory Database Reconstruction Failed!\n");
-                    pdb_rdma_destroy_conn(slave_conn);
-                    current_client->rdma_conn = NULL;
-                    break; 
+                    pthread_create(&threads[i], NULL, _heist_worker, &t_args[i]);
                 }
 
-                pdb_rdma_destroy_conn(slave_conn);
-                current_client->rdma_conn = NULL; 
+                // 3. 等待所有硬件并发拉取完成 (Barrier)
+                for (int i = 0; i < NUM_QPS; i++) {
+                    pthread_join(threads[i], NULL);
+                }
 
-                // salve heist and deserialize data successfully.
-                // slave reply ZSYN_ACK to master node
+                // 4. 重建数据库内存
+                *(snap->pool.used_offset) = pull_size;
+                if (pdb_rdma_deserialize(snap) != PDB_RDMA_OK) {
+                    pdb_log_error("Memory Database Reconstruction Failed!\n");
+                }
+
+                // 5. 清理 4 个连接
+                for (int i = 0; i < NUM_QPS; i++) {
+                    pdb_rdma_destroy_conn(current_client->rdma_conn[i]);
+                    current_client->rdma_conn[i] = NULL; 
+                }
+
+                // Reply
                 char sync_ack_buf[64];
                 int sync_ack_len = sprintf(sync_ack_buf, "*1\r\n$8\r\nZSYN_ACK\r\n");
                 write(fd, sync_ack_buf, sync_ack_len);
@@ -1692,8 +1719,11 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /* master node release snapshot and destroy rdma conn**************** */
             /******************************************************************** */
             if (conn_list[fd]->rdma_conn) {
-                pdb_rdma_destroy_conn(conn_list[fd]->rdma_conn);
-                conn_list[fd]->rdma_conn = NULL;
+                int i = 0;
+                for (i = 0; i < NUM_QPS; i++){
+                    pdb_rdma_destroy_conn(conn_list[fd]->rdma_conn[i]);
+                    conn_list[fd]->rdma_conn[i] = NULL;
+                }
                 
                 if (global_master_snapshot && global_master_snapshot->ref_count == 1) {
                     pdb_rdma_release_snapshot(global_master_snapshot);
