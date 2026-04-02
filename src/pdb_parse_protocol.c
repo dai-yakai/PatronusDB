@@ -1492,7 +1492,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             if (global_master_snapshot == NULL) {
                 // 512M
                 pdb_log_info("PDB_RDMA_MEMPOOL_SIZE: %zu\n", PDB_RDMA_MEMPOOL_SIZE);
-                global_master_snapshot = pdb_rdma_create_snapshot("rxe0", PDB_RDMA_MEMPOOL_SIZE);
+                global_master_snapshot = pdb_rdma_create_snapshot(global_conf.rdma_device, PDB_RDMA_MEMPOOL_SIZE);
                 if (!global_master_snapshot) {
                     // pdb_log_info("master send +RDMA_READY\n");
                     if (response != NULL) len = sprintf(response, "-ERR RDMA Snapshot init failed\r\n");
@@ -1577,7 +1577,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 uint16_t master_lid = (uint16_t)strtoul(tokens[4], NULL, 10);
                 char* master_gid_str = tokens[5];
 
-                pdb_rdma_snapshot_ctx* slave_recv_snapshot = pdb_rdma_create_snapshot("rxe0", pull_size + 4096);
+                pdb_rdma_snapshot_ctx* slave_recv_snapshot = pdb_rdma_create_snapshot(global_conf.rdma_device, pull_size + 4096);
                 
                 char my_gid_str[33];
                 char qp_payload[512] = {0};
