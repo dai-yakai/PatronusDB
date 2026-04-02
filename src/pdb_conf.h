@@ -17,6 +17,7 @@ typedef struct server_config_s{
     char* master_ip;
     int is_slave;
     bool is_rdma;
+    char* rdma_device;
 
     char* dump_dir;
     char* dump_raw_dir;

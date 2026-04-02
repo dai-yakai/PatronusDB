@@ -19,6 +19,7 @@ config_entry conf_table[] = {
     {"dpdk_log",        CONF_TYPE_STRING,   &global_conf.dpdk_log},
     {"is_rdma",         CONF_TYPE_BOOL,     &global_conf.is_rdma},
     {"dump_raw_dir",    CONF_TYPE_STRING,   &global_conf.dump_raw_dir},
+    {"rdma_device",     CONF_TYPE_STRING,   &global_conf.rdma_device},
     {NULL,              0,                  NULL}
 };
 
