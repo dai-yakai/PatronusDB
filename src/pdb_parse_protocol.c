@@ -1511,15 +1511,22 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             }
 
             int i = 0;
+            int conn_create_failed = 0;
             for (i = 0; i < NUM_QPS; i++){
                 pdb_rdma_conn_ctx* conn = pdb_rdma_create_conn(global_master_snapshot);
                 if (!conn) {
+                    pdb_log_error("master pdb_rdma_create_conn error");
                     if (response != NULL) len = sprintf(response, "-ERR RDMA Conn create failed\r\n");
+                    conn_create_failed = 1;
                     break;
                 }
                 conn_list[fd]->rdma_conn[i] = conn;
             }
 
+            if (conn_create_failed){
+                break;
+            }
+            
             char gid_str[33];
             _gid_to_str(conn_list[fd]->rdma_conn[0]->local_info.gid, gid_str);
 

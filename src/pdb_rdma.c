@@ -136,7 +136,10 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     snap->ref_count++; 
 
     conn->cq = ibv_create_cq(snap->ctx, 1024, NULL, NULL, 0);
-    if (!conn->cq) goto cleanup;
+    if (!conn->cq) {
+        pdb_log_error("ibv_create_cq error\n");
+        goto cleanup;
+    }
 
     struct ibv_qp_init_attr qp_attr;
     memset(&qp_attr, 0, sizeof(qp_attr));
@@ -149,7 +152,10 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     qp_attr.cap.max_recv_sge = 1;
 
     conn->qp = ibv_create_qp(snap->pd, &qp_attr);
-    if (!conn->qp) goto cleanup_cq;
+    if (!conn->qp) {
+        pdb_log_error("ibv_create_qp error\n");
+        goto cleanup_cq;
+    }
 
     struct ibv_qp_attr attr;
     memset(&attr, 0, sizeof(attr));
@@ -159,7 +165,10 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     attr.qp_access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE;
 
     int flags = IBV_QP_STATE | IBV_QP_PKEY_INDEX | IBV_QP_PORT | IBV_QP_ACCESS_FLAGS;
-    if (ibv_modify_qp(conn->qp, &attr, flags) != 0) goto cleanup_qp;
+    if (ibv_modify_qp(conn->qp, &attr, flags) != 0){
+        pdb_log_error("ibv_modify_qp error\n");
+        goto cleanup_qp;
+    } 
 
     conn->local_info.qpn = conn->qp->qp_num;
     conn->local_info.psn = 314159 + (rand() % 1000); 
