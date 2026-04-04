@@ -20,6 +20,10 @@ config_entry conf_table[] = {
     {"is_rdma",         CONF_TYPE_BOOL,     &global_conf.is_rdma},
     {"dump_raw_dir",    CONF_TYPE_STRING,   &global_conf.dump_raw_dir},
     {"rdma_device",     CONF_TYPE_STRING,   &global_conf.rdma_device},
+    {"rdma_qp",         CONF_TYPE_INT,      &global_conf.rdma_qp},
+    {"rdma_num_chunks", CONF_TYPE_INT,      &global_conf.rdma_num_chunks},
+    {"rdma_read_depth", CONF_TYPE_INT,      &global_conf.rdma_read_depth},
+    {"rdma_internal_chunks",    CONF_TYPE_INT,  &global_conf.rdma_internal_chunks},
     {NULL,              0,                  NULL}
 };
 

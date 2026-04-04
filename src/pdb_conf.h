@@ -18,6 +18,10 @@ typedef struct server_config_s{
     int is_slave;
     bool is_rdma;
     char* rdma_device;
+    int rdma_qp;
+    int rdma_num_chunks;
+    int rdma_read_depth;
+    int rdma_internal_chunks;
 
     char* dump_dir;
     char* dump_raw_dir;

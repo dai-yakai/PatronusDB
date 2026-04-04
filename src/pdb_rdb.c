@@ -345,29 +345,39 @@ int pdb_rdb_dump_raw(const char* file){
             int k_len = strlen(key);
             pdb_value* value = node->value;
             if (value->type == PDB_VALUE_TYPE_STRING){
-                char* v = (char*)value->ptr;
+                char *v = (char *)value->ptr;
                 int v_len = strlen(v);
-                char k_len_str[32], v_len_str[32];
-                int k_num_len = snprintf(k_len_str, sizeof(k_len_str), "%d", k_len);
-                int v_num_len = snprintf(v_len_str, sizeof(v_len_str), "%d", v_len);
-                // "*3\r\n$4\r\nHSET\r\n"
-                int required_space = 15 + (1 + k_num_len + 2 + k_len + 2) + (1 + v_num_len + 2 + v_len + 2);
-                if (required_space + len > buffer_len){
-                    int write_len = write(fd, write_buffer, len);
-                    if (write_len < 0){
-                        pdb_log_error("rdb raw write failed\n");
-                        return PDB_ERROR;
-                    }
-                    memset(write_buffer, 0, buffer_len);
+
+                // 1. 先写协议头（Header）
+                char header[128];
+                int h_len = sprintf(header, "*3\r\n$4\r\nHSET\r\n$%d\r\n%s\r\n$%d\r\n", k_len, key, v_len);
+
+                // 如果 buffer 剩下的空间连 Header 都放不下，先清空 buffer
+                if (len + h_len > buffer_len) {
+                    write(fd, write_buffer, len);
                     len = 0;
                 }
+                memcpy(write_buffer + len, header, h_len);
+                len += h_len;
 
-                len += sprintf(write_buffer + len, 
-                        "*3\r\n$4\r\nHSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",
-                            k_len, key, 
-                            v_len, v
-                            );
-
+                // 2. 核心：处理那个巨大的 Value
+                // 如果 Value 本身比 buffer 还大，直接绕过 buffer 写入文件
+                if (v_len > buffer_len / 2) { 
+                    write(fd, write_buffer, len); // 先把 buffer 里现有的写掉
+                    write(fd, v, v_len);         // 直接把 10MB 写进文件
+                    write(fd, "\r\n", 2);        // 补上 Redis 协议换行
+                    len = 0;
+                } else {
+                    // 如果 Value 较小，正常的逻辑处理...
+                    if (len + v_len + 2 > buffer_len) {
+                        write(fd, write_buffer, len);
+                        len = 0;
+                    }
+                    memcpy(write_buffer + len, v, v_len);
+                    len += v_len;
+                    memcpy(write_buffer + len, "\r\n", 2);
+                    len += 2;
+                }
             }else if (value->type == PDB_VALUE_TYPE_INT){
                 char* v = pdb_parse_value_to_string(value);
                 int v_len = strlen(v);

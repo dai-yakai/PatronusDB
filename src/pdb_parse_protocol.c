@@ -1530,11 +1530,14 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             char gid_str[33];
             _gid_to_str(conn_list[fd]->rdma_conn[0]->local_info.gid, gid_str);
 
+
+            pdb_log_info("master send RDMA_READY\n");
             // master reply RDMA_READY
             // RDMA_READY <vaddr> <rkey> <size> <qpn> <psn> <lid> <gid_str>\r\n
+            int resp_count = 1 + 5 + (2 * NUM_QPS);
             if (response != NULL) {
-                char buf[1024];
-                int offset = sprintf(buf, "*14\r\n$11\r\nZRDMA_READY\r\n");
+                char buf[2048];
+                int offset = sprintf(buf, "*%d\r\n$11\r\nZRDMA_READY\r\n", resp_count);
                 
                 char vaddr_str[64];
                 char rkey_str[32];
@@ -1614,10 +1617,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 char oob_buf[1024];
                 char lid_str[32];
                 int lid_len = sprintf(lid_str, "%hu", conn_list[fd]->rdma_conn[0]->local_info.lid);
-                
+                int resp_count = 1 + 2 + (2 * NUM_QPS);
                 int oob_len = sprintf(oob_buf, 
-                    "*11\r\n$8\r\nZSYN_OOB\r\n"
-                    "$%d\r\n%s\r\n$%d\r\n%s\r\n%s",
+                    "*%d\r\n$8\r\nZSYN_OOB\r\n"
+                    "$%d\r\n%s\r\n$%d\r\n%s\r\n%s", resp_count, 
                     lid_len, lid_str, (int)strlen(my_gid_str), my_gid_str, qp_payload);
 
                 write(fd, oob_buf, oob_len);
@@ -1633,7 +1636,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /***********************      SETP 3      *************************** */
             /* master node receive "ZSYN_OOB", and reply "ZOOB_ACK" to slave node */
             /******************************************************************** */
-            uint16_t slave_lid = atoi(tokens[1]);
+           
+	    pdb_log_info("master receive ZSYN_OOB\n");
+	    uint16_t slave_lid = atoi(tokens[1]);
     
             for (int i = 0; i < NUM_QPS; i++) {
                 pdb_rdma_conn_ctx* conn = conn_list[fd]->rdma_conn[i];

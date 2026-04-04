@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/mman.h>
 
 #include "pdb_rdma.h"
 #include "pdb_set.h"
@@ -16,9 +17,9 @@ pdb_rdma_snapshot_ctx* global_master_snapshot = NULL;
 
 // Performance Configuration Constants
 // Divide large data into 16 chunks for parallel fetching
-#define NUM_CHUNKS 1024       
+// #define NUM_CHUNKS 1024       
 // Corresponding to max_rd_atomic in QP configuration  
-#define RDMA_READ_DEPTH 32
+// #define RDMA_READ_DEPTH 128
 
 static double get_delta_ms(struct timeval t_start, struct timeval t_end) {
     return (t_end.tv_sec - t_start.tv_sec) * 1000.0 + (t_end.tv_usec - t_start.tv_usec) / 1000.0;
@@ -32,14 +33,22 @@ static double get_delta_ms(struct timeval t_start, struct timeval t_end) {
  */
 static void* _alloc_aligned_memory(size_t size) {
     void* ptr = NULL;
-    long page_size = sysconf(_SC_PAGESIZE); 
-    int ret = posix_memalign(&ptr, page_size, size);
-    if (ret != 0){
-        pdb_log_error("rdma alloc mem error: %s\n", strerror(ret));
+    ptr = mmap(NULL, size, PROT_READ | PROT_WRITE, 
+               MAP_PRIVATE | MAP_ANONYMOUS | MAP_HUGETLB | (21 << 26) | MAP_POPULATE | MAP_LOCKED, 
+               -1, 0);
+
+    if (ptr == MAP_FAILED) {
+        pdb_log_error("Hugepage mmap failed (%s). Check nr_hugepages!\n", strerror(errno));
         return NULL;
     }
 
-    memset(ptr, 0, size);
+    volatile char* p = (volatile char*)ptr;
+    for (size_t i = 0; i < size; i += 2 * 1024 * 1024) {
+        p[i] = 0; 
+    }
+
+    pdb_log_info("1GB Hugepage Memory Pinning Success at %p\n", ptr);
+    
     return ptr;
 }
 
@@ -82,7 +91,10 @@ pdb_rdma_snapshot_ctx* pdb_rdma_create_snapshot(const char* dev_name, size_t poo
     struct ibv_device** dev_list;
     int num_devices;
     dev_list = ibv_get_device_list(&num_devices);
-    if (!dev_list || num_devices == 0) goto cleanup;
+    if (!dev_list || num_devices == 0) {
+        pdb_log_error("ibv_get_device_list\n");
+        goto cleanup;
+    }
 
     struct ibv_device *ib_dev = NULL;
     for (int i = 0; i < num_devices; i++) {
@@ -90,7 +102,10 @@ pdb_rdma_snapshot_ctx* pdb_rdma_create_snapshot(const char* dev_name, size_t poo
             ib_dev = dev_list[i]; break;
         }
     }
-    if (!ib_dev) goto cleanup_devlist;
+    if (!ib_dev) {
+        pdb_log_error("ibv_device error\n");
+        goto cleanup_devlist;
+    }
 
     snap->ctx = ibv_open_device(ib_dev);
     if (!snap->ctx) goto cleanup_devlist;
@@ -101,7 +116,10 @@ pdb_rdma_snapshot_ctx* pdb_rdma_create_snapshot(const char* dev_name, size_t poo
 
     int access_flags = IBV_ACCESS_LOCAL_WRITE | IBV_ACCESS_REMOTE_READ | IBV_ACCESS_REMOTE_WRITE;
     snap->mr = ibv_reg_mr(snap->pd, snap->pool.base_addr, snap->pool.total_size, access_flags);
-    if (!snap->mr) goto cleanup_pd;
+    if (!snap->mr) {
+        pdb_log_error("ibv_reg_mr error: %s\n", strerror(errno));
+        goto cleanup_pd;
+    }
 
     return snap;
 
@@ -135,9 +153,9 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     conn->snap = snap;
     snap->ref_count++; 
 
-    conn->cq = ibv_create_cq(snap->ctx, 1024, NULL, NULL, 0);
+    conn->cq = ibv_create_cq(snap->ctx, 128, NULL, NULL, 0);
     if (!conn->cq) {
-        pdb_log_error("ibv_create_cq error\n");
+        pdb_log_error("ibv_create_cq error: %s\n", strerror(errno));
         goto cleanup;
     }
 
@@ -146,14 +164,14 @@ pdb_rdma_conn_ctx* pdb_rdma_create_conn(pdb_rdma_snapshot_ctx* snap) {
     qp_attr.send_cq = conn->cq;
     qp_attr.recv_cq = conn->cq;
     qp_attr.qp_type = IBV_QPT_RC;  
-    qp_attr.cap.max_send_wr  = 4096;
-    qp_attr.cap.max_recv_wr  = 256;
+    qp_attr.cap.max_send_wr  = 64;
+    qp_attr.cap.max_recv_wr  = 64;
     qp_attr.cap.max_send_sge = 1;
     qp_attr.cap.max_recv_sge = 1;
 
     conn->qp = ibv_create_qp(snap->pd, &qp_attr);
     if (!conn->qp) {
-        pdb_log_error("ibv_create_qp error\n");
+        pdb_log_error("ibv_create_qp error: %s\n", strerror(errno));
         goto cleanup_cq;
     }
 
@@ -342,15 +360,15 @@ void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vadd
     }
     gettimeofday(&t_alloc, NULL);
 
-    struct ibv_send_wr wr[NUM_CHUNKS];
-    struct ibv_sge sge[NUM_CHUNKS];
+    struct ibv_send_wr wr[global_conf.rdma_num_chunks];
+    struct ibv_sge sge[global_conf.rdma_num_chunks];
     struct ibv_send_wr *bad_wr = NULL;
     
-    size_t chunk_size = data_size / NUM_CHUNKS;
+    size_t chunk_size = data_size / global_conf.rdma_num_chunks;
 
-    for (int i = 0; i < NUM_CHUNKS; i++) {
+    for (int i = 0; i < global_conf.rdma_num_chunks; i++) {
         size_t current_offset = i * chunk_size;
-        size_t current_len = (i == NUM_CHUNKS - 1) ? (data_size - current_offset) : chunk_size;
+        size_t current_len = (i == global_conf.rdma_num_chunks - 1) ? (data_size - current_offset) : chunk_size;
 
         sge[i].addr = (uintptr_t)local_buffer + current_offset;
         sge[i].length = current_len;
@@ -362,7 +380,7 @@ void execute_rdma_read_heist(pdb_rdma_conn_ctx* slave_conn, uint64_t remote_vadd
         wr[i].sg_list = &sge[i];
         wr[i].num_sge = 1;
 
-        if (i == NUM_CHUNKS - 1) {
+        if (i == global_conf.rdma_num_chunks - 1) {
             wr[i].send_flags = IBV_SEND_SIGNALED;
             wr[i].next = NULL; 
         } else {
@@ -416,10 +434,10 @@ int pdb_rdma_connect_qp(pdb_rdma_conn_ctx* conn, pdb_rdma_conn_info* remote_info
     // RTR 阶段
     memset(&attr, 0, sizeof(attr));
     attr.qp_state           = IBV_QPS_RTR;
-    attr.path_mtu           = IBV_MTU_4096;      // 确保物理网卡 MTU 已设为 4200+
+    attr.path_mtu           = IBV_MTU_4096;
     attr.dest_qp_num        = remote_info->qpn;
     attr.rq_psn             = remote_info->psn;
-    attr.max_dest_rd_atomic = RDMA_READ_DEPTH;   // 提升硬件响应深度
+    attr.max_dest_rd_atomic = global_conf.rdma_read_depth;   
     attr.min_rnr_timer      = 12;
     attr.ah_attr.is_global  = 1;
     attr.ah_attr.dlid       = remote_info->lid;
@@ -439,14 +457,14 @@ int pdb_rdma_connect_qp(pdb_rdma_conn_ctx* conn, pdb_rdma_conn_info* remote_info
     attr.retry_cnt     = 7;
     attr.rnr_retry     = 7;
     attr.sq_psn        = conn->local_info.psn;
-    attr.max_rd_atomic = RDMA_READ_DEPTH;       // 提升硬件发起深度
+    attr.max_rd_atomic = global_conf.rdma_read_depth;       // 提升硬件发起深度
 
     flags = IBV_QP_STATE | IBV_QP_TIMEOUT | IBV_QP_RETRY_CNT | 
             IBV_QP_RNR_RETRY | IBV_QP_SQ_PSN | IBV_QP_MAX_QP_RD_ATOMIC;
     return ibv_modify_qp(conn->qp, &attr, flags);
 }
 
-#define INTERNAL_CHUNKS 64
+// #define INTERNAL_CHUNKS 64
 void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn, 
                                    uint64_t remote_base_vaddr, uint64_t chunk_offset, 
                                    uint32_t remote_rkey, size_t chunk_size, 
@@ -456,15 +474,15 @@ void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn,
     struct timeval t_start, t_alloc, t_post, t_poll;
     uint64_t remote_addr_start = remote_base_vaddr + chunk_offset;
 
-    struct ibv_send_wr wr[INTERNAL_CHUNKS];
-    struct ibv_sge sge[INTERNAL_CHUNKS];
+    struct ibv_send_wr wr[global_conf.rdma_internal_chunks];
+    struct ibv_sge sge[global_conf.rdma_internal_chunks];
     struct ibv_send_wr *bad_wr = NULL;
 
-    size_t per_wr_size = chunk_size / INTERNAL_CHUNKS;
+    size_t per_wr_size = chunk_size / global_conf.rdma_internal_chunks;
 
-    for (int i = 0; i < INTERNAL_CHUNKS; i++) {
+    for (int i = 0; i < global_conf.rdma_internal_chunks; i++) {
         size_t current_inner_offset = i * per_wr_size;
-        size_t current_inner_len = (i == INTERNAL_CHUNKS - 1) ? 
+        size_t current_inner_len = (i == global_conf.rdma_internal_chunks - 1) ? 
                                    (chunk_size - current_inner_offset) : per_wr_size;
 
         sge[i].addr = (uintptr_t)local_buf_addr + current_inner_offset;
@@ -477,7 +495,7 @@ void execute_rdma_read_heist_chunk(pdb_rdma_conn_ctx* slave_conn,
         wr[i].sg_list = &sge[i];
         wr[i].num_sge = 1;
 
-        if (i == INTERNAL_CHUNKS - 1) {
+        if (i == global_conf.rdma_internal_chunks - 1) {
             wr[i].send_flags = IBV_SEND_SIGNALED;
             wr[i].next = NULL; 
         } else {
