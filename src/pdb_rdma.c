@@ -138,7 +138,7 @@ void pdb_rdma_release_snapshot(pdb_rdma_snapshot_ctx* snap) {
         if (snap->mr) ibv_dereg_mr(snap->mr);
         if (snap->pd) ibv_dealloc_pd(snap->pd);
         if (snap->ctx) ibv_close_device(snap->ctx);
-        if (snap->pool.base_addr) free(snap->pool.base_addr);
+        if (snap->pool.base_addr) munmap(snap->pool.base_addr, snap->pool.total_size);
         free(snap);
     }
 }
