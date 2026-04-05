@@ -9,6 +9,8 @@
 #include <string.h>
 #include <inttypes.h>
 #include <arpa/inet.h>
+#include <sys/resource.h>
+#include <sys/time.h>
 
 #include "pdb_serialize.h"
 #include "pdb_conf.h"
@@ -59,7 +61,7 @@ typedef struct pdb_rdma_conn_ctx {
     struct ibv_cq* cq;
     struct ibv_qp* qp;
     struct ibv_comp_channel *channel;
-    
+
     pdb_rdma_conn_info  local_info;
     
     pdb_rdma_snapshot_ctx* snap;
@@ -84,6 +86,13 @@ typedef struct {
     void* local_buf;
 } heist_thread_arg_t;
 
+
+typedef struct {
+    struct timeval wall_time;
+    struct timeval user_time;
+    struct timeval sys_time;
+} pdb_cpu_profiler_t;
+
 extern pdb_rdma_snapshot_ctx* global_master_snapshot;
 struct conn_info;
 
@@ -106,5 +115,9 @@ int pdb_rdma_deserialize(pdb_rdma_snapshot_ctx* rdma);
 int pdb_rdma_incremental_append(void* dataStructure, const char* key, uint8_t opcode);
 void pdb_rdma_post_recv_monitor(pdb_rdma_conn_ctx* slave_conn);
 void pdb_increment_syn();
+
+void pdb_profiler_start(pdb_cpu_profiler_t* profiler);
+void pdb_profiler_end(pdb_cpu_profiler_t* profiler, const char* label);
+
 
 #endif

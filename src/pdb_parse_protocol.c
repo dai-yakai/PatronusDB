@@ -1442,6 +1442,9 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             ssize_t total_len = file_stat.st_size;
             ssize_t send_len = 0;
             off_t offset = 0;
+
+            pdb_cpu_profiler_t profiler;
+            pdb_profiler_start(&profiler);
             while(total_len > 0){
                 send_len = sendfile(fd, dump_fd, &offset, file_stat.st_size);
                 total_len -= send_len;
@@ -1458,8 +1461,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     // disconnect
                     break;
                 }
-                // pdb_log_info("sendfile size: %d, total file size: %d\n", send_len, file_stat.st_size);
             }
+            
+            pdb_profiler_end(&profiler, "Sendfile Transfer");
+            pdb_log_info("total file size: %d\n", file_stat.st_size);
             
             close(dump_fd);
             break;

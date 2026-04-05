@@ -1,8 +1,11 @@
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/resource.h>
 
 #include "pdb_rdma.h"
 #include "pdb_set.h"
@@ -23,6 +26,44 @@ pdb_rdma_snapshot_ctx* global_master_snapshot = NULL;
 
 static double get_delta_ms(struct timeval t_start, struct timeval t_end) {
     return (t_end.tv_sec - t_start.tv_sec) * 1000.0 + (t_end.tv_usec - t_start.tv_usec) / 1000.0;
+}
+
+void pdb_profiler_start(pdb_cpu_profiler_t* profiler) {
+    struct rusage usage;
+    gettimeofday(&profiler->wall_time, NULL);
+    // 获取当前线程/进程的 CPU 资源使用情况
+    // RUSAGE_THREAD 仅统计当前线程，RUSAGE_SELF 统计整个进程
+    getrusage(RUSAGE_THREAD, &usage); 
+    profiler->user_time = usage.ru_utime;
+    profiler->sys_time = usage.ru_stime;
+}
+
+void pdb_profiler_end(pdb_cpu_profiler_t* profiler, const char* label) {
+    struct rusage usage;
+    struct timeval wall_end;
+    
+    getrusage(RUSAGE_THREAD, &usage);
+    gettimeofday(&wall_end, NULL);
+
+    double wall_ms = (wall_end.tv_sec - profiler->wall_time.tv_sec) * 1000.0 + 
+                     (wall_end.tv_usec - profiler->wall_time.tv_usec) / 1000.0;
+
+    double user_ms = (usage.ru_utime.tv_sec - profiler->user_time.tv_sec) * 1000.0 + 
+                     (usage.ru_utime.tv_usec - profiler->user_time.tv_usec) / 1000.0;
+
+    double sys_ms = (usage.ru_stime.tv_sec - profiler->sys_time.tv_sec) * 1000.0 + 
+                    (usage.ru_stime.tv_usec - profiler->sys_time.tv_usec) / 1000.0;
+
+    double total_cpu_ms = user_ms + sys_ms;
+    double cpu_usage_percent = (wall_ms > 0) ? (total_cpu_ms / wall_ms) * 100.0 : 0.0;
+
+    printf("\n--- [%s] CPU Profiler Report ---\n", label);
+    printf("Wall Clock Time : %.2f ms\n", wall_ms);
+    printf("CPU User Time   : %.2f ms\n", user_ms);
+    printf("CPU System Time : %.2f ms\n", sys_ms);
+    printf("Total CPU Time  : %.2f ms\n", total_cpu_ms);
+    printf("-> Thread CPU Usage: %.2f%%\n", cpu_usage_percent);
+    printf("----------------------------------------\n");
 }
 
 
@@ -596,6 +637,9 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
             wr[j].sg_list = &sge[j];
             wr[j].num_sge = 1;
 
+            wr[j].wr.rdma.remote_addr = remote_addr_start + current_inner_offset;
+            wr[j].wr.rdma.rkey = remote_rkey;
+
             // 仅在当前批次的最后一个 WR 设置 SIGNALED
             if (j == current_batch_count - 1) {
                 wr[j].send_flags = IBV_SEND_SIGNALED;
@@ -649,12 +693,14 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
 
 void* _heist_worker(void* arg) {
     heist_thread_arg_t* t_arg = (heist_thread_arg_t*)arg;
-    
-    execute_rdma_read_heist_chunk(t_arg->conn, 
+    pdb_cpu_profiler_t profiler;
+    pdb_profiler_start(&profiler);
+    execute_rdma_read_heist_chunk_window(t_arg->conn, 
                                   t_arg->remote_vaddr, 
                                   t_arg->offset, 
                                   t_arg->rkey, 
                                   t_arg->size, 
                                   t_arg->local_buf);
+    pdb_profiler_end(&profiler, "RDMA Transfer");
     return NULL;
 }
