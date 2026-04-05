@@ -58,6 +58,8 @@ typedef struct pdb_rdma_snapshot_ctx {
 typedef struct pdb_rdma_conn_ctx {
     struct ibv_cq* cq;
     struct ibv_qp* qp;
+    struct ibv_comp_channel *channel;
+    
     pdb_rdma_conn_info  local_info;
     
     pdb_rdma_snapshot_ctx* snap;
