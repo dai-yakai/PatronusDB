@@ -27,7 +27,7 @@
 #define RDMA_TEST_REPORT        1
 
 #define PDB_RDMA_INCRE_BUFFER_LEN   4*1024*1024
-#define PDB_RDMA_MEMPOOL_SIZE       2048ULL*1024ULL*1024ULL
+#define PDB_RDMA_MEMPOOL_SIZE       2560ULL*1024ULL*1024ULL
 
 typedef struct __attribute__((packed)) pdb_rdma_conn_info {
     uint32_t qpn;          // Queue Pair Number

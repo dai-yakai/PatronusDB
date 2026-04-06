@@ -1496,7 +1496,6 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             /****************************************************************** */
             if (global_master_snapshot == NULL) {
                 // 512M
-                pdb_log_info("PDB_RDMA_MEMPOOL_SIZE: %zu\n", PDB_RDMA_MEMPOOL_SIZE);
                 global_master_snapshot = pdb_rdma_create_snapshot(global_conf.rdma_device, PDB_RDMA_MEMPOOL_SIZE);
                 if (!global_master_snapshot) {
                     // pdb_log_info("master send +RDMA_READY\n");

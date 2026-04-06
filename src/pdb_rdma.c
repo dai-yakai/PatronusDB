@@ -603,24 +603,18 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
     gettimeofday(&t_start, NULL);
     uint64_t remote_addr_start = remote_base_vaddr + chunk_offset;
 
-    // 分配足够大的 wr 和 sge 数组（只申请当前窗口大小即可，复用内存）
     struct ibv_send_wr wr[WINDOW_BATCH_SIZE];
     struct ibv_sge sge[WINDOW_BATCH_SIZE];
     struct ibv_send_wr *bad_wr = NULL;
 
     size_t per_wr_size = chunk_size / global_conf.rdma_internal_chunks;
     
-    // 记录开始下发的时间
     gettimeofday(&t_post, NULL);
 
-    // 外层循环：按照滑动窗口的步长（WINDOW_BATCH_SIZE）推进
     for (int batch_start = 0; batch_start < global_conf.rdma_internal_chunks; batch_start += WINDOW_BATCH_SIZE) {
-        
-        // 计算当前批次实际包含几个 Chunk（防止最后一次越界）
         int current_batch_count = (global_conf.rdma_internal_chunks - batch_start < WINDOW_BATCH_SIZE) ? 
                                   (global_conf.rdma_internal_chunks - batch_start) : WINDOW_BATCH_SIZE;
 
-        // 1. 构建当前小批次（窗口）的 WR 链表
         for (int j = 0; j < current_batch_count; j++) {
             int chunk_idx = batch_start + j;
             size_t current_inner_offset = chunk_idx * per_wr_size;
@@ -640,7 +634,6 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
             wr[j].wr.rdma.remote_addr = remote_addr_start + current_inner_offset;
             wr[j].wr.rdma.rkey = remote_rkey;
 
-            // 仅在当前批次的最后一个 WR 设置 SIGNALED
             if (j == current_batch_count - 1) {
                 wr[j].send_flags = IBV_SEND_SIGNALED;
                 wr[j].next = NULL; 
@@ -652,10 +645,8 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
 
         __builtin_ia32_sfence();
 
-        // 💡 修复潜在的 Race Condition：在下发请求前，先要求 CQ 发出通知
         ibv_req_notify_cq(slave_conn->cq, 0);
 
-        // 2. 下发当前窗口的请求
         int ret = ibv_post_send(slave_conn->qp, &wr[0], &bad_wr);
         if (ret != 0) {
             int err_code = (ret < 0) ? -ret : ret; 
@@ -663,7 +654,6 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
             return;
         }
 
-        // 3. 阻塞等待当前窗口完成，完成之后才会进入下一次循环
         struct ibv_wc wc;
         int num_comp = 0;
         struct ibv_cq *ev_cq;
@@ -676,14 +666,13 @@ void execute_rdma_read_heist_chunk_window(pdb_rdma_conn_ctx* slave_conn,
             }
 
             ibv_ack_cq_events(ev_cq, 1);
-            // 收到事件后，先收割 CQ，确认当前批次完毕
             num_comp = ibv_poll_cq(slave_conn->cq, 1, &wc);
         }
 
         if (wc.status != IBV_WC_SUCCESS) {
             pdb_log_error("❌ [THREAD FATAL] RDMA READ Failed at chunk %d! Status: %s (%d)\n", 
                           batch_start, ibv_wc_status_str(wc.status), wc.status);
-            return; // 发生错误，立即退出，不再推进窗口
+            return; 
         }
     }
 
