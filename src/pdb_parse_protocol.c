@@ -1847,7 +1847,7 @@ int pdb_protocol(int fd, char* msg, int length, char* out){
     }
     char *crlf = strstr(rmsg, "\r\n");
     if (crlf == NULL) {
-        pdb_log_debug("crlf == NULL\n");
+        pdb_log_debug("can not find \"\\r\\n\" : %s\n", rmsg);
         free(rmsg);
         return -1;
     }

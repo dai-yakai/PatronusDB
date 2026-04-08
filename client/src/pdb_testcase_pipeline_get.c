@@ -96,8 +96,8 @@ void verify_get_exist_responses(int fd, int start_i, int count, const char* expe
             if (!is_get_cmd) {
                 strcpy(expected_str, expect_exist);
             } else {
-                if (strcmp(expect_exist, "EXIST") == 0) {
-                    sprintf(expected_str, "%d", req_index);
+                if (strcmp(expect_exist, "+EXIST") == 0) {
+                    sprintf(expected_str, "+%d", req_index);
                 } else {
                     strcpy(expected_str, "NO EXIST");
                 }

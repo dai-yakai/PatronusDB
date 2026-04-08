@@ -7,45 +7,42 @@ static inline uint64_t get_current_ms() {
     return (uint64_t)tv.tv_sec * 1000 + (uint64_t)tv.tv_usec / 1000;
 }
 
-// static int is_need_command(char *buf) {
-//     if (buf == NULL) return 0;
+static int is_need_command(char *buf) {
+    if (buf == NULL) return 0;
     
-//     if (strstr(buf, "SYN") != NULL) return 0; 
+    if (strstr(buf, "SYN") != NULL) return 0; 
     
-//     if (strstr(buf, "SET") != NULL) return 1; // include SET, MSET, RSET, HSET
-//     if (strstr(buf, "DEL") != NULL) return 1; // include DEL, RDEL, HDEL
-//     if (strstr(buf, "MOD") != NULL) return 1; // include MOD
+    if (strstr(buf, "SET") != NULL) return 1; // include SET, MSET, RSET, HSET
+    if (strstr(buf, "DEL") != NULL) return 1; // include DEL, RDEL, HDEL
+    if (strstr(buf, "MOD") != NULL) return 1; // include MOD
     
-//     return 0; 
-// }
+    return 0; 
+}
 
 
-int pdb_aof_load(){
-    // rdb dump load
+int pdb_aof_load() {
     int ret = pdb_rdb_load(global_conf.dump_dir);
-    if (ret != PDB_OK){
+    if (ret != PDB_OK) {
         pdb_log_error("Failed to load RDB dump\n");
         return ret;
     }
 
-    // aof dump load
-    size_t buf_cap = 2 * 1024 * 1024; 
+    size_t buf_cap = 3 * 1024 * 1024; 
     char* buf = (char*)pdb_malloc(buf_cap);
-    if (buf == NULL) {
-        pdb_log_error("OOM: Failed to allocate memory for AOF load buffer\n");
-        return PDB_MALLOC_NULL;
-    }
+    if (buf == NULL) return PDB_MALLOC_NULL;
 
-    size_t pos = 0;
+    size_t pos = 0; 
+    int exit_code = PDB_OK;
 
     while (1) {
-        if (pos == buf_cap) {
+        if (buf_cap - pos < 1024 * 1024) { 
             buf_cap *= 2;
+            pdb_log_info("realloc\n");
             char* new_buf = (char*)pdb_realloc(buf, buf_cap);
             if (new_buf == NULL) {
-                pdb_log_error("OOM: Failed to realloc AOF load buffer\n");
-                pdb_free(buf, -1);
-                return PDB_MALLOC_NULL;
+                pdb_log_error("OOM: Failed to realloc AOF buffer\n");
+                exit_code = PDB_MALLOC_NULL;
+                goto cleanup;
             }
             buf = new_buf;
         }
@@ -53,9 +50,11 @@ int pdb_aof_load(){
         ssize_t bytes_read = read(global_dump.dump_aof_fd, buf + pos, buf_cap - pos);
         if (bytes_read < 0) {
             pdb_log_error("Read AOF file error: %s\n", strerror(errno));
+            exit_code = PDB_ERROR;
             break;
         }
         if (bytes_read == 0) break; 
+        pdb_log_info("read aof: %d\n", bytes_read);
 
         pos += bytes_read;
         size_t curr_offset = 0;
@@ -64,28 +63,39 @@ int pdb_aof_load(){
             int bulk_len = 0;
             int pkg_len = check_resp_integrity(buf + curr_offset, pos - curr_offset, &bulk_len);
 
-            if (pkg_len > 0) {
-                pdb_protocol(-1, buf + curr_offset, pkg_len, NULL);
-                curr_offset += pkg_len;
-            } else if (pkg_len == PDB_HALF_PACKAGE) {
+            if (pkg_len == PDB_HALF_PACKAGE) {
                 break;
-            } else if (pkg_len == PDB_PROTOCAL_ERROR) {
-                pdb_log_error("AOF File corrupted: Protocol error at offset %zu\n", curr_offset);
-                pdb_free(buf, -1);
-                return PDB_PROTOCAL_ERROR;
+            } else if (pkg_len > 0) {
+                int p_ret = pdb_protocol(-1, buf + curr_offset, pkg_len, NULL);
+                if (p_ret < 0) {
+                    pdb_log_info("pkg_len: %d\n", pkg_len);
+                    pdb_log_error("AOF load error at offset %zu: protocol execution failed\n", curr_offset);
+                    exit_code = PDB_ERROR;
+                    goto cleanup;
+                }
+                curr_offset += pkg_len;
+            }  
+            else {
+                pdb_log_error("AOF File corrupted at offset %zu\n", curr_offset);
+                exit_code = PDB_PROTOCAL_ERROR;
+                goto cleanup;
             }
         }
 
         size_t remaining = pos - curr_offset;
-        if (remaining > 0 && curr_offset > 0) {
-            memmove(buf, buf + curr_offset, remaining);
+        if (remaining > 0) {
+            if (curr_offset > 0) {
+                memmove(buf, buf + curr_offset, remaining);
+            }
         }
         pos = remaining; 
     }
 
-    pdb_free(buf, -1);
     pdb_log_info("AOF file loaded successfully.\n");
-    return PDB_OK;
+
+cleanup:
+    pdb_free(buf, -1);
+    return exit_code;
 }
 
 /**
@@ -183,6 +193,16 @@ void pdb_aof_reap_uring() {
 
 void pdb_write_to_aof_writen_buffer(char* msg, size_t len){
     if (!global_conf.is_aof && !global_dump.is_aof){
+        return;
+    }
+
+    char temp_buf[128];
+    size_t check_len = len < (sizeof(temp_buf) - 1) ? len : (sizeof(temp_buf) - 1);
+    
+    memcpy(temp_buf, msg, check_len);
+    temp_buf[check_len] = '\0';
+
+    if (!is_need_command(temp_buf)) {
         return;
     }
 

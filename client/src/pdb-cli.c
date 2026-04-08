@@ -170,7 +170,7 @@ int pdb_parser_cmd(int argc, char **argv) {
         return 0;
     }     
     if (!strcmp(cmd_str, "T-PIPELINE-GET")) {
-        char* expect_result = "EXIST";
+        char* expect_result = "+EXIST";
         for (int i = 1; i < argc; i++) {
             if (strncmp(argv[i], "-result=", 8) == 0) {
                 expect_result = argv[i] + 8; 

@@ -319,7 +319,10 @@ int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handl
 			// pdb_ebpf_poll();
 			pdb_aof_reap_uring();
 		}
-		// pdb_is_aof_sqe_complete();
+		// aof begin
+		if (global_dump.is_aof && global_conf.is_aof){
+			pdb_aof_write();
+		}
 
 		if (nready == 0){
 			// epoll_wait timeout
@@ -378,11 +381,7 @@ int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handl
 			}
 		}
 	
-		// aof begin
-		if (global_dump.is_aof && global_conf.is_aof){
-			pdb_aof_write();
-		}
-		// pdb_aof_write();
+		
 	}
 
 	return 0;
