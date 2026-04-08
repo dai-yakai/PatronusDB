@@ -151,10 +151,6 @@ static int process_read_buffer(int fd, msg_handler handler){
 			
 			return PDB_PROTOCAL_ERROR;
 		}
-
-		if (global_conf.is_replication){
-			pdb_write_to_slave(fd, c->read_buffer, package_len);
-		}
 		
 		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
 		// Write response directly into `c->write_buffer` to avoid extra allocating.
@@ -162,6 +158,15 @@ static int process_read_buffer(int fd, msg_handler handler){
 		if (response_len > 0){
 			c->write_pos += response_len;
 			pdb_sds_len_increment(c->write_buffer, response_len);
+		}
+
+		if (global_conf.is_replication && response_len > 0){
+			pdb_write_to_slave(fd, c->read_buffer, package_len);
+		}
+
+		// aof
+		if (global_conf.is_aof && global_dump.is_aof){
+			pdb_write_to_aof_writen_buffer(c->read_buffer, package_len);
 		}
 
 		pdb_sds_range(c->read_buffer, package_len, -1);
@@ -303,15 +308,18 @@ void init_replication_slave_to_master_conn_list(int fd){
 
 
 extern int is_incre_ready;
+extern void pdb_aof_reap_uring();
+
 int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handler response_handler){
 	while (1) { // mainloop
 		struct epoll_event events[1024] = {0};
 		int nready = epoll_wait(epfd, events, 1024, 10);
 		
 		if (global_dump.is_aof){
-			pdb_ebpf_poll();
+			// pdb_ebpf_poll();
+			pdb_aof_reap_uring();
 		}
-		pdb_is_aof_sqe_complete();
+		// pdb_is_aof_sqe_complete();
 
 		if (nready == 0){
 			// epoll_wait timeout
@@ -369,6 +377,12 @@ int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handl
 				}
 			}
 		}
+	
+		// aof begin
+		if (global_dump.is_aof && global_conf.is_aof){
+			pdb_aof_write();
+		}
+		// pdb_aof_write();
 	}
 
 	return 0;
@@ -383,7 +397,7 @@ int pdb_dpdk_loop(void* arg){
 	int nready = epoll_wait(epfd, events, 1024, 0);
 
 	if (global_dump.is_aof){
-		pdb_ebpf_poll();
+		// pdb_ebpf_poll();
 	}
 	pdb_is_aof_sqe_complete();
 

@@ -1,7 +1,5 @@
 #include "pdb_server.h"
 
-extern int pdb_ebpf_init();
-
 int pdb_response_handler(int fd, char* rmsg, int length, char* out){
 
 }
@@ -91,7 +89,7 @@ void init_pdb_engine(){
         ret = pdb_rdb_load(global_conf.dump_dir);
     }else{
         pdb_log_info("AOF file is loading...\n");     
-        ret = pdb_aof_load(global_conf.dump_dir);
+        ret = pdb_aof_load();
     }
     if (ret == PDB_OK){
         if (global_conf.is_aof == 0){

@@ -342,6 +342,10 @@ rbtree_node *rbtree_delete(rbtree *T, rbtree_node *z) {
 		tmp = z->value;
 		z->value= y->value;
 		y->value = tmp;
+
+		uint64_t tmp_hash = z->hash_value;
+        z->hash_value = y->hash_value;
+        y->hash_value = tmp_hash;
 	}
 
 	if (y->color == BLACK) {

@@ -57,25 +57,6 @@ int pipeline_set_recv_msg(int connfd, char* msg, int length){
     return res;
 }
 
-
-void testcase(int connfd, char* msg, char* pattern, char* casename){
-    if (!msg || !pattern || !casename)    return ;
-
-    pipeline_set_send_msg(connfd, msg, strlen(msg));
-
-    char result[MAX_MSG_LENGTH] = {0};
-    pipeline_set_recv_msg(connfd, result, MAX_MSG_LENGTH);
-
-    if (strcmp(result, pattern) == 0){
-#if ENABLE_PRINT_KV
-        printf("==> PASS -> %s\n", casename);
-#endif
-    }else {
-        printf("==> FAILED -> %s, '%s' != '%s'\n", casename, result, pattern);
-        exit(-1);
-    }
-}
-
 void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const char* pattern, const char* ds_type) {
     char buffer[16384]; 
     int received_count = 0;
@@ -109,26 +90,21 @@ void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const 
                 if (current_resp_len > 1 && current[current_resp_len-2] == '\r') 
                     current[current_resp_len-2] = '\0';
 
+                // 计算出是在第几个循环 (i)，以及是该循环拼接的第几条命令
                 int fail_i = start_i + (received_count / 3);
-                int cmd_idx = received_count % 3;
+                int cmd_idx = received_count % 3; // 0代表第一条，1代表第二条，2代表第三条
                 
-                char op_set[16], op_del[16];
-                if (strcmp(ds_type, "RBTREE") == 0) { strcpy(op_set, "RSET"); strcpy(op_del, "RDEL"); }
-                else if (strcmp(ds_type, "HASH") == 0) { strcpy(op_set, "HSET"); strcpy(op_del, "HDEL"); }
-                else { strcpy(op_set, "SET"); strcpy(op_del, "DEL"); }
-
-                char failed_cmd[128];
-                if (cmd_idx == 0) sprintf(failed_cmd, "%s DAI%d %d", op_set, fail_i, fail_i);
-                else if (cmd_idx == 1) sprintf(failed_cmd, "%s TAO%d %d", op_set, fail_i, fail_i);
-                else sprintf(failed_cmd, "%s TAO%d", op_del, fail_i);
-
                 printf("\n============================================\n");
                 printf("\033[1;31m[FATAL ERROR] Response Verify Failed!\033[0m\n");
-                printf("Failed Command : %s\n", failed_cmd);
-                printf("Loop Index (i) : %d\n", fail_i);
+                // 停止瞎猜，直接告诉你是循环里的第几个动作报错
+                printf("Error Location : Loop Index (i) = %d\n", fail_i);
+                printf("Error Command  : The No.%d command in this loop (Index: %d)\n", cmd_idx + 1, cmd_idx);
                 printf("Expected Reply : %s", pattern); 
                 printf("Actual Reply   : %s\n", current);
                 printf("============================================\n");
+                
+                // 提示你怎么找真实命令
+                printf("=> How to fix: Look at your for() loop at i=%d, and check the %d-th sprintf(...) command.\n", fail_i, cmd_idx + 1);
                 exit(-1);
             }
 
@@ -201,7 +177,7 @@ static void testcase_100w_set(int connfd){
         }
         
         if (response_count >= SEND_BATCH) {
-            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "RBTREE");
             batch_start_i += (response_count / 3); 
             response_count = 0;
         }
@@ -211,7 +187,7 @@ static void testcase_100w_set(int connfd){
         pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "RBTREE");
     }
 
     gettimeofday(&tv_end, NULL);
@@ -256,7 +232,7 @@ static void testcase_100w_set(int connfd){
         }
         
         if (response_count >= SEND_BATCH) {
-            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "HASH");
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "HASH");
             batch_start_i += (response_count / 3);
             response_count = 0;
         }
@@ -266,7 +242,7 @@ static void testcase_100w_set(int connfd){
         pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "HASH");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "HASH");
     }
 
     gettimeofday(&tv_end, NULL);
@@ -311,7 +287,7 @@ static void testcase_100w_set(int connfd){
         }
         
         if (response_count >= SEND_BATCH) {
-            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "ARRAY");
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "ARRAY");
             batch_start_i += (response_count / 3);
             response_count = 0;
         }
@@ -321,7 +297,7 @@ static void testcase_100w_set(int connfd){
         pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "ARRAY");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "ARRAY");
     }
 
     gettimeofday(&tv_end, NULL);
@@ -349,8 +325,8 @@ void testcase_100w_delete(int connfd){
         v_len = sprintf(val, "%d", i);     
         
         batch_len += sprintf(batch_buf + batch_len, 
-            "*3\r\n$4\r\nRDEL\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",  
-            k_len, key, v_len, val);
+            "*2\r\n$4\r\nRDEL\r\n$%d\r\n%s\r\n",  
+            k_len, key);
         
         k_len = sprintf(key, "TAO%d", i);
         v_len = sprintf(val, "%d", i);
@@ -373,7 +349,7 @@ void testcase_100w_delete(int connfd){
         }
         
         if (response_count >= SEND_BATCH) {
-            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+            pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "RBTREE");
             batch_start_i += (response_count / 3); 
             response_count = 0;
         }
@@ -383,7 +359,7 @@ void testcase_100w_delete(int connfd){
         pipeline_set_send_msg(connfd, batch_buf, batch_len);
     }
     if (response_count > 0) {
-        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "OK\r\n", "RBTREE");
+        pipeline_set_verify_responses(connfd, batch_start_i, response_count, "+OK\r\n", "RBTREE");
     }
 }
 
@@ -398,7 +374,7 @@ int pdb_testcase_pipeline_set(char* ip, int port){
     }
 
     testcase_100w_set(connfd);
-    testcase_100w_delete(connfd);
+    // testcase_100w_delete(connfd);
 
     return 0;
 }

@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <jemalloc/jemalloc.h>
 #include <sys/sendfile.h>
+#include <sys/epoll.h>
 
 #include "pdb_array.h"
 #include "pdb_hash.h"

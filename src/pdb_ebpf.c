@@ -48,13 +48,13 @@ static int handle_event(void *ctx, void *data, size_t data_sz) {
     struct dirty_key_event *e = (struct dirty_key_event *)data;
     fflush(stdout);
 
-    int ret;
+    int ret = 0;
     if (e->opcode == PDB_OPCODE_BITMAP){
         // pdb_log_info("handle: %p\n", e->key);
-        ret = pdb_aof_buffer_append_bitmap(e->dataStructure, e->key, e->offset, e->val);
+        // ret = pdb_aof_buffer_append_bitmap(e->dataStructure, e->key, e->offset, e->val);
         return 0;
     }
-    ret = pdb_aof_incrememtal_append(e->dataStructure, e->key, e->opcode);
+    // ret = pdb_aof_incrememtal_append(e->dataStructure, e->key, e->opcode);
     if (ret < 0){
         // full
         // pdb_log_debug("key: %s\n", e->key);

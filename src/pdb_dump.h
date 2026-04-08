@@ -13,10 +13,12 @@
 
 struct pdb_dump_s{
     int dump_fd;
+    int dump_aof_fd;
 
     int is_aof;                         // If receive SAVE, is_aof = 1
     pdb_sds aof_buffer;
     size_t aof_buffer_pos;
+    size_t aof_file_offset;
     
     int is_aof_written;
     pdb_sds aof_rewrite_buffer_ebpf;
@@ -30,10 +32,7 @@ struct pdb_dump_s{
     uint64_t last_flush_time;
 };
 
-
-
 extern struct pdb_dump_s global_dump;
-
-void pdb_init_dump(const char* file);
+void pdb_init_dump();
 
 #endif

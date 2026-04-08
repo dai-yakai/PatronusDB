@@ -20,10 +20,12 @@
 void pdb_init_aof();
 int pdb_aof_buffer_append(char* resp_package, size_t package_len);
 int pdb_aof_dump();
-int pdb_aof_load(const char* file);
+int pdb_aof_load();
 int pdb_aof_write_to_written_buffer(char* msg, size_t len);
 int pdb_is_aof_written_end();
 int pdb_aof_incrememtal_append(void* dataStructure, const char* key, uint8_t opcode);
 void pdb_is_aof_sqe_complete();
 int pdb_aof_buffer_append_bitmap(void* dataStructure, const char* key, uint64_t offset, int val);
+ssize_t pdb_aof_write();
+void pdb_write_to_aof_writen_buffer(char* msg, size_t len);
 #endif

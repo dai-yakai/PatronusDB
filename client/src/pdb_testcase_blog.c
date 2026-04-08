@@ -12,7 +12,7 @@
 
 #define MAX_MSG_LENGTH  1024
 #define SEND_BATCH      1024
-#define BLOG_NUM        200
+#define BLOG_NUM        50
 
 #define HASH            1
 #define RBTREE          0

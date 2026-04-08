@@ -583,6 +583,10 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
 
         // RBTREE
         case PDB_CMD_RSET:
+            if (count < 3){
+                len = sprintf(response, "-ERROR: error cmd\r\n");
+                break;
+            }
             raw_value = tokens[2];
             value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
 
@@ -1390,7 +1394,7 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 // AOF dump
                 global_dump.is_aof = 1;
                 pdb_init_aof();
-                pdb_ebpf_init();
+                // pdb_ebpf_init();
                 if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
                 break;
             }else{
@@ -1871,7 +1875,7 @@ int pdb_protocol(int fd, char* msg, int length, char* out){
     count = pdb_split_token(rmsg, length, tokens);
     if (count == -1){
         pdb_log_debug("pdb_split_token return -1\n");
-        free(tokens);
+        free(rmsg);
         return -1;
     }
 

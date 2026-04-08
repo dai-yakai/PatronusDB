@@ -22,8 +22,10 @@ typedef struct server_config_s{
     int rdma_num_chunks;
     int rdma_read_depth;
     int rdma_internal_chunks;
+    bool aof_is_ebpf;
 
     char* dump_dir;
+    char* dump_dir_aof;
     char* dump_raw_dir;
     char* persistence;
     bool is_aof;

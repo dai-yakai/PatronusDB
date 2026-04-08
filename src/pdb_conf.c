@@ -24,6 +24,8 @@ config_entry conf_table[] = {
     {"rdma_num_chunks", CONF_TYPE_INT,      &global_conf.rdma_num_chunks},
     {"rdma_read_depth", CONF_TYPE_INT,      &global_conf.rdma_read_depth},
     {"rdma_internal_chunks",    CONF_TYPE_INT,  &global_conf.rdma_internal_chunks},
+    {"aof_is_ebpf",     CONF_TYPE_BOOL,     &global_conf.aof_is_ebpf},
+    {"dump_dir_aof",    CONF_TYPE_STRING,   &global_conf.dump_dir_aof},
     {NULL,              0,                  NULL}
 };
 
