@@ -131,10 +131,11 @@ void pdb_write_to_slave(int fd, char* msg, int msg_len){
 
 static int process_read_buffer(int fd, msg_handler handler){
 	struct conn_info* c = conn_list[fd];
+	int parsed_offset = 0;
 
-	while(c->read_pos > 0){
+	while(c->read_pos > parsed_offset){
 		int bulk_length = 0;
-		size_t package_len = check_resp_integrity(c->read_buffer, c->read_pos, &bulk_length);
+		size_t package_len = check_resp_integrity(c->read_buffer + parsed_offset, c->read_pos - parsed_offset, &bulk_length);
 		
 		if (bulk_length > PDB_PROTO_IO_BUFFER_LENGTH){
 			c->is_big_package = 1;
@@ -143,39 +144,48 @@ static int process_read_buffer(int fd, msg_handler handler){
 		
 		if (package_len == PDB_HALF_PACKAGE){
 			// pdb_log_debug("process_read_buffer receive half package\n");
-			return PDB_HALF_PACKAGE;
+			// return PDB_HALF_PACKAGE;
+			break;
 		}else if (package_len == PDB_PROTOCAL_ERROR){
 			pdb_log_debug("process_read_buffer receive error protocal\n%s\n", c->read_buffer);
 			memcpy(c->write_buffer + c->write_pos, "protocal error\r\n", 17);
 			// discard error buffer
 			
-			return PDB_PROTOCAL_ERROR;
+			// return PDB_PROTOCAL_ERROR;
+			break;
 		}
 		
 		// pdb_log_info("read_buffer:%s\n", c->read_buffer);
 		// Write response directly into `c->write_buffer` to avoid extra allocating.
-		int response_len = handler(fd, c->read_buffer, package_len, c->write_buffer + c->write_pos);
+		int response_len = handler(fd, c->read_buffer + parsed_offset, package_len, c->write_buffer + c->write_pos);
 		if (response_len > 0){
 			c->write_pos += response_len;
 			pdb_sds_len_increment(c->write_buffer, response_len);
 		}
 
 		if (global_conf.is_replication && response_len > 0){
-			pdb_write_to_slave(fd, c->read_buffer, package_len);
+			pdb_write_to_slave(fd, c->read_buffer + parsed_offset, package_len);
 		}
 
 		// aof
 		if (global_conf.is_aof && global_dump.is_aof){
-			pdb_write_to_aof_writen_buffer(c->read_buffer, package_len);
+			pdb_write_to_aof_writen_buffer(c->read_buffer + parsed_offset, package_len);
 		}
 
-		pdb_sds_range(c->read_buffer, package_len, -1);
-		c->read_pos -= package_len;
+		// pdb_sds_range(c->read_buffer, package_len, -1);
+		// c->read_pos -= package_len;
 		
 		if (c->is_big_package == 1){
 			c->is_big_package = -1;
 		}
+
+		parsed_offset += package_len;
 	}
+
+	if (parsed_offset > 0) {
+        pdb_sds_range(c->read_buffer, parsed_offset, -1);
+        c->read_pos -= parsed_offset;
+    }
 
 	return PDB_OK;
 }
@@ -205,26 +215,33 @@ int send_cb(int fd, msg_handler handler) {
 
 int recv_cb(int fd, msg_handler handler){
 	struct conn_info* c = conn_list[fd];
-	// pdb_log_info("read_buffer: %d, write_buffer:%d\n", pdb_get_sds_alloc(c->read_buffer), pdb_get_sds_alloc(c->write_buffer));
 
+	// !!!do not delete
 	size_t read_len = PDB_PROTO_IO_BUFFER_LENGTH;
+
 	size_t avail_len = pdb_get_sds_avail(c->read_buffer);
 	assert(avail_len >= 0);
 
+	// if (c->is_big_package){
+	// 	read_len = c->bulk_length;
+	// }
+
+	// if (avail_len < read_len + 2){
+	// 	size_t remaining_length = read_len + 2 - avail_len;		// +2:\r\n
+	// 	read_len = remaining_length;
+	// 	// pdb_log_info("read_len: %d\n", read_len);
+	// 	c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, read_len);
+	// }
+
 	int nread = 0;
-
-	if (c->is_big_package){
-		read_len = c->bulk_length;
-	}
-
-	if (avail_len < read_len + 2){
-		size_t remaining_length = read_len + 2 - avail_len;		// +2:\r\n
-		read_len = remaining_length;
-		// pdb_log_info("read_len: %d\n", read_len);
-		c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, read_len);
-	}
-	
 	while(1){
+		size_t avail_len = pdb_get_sds_avail(c->read_buffer);
+		if (avail_len < 65536){
+			c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, PDB_PROTO_IO_BUFFER_LENGTH);
+			avail_len = pdb_get_sds_avail(c->read_buffer);
+		}
+
+		size_t read_len = avail_len;
 		nread = recv(fd, c->read_buffer + c->read_pos, read_len, 0);
 		if (nread > 0){
 			c->read_pos += nread;

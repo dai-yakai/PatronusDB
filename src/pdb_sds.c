@@ -378,14 +378,17 @@ pdb_sds pdb_get_new_sds_len(const void* data, size_t len) {
  */
 void pdb_sds_sub_str(pdb_sds s, size_t start, size_t len){
     size_t old_len = pdb_get_sds_len(s);
-    if (start >= old_len){
+    if (start >= old_len || len == 0){
+        pdb_sds_clear(s);
         return;
     }
     if (len > old_len - start){
         len = old_len - start;
     }
     assert(len > 0);
-    memmove(s, s + start, len);
+    if (start != 0){
+        memmove(s, s + start, len);
+    }
 
     pdb_set_sds_len(s, len);
     s[len] = '\0';
@@ -416,13 +419,16 @@ void pdb_sds_range(pdb_sds s, ssize_t start, ssize_t end){
         if (end < 0)    end = 0;
     }
     if (end >= len)     end = len - 1;
-    if (start > end)    return;
+    if (start > end) {
+        pdb_sds_clear(s);
+        return;
+    }
 
     size_t new_len;
     new_len = end - start + 1;                  // 闭区间(0,2)：0,1,2
     pdb_sds_sub_str(s, start, new_len);
 
-    new_len = pdb_get_sds_len(s);
+    // new_len = pdb_get_sds_len(s);
     // pdb_log_info("old_len: %d, new_len: %d\n", len, new_len);   // DEBUG by DYK
     return;
 }
@@ -457,25 +463,11 @@ pdb_sds pdb_sds_cat_len(pdb_sds s, pdb_sds cat_s, size_t len){
     s[new_len] = '\0';
 
     return s;
-
-    // size_t cat_len = pdb_get_sds_len(cat_s);
-    // assert(len <= cat_len);
-
-    // size_t new_len = curr_len + len;
-
-    // pdb_sds new_s = pdb_get_new_sds(new_len + 1);
-    // pdb_set_sds_len(new_s, new_len);
-
-    // memcpy(new_s, s, curr_len);
-    // memcpy(new_s + curr_len, cat_s, len);
-    // new_s[new_len] = '\0';
-
-    // pdb_sds_free(s);
-
-    // return new_s;
 }
 
 void pdb_sds_clear(pdb_sds s){
+    if (s == NULL) return;
+
     pdb_set_sds_len(s, 0);
     s[0] = '\0';
 }

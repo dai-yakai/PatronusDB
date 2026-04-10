@@ -17,8 +17,8 @@
 #define RBTREE  1
 #define HASH    1
 
-#define BATCH          100
-#define BATCH_NUM      10000
+#define BATCH          1
+#define BATCH_NUM      5000
 
 int mset_send_all(int fd, char* msg, int length) {
     int total_sent = 0;
@@ -171,7 +171,7 @@ void testcase_mset_100w(int connfd) {
 
         int ret = mset_verify_response(connfd);
         if (ret == 0){
-            printf("OK\n");
+            // printf("OK\n");
         }else if (ret == 1){
             printf("ERRPR\n");
         }else if (ret == 2){
@@ -231,7 +231,7 @@ void testcase_mset_100w(int connfd) {
 
         int ret = mset_verify_response(connfd);
         if (ret == 0){
-            printf("OK\n");
+            // printf("OK\n");
         }else if (ret == 1){
             printf("ERRPR\n");
         }else if (ret == 2){
@@ -294,7 +294,7 @@ void recv_and_print_raw(int fd, int expected_count) {
                 items_received++;
             }
         }
-        printf("recv chunk: %s", buffer);
+        // printf("recv chunk: %s", buffer);
     }
 }
 

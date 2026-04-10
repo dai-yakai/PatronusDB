@@ -562,7 +562,7 @@ void pdb_print_rbtree(pdb_rbtree_t* inst){
  * @return 0:操作成功(已经存在会自动更新value); < 0: ERROR
  */
 int pdb_rbtree_mset(pdb_rbtree_t *arr, char** tokens, int count){
-	// pdb_log_info("rbtree mset\n");
+	// pdb_log_info("rbtree mset: %d\n", count);
 	int i;
 	for (i = 1;  i < count; i = i + 2){
 		char* key = tokens[i];

@@ -11,7 +11,7 @@
 
 #define REPLICATION_BUFFER_LENGTH   1024*1024
 #define WRITE_BUFFER_LENGTH         16*1024*1024    // 16M
-#define PDB_PROTO_IO_BUFFER_LENGTH  16*1024         // 16k     
+#define PDB_PROTO_IO_BUFFER_LENGTH  64*1024         // 64k     
 #define CONNECTION_SIZE			    1024*1024       // 1024 * 1024
 #define REPLICATION_NUM             1024
 
