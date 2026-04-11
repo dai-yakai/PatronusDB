@@ -9,8 +9,7 @@
 
 #include "pdb_cli_tool.h"
 
-#define MAX_MSG_LENGTH  1024
-#define SEND_BATCH      1024
+#define SEND_BATCH      4096*2
 #define CMD_NUM         1000000
 
 #define ARRAY           0

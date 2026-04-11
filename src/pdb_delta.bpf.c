@@ -2,116 +2,228 @@
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
 
-#define PDB_MAX_KEY_LEN 64
+#include "vmlinux.h"
+#include <bpf/bpf_helpers.h>
+#include <bpf/bpf_endian.h>
 
-char LICENSE[] SEC("license") = "GPL";
+char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
-typedef struct pdb_hash {
-    void **nodes;       
-             
-    int max_slots;
-    int count;
-    char parent_key[PDB_MAX_KEY_LEN];
-} pdb_hash_t;
+#define TC_ACT_OK 0
+#define TC_ACT_SHOT 2
+#define TC_ACT_REDIRECT 7
+#define ETH_P_IP 0x0800
+#define ETH_ALEN 6
 
-struct dirty_key_event {
-    uint32_t opcode;
-    char key[60];
-
-    void* dataStructure;
-    char parent_key[PDB_MAX_KEY_LEN];
-    int is_sub_element;
-
-    // bitmap
-    uint64_t offset;
-    int val;
+struct mirror_config {
+    __u8  target_mac[ETH_ALEN]; // 从库的 MAC 地址
+    __u8  src_mac[ETH_ALEN];    // 主库的物理 MAC 地址 (用于伪装)
+    __u32 target_ip;            // 从库的 IP 地址 (网络字节序)
+    __u32 dummy_ifindex;        // dummy0 的网卡索引
+    __u32 phys_ifindex;         // eth0 的网卡索引
 };
 
 struct {
-    __uint(type, BPF_MAP_TYPE_RINGBUF);
-    __uint(max_entries, 256 * 1024 * 1024);
-} rb SEC(".maps");
+    __uint(type, BPF_MAP_TYPE_ARRAY);
+    __uint(max_entries, 1);
+    __type(key, __u32);
+    __type(value, struct mirror_config);
+} config_map SEC(".maps");
 
+// Hook 1: 挂载在物理网卡 (eth0) 的 Ingress，负责筛选和克隆
+SEC("tc/ingress")
+int patronus_ingress_mirror(struct __sk_buff *skb)
+{
+    void *data = (void *)(long)skb->data;
+    void *data_end = (void *)(long)skb->data_end;
 
-/**
- * int pdb_hash_set(pdb_hash_t* hash, char* key, pdb_value* value);
- *                          RDI,         RSI(si),        RDX...
- */
-SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_hash_set")
-int pdb_hash_set_entry(struct pt_regs *ctx) {
-    void* dataStructure = (void*)ctx->di;
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end) return TC_ACT_OK;
+    if (eth->h_proto != bpf_htons(ETH_P_IP)) return TC_ACT_OK;
 
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end) return TC_ACT_OK;
+    if (ip->protocol != IPPROTO_TCP) return TC_ACT_OK;
 
-    char *key_ptr = (char *)ctx->si; 
-    // bpf_printk("BPF_TRACE: pdb_hash_set matched!\n");
-    if (!key_ptr) return 0;
+    struct tcphdr *tcp = (void *)ip + (ip->ihl * 4);
+    if ((void *)(tcp + 1) > data_end) return TC_ACT_OK;
 
-    struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
-     if (!e) {
-        bpf_printk("BPF_WARN: Ringbuf FULL! Dropping event for key ptr: %p\n", key_ptr);
-        return 0;
-    }
+    // 过滤条件：只拦截发往 PatronusDB 端口 (例如 6379) 的请求
+    if (tcp->dest != bpf_htons(6379)) return TC_ACT_OK;
 
-    char *parent_ptr = NULL;
-    bpf_probe_read_user(&parent_ptr, sizeof(parent_ptr), (char*)dataStructure + offsetof(pdb_hash_t, parent_key));
-    if (parent_ptr) {
-        bpf_probe_read_user_str(e->parent_key, sizeof(e->parent_key), parent_ptr);
-        e->is_sub_element = 1; 
-    }
+    // 计算 Payload 长度，只同步带有数据的报文 (过滤单纯的 ACK/SYN)
+    __u32 tcp_hl = tcp->doff * 4;
+    __u32 payload_len = bpf_ntohs(ip->tot_len) - (ip->ihl * 4) - tcp_hl;
+    if (payload_len == 0) return TC_ACT_OK;
 
-    e->opcode = 0xFA; 
-    bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
-    e->dataStructure = dataStructure;
-    bpf_ringbuf_submit(e, 0);
+    // 获取配置
+    __u32 key = 0;
+    struct mirror_config *cfg = bpf_map_lookup_elem(&config_map, &key);
+    if (!cfg || cfg->dummy_ifindex == 0) return TC_ACT_OK;
 
-    return 0;
+    // 核心操作：克隆当前数据包，并将其推送到 dummy0 的发送队列 (Egress)
+    // 原数据包正常返回 TC_ACT_OK，进入主库业务层的 Reactor
+    bpf_clone_redirect(skb, cfg->dummy_ifindex, 0);
+
+    return TC_ACT_OK; 
 }
 
-/**
- * int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value)
- */
-SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_array_set")
-int pdb_array_set_entry(struct pt_regs *ctx) {
-    void* dataStructure = (void*)ctx->di;
+// Hook 2: 挂载在跳板网卡 (dummy0) 的 Egress，负责修改包头并真正发出
+SEC("tc/egress")
+int patronus_egress_rewrite(struct __sk_buff *skb)
+{
+    void *data = (void *)(long)skb->data;
+    void *data_end = (void *)(long)skb->data_end;
 
-    char *key_ptr = (char *)ctx->si; 
-    // bpf_printk("BPF_TRACE: pdb_array_set matched!\n");
-    if (!key_ptr) return 0;
+    struct ethhdr *eth = data;
+    if ((void *)(eth + 1) > data_end) return TC_ACT_OK;
 
-    struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
-     if (!e) {
-        bpf_printk("BPF_WARN: Ringbuf FULL! Dropping event for key ptr: %p\n", key_ptr);
-        return 0;
-    }
+    struct iphdr *ip = (void *)(eth + 1);
+    if ((void *)(ip + 1) > data_end) return TC_ACT_OK;
 
-    e->opcode = 0xFC; 
-    e->dataStructure = dataStructure;
-    bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
-    bpf_ringbuf_submit(e, 0);
-    return 0;
+    struct tcphdr *tcp = (void *)ip + (ip->ihl * 4);
+    if ((void *)(tcp + 1) > data_end) return TC_ACT_OK;
+
+    __u32 key = 0;
+    struct mirror_config *cfg = bpf_map_lookup_elem(&config_map, &key);
+    if (!cfg || cfg->phys_ifindex == 0) return TC_ACT_SHOT;
+
+    // 1. 重写 MAC 地址
+    __builtin_memcpy(eth->h_dest, cfg->target_mac, ETH_ALEN);
+    __builtin_memcpy(eth->h_source, cfg->src_mac, ETH_ALEN);
+
+    // 2. 重写目的 IP 地址
+    __u32 old_ip = ip->daddr;
+    __u32 new_ip = cfg->target_ip;
+    ip->daddr = new_ip;
+
+    // 3. 重新计算 IP 校验和 (增量更新，极速)
+    bpf_l3_csum_replace(skb, sizeof(struct ethhdr) + offsetof(struct iphdr, check), old_ip, new_ip, sizeof(new_ip));
+
+    // 4. 重新计算 TCP 伪首部校验和 (因为目的 IP 变了)
+    bpf_l4_csum_replace(skb, sizeof(struct ethhdr) + (ip->ihl * 4) + offsetof(struct tcphdr, check), old_ip, new_ip, BPF_F_PSEUDO_HDR | sizeof(new_ip));
+
+    // 5. 绕过主节点协议栈，直接将修改后的克隆包重定向到物理网卡 (eth0) 发送出去
+    return bpf_redirect(cfg->phys_ifindex, 0); 
 }
 
 
-SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_rbtree_set")
-int pdb_rbtree_set_entry(struct pt_regs *ctx) {
-    void* dataStructure = (void*)ctx->di;
 
-    char *key_ptr = (char *)ctx->si; 
-    // bpf_printk("BPF_TRACE: pdb_rbtree_set matched!\n");
-    if (!key_ptr) return 0;
 
-    struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
-    if (!e) {
-        bpf_printk("BPF_WARN: Ringbuf FULL! Dropping event for key ptr: %p\n", key_ptr);
-        return 0;
-    }
 
-    e->opcode = 0xFB; 
-    e->dataStructure = dataStructure;
-    bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
-    bpf_ringbuf_submit(e, 0);
-    return 0;
-}
+
+
+
+
+// #define PDB_MAX_KEY_LEN 64
+
+// char LICENSE[] SEC("license") = "GPL";
+
+// typedef struct pdb_hash {
+//     void **nodes;       
+             
+//     int max_slots;
+//     int count;
+//     char parent_key[PDB_MAX_KEY_LEN];
+// } pdb_hash_t;
+
+// struct dirty_key_event {
+//     uint32_t opcode;
+//     char key[60];
+
+//     void* dataStructure;
+//     char parent_key[PDB_MAX_KEY_LEN];
+//     int is_sub_element;
+
+//     // bitmap
+//     uint64_t offset;
+//     int val;
+// };
+
+// struct {
+//     __uint(type, BPF_MAP_TYPE_RINGBUF);
+//     __uint(max_entries, 256 * 1024 * 1024);
+// } rb SEC(".maps");
+
+
+// /**
+//  * int pdb_hash_set(pdb_hash_t* hash, char* key, pdb_value* value);
+//  *                          RDI,         RSI(si),        RDX...
+//  */
+// SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_hash_set")
+// int pdb_hash_set_entry(struct pt_regs *ctx) {
+//     void* dataStructure = (void*)ctx->di;
+
+
+//     char *key_ptr = (char *)ctx->si; 
+//     // bpf_printk("BPF_TRACE: pdb_hash_set matched!\n");
+//     if (!key_ptr) return 0;
+
+//     struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
+//      if (!e) {
+//         bpf_printk("BPF_WARN: Ringbuf FULL! Dropping event for key ptr: %p\n", key_ptr);
+//         return 0;
+//     }
+
+//     char *parent_ptr = NULL;
+//     bpf_probe_read_user(&parent_ptr, sizeof(parent_ptr), (char*)dataStructure + offsetof(pdb_hash_t, parent_key));
+//     if (parent_ptr) {
+//         bpf_probe_read_user_str(e->parent_key, sizeof(e->parent_key), parent_ptr);
+//         e->is_sub_element = 1; 
+//     }
+
+//     e->opcode = 0xFA; 
+//     bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
+//     e->dataStructure = dataStructure;
+//     bpf_ringbuf_submit(e, 0);
+
+//     return 0;
+// }
+
+// /**
+//  * int pdb_array_set(pdb_array_t* inst, char* key, pdb_value* value)
+//  */
+// SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_array_set")
+// int pdb_array_set_entry(struct pt_regs *ctx) {
+//     void* dataStructure = (void*)ctx->di;
+
+//     char *key_ptr = (char *)ctx->si; 
+//     // bpf_printk("BPF_TRACE: pdb_array_set matched!\n");
+//     if (!key_ptr) return 0;
+
+//     struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
+//      if (!e) {
+//         bpf_printk("BPF_WARN: Ringbuf FULL! Dropping event for key ptr: %p\n", key_ptr);
+//         return 0;
+//     }
+
+//     e->opcode = 0xFC; 
+//     e->dataStructure = dataStructure;
+//     bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
+//     bpf_ringbuf_submit(e, 0);
+//     return 0;
+// }
+
+
+// SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_rbtree_set")
+// int pdb_rbtree_set_entry(struct pt_regs *ctx) {
+//     void* dataStructure = (void*)ctx->di;
+
+//     char *key_ptr = (char *)ctx->si; 
+//     // bpf_printk("BPF_TRACE: pdb_rbtree_set matched!\n");
+//     if (!key_ptr) return 0;
+
+//     struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
+//     if (!e) {
+//         bpf_printk("BPF_WARN: Ringbuf FULL! Dropping event for key ptr: %p\n", key_ptr);
+//         return 0;
+//     }
+
+//     e->opcode = 0xFB; 
+//     e->dataStructure = dataStructure;
+//     bpf_probe_read_user_str(&e->key, sizeof(e->key), key_ptr);
+//     bpf_ringbuf_submit(e, 0);
+//     return 0;
+// }
 
 
 // bitmap
@@ -119,35 +231,35 @@ int pdb_rbtree_set_entry(struct pt_regs *ctx) {
  * int pdb_bitmap_set_(struct pdb_bitmap* bitmap, uint64_t offset, int val, int* old_value)
  *                          RDI,                    RSI(si),          RDX...
  */
-SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_bitmap_set_")
-int pdb_bitmap_add_entry(struct pt_regs *ctx) {
-    void* bitmap_ptr = (void *)ctx->di; 
-    if (!bitmap_ptr) return 0;
+// SEC("uprobe//home/dai/PatronusDB/pdb_server:pdb_bitmap_set_")
+// int pdb_bitmap_add_entry(struct pt_regs *ctx) {
+//     void* bitmap_ptr = (void *)ctx->di; 
+//     if (!bitmap_ptr) return 0;
 
-    // bpf_printk("TRIGGERED: bitmap_ptr=%p\n", bitmap_ptr);
+//     // bpf_printk("TRIGGERED: bitmap_ptr=%p\n", bitmap_ptr);
 
-    // char *key_ptr = NULL;
-    // long ret = bpf_probe_read_user(&key_ptr, sizeof(key_ptr), bitmap_ptr);
-    // bpf_printk("TRIGGERED: ret=%ld, key_Ptr: %p\n", ret, key_ptr);
-    // if (ret != 0 || !key_ptr) return 0;
-    // bpf_printk("uprobe bitmap: bitmap_ptr=%p, key_ptr=%p\n", bitmap_ptr, key_ptr);
+//     // char *key_ptr = NULL;
+//     // long ret = bpf_probe_read_user(&key_ptr, sizeof(key_ptr), bitmap_ptr);
+//     // bpf_printk("TRIGGERED: ret=%ld, key_Ptr: %p\n", ret, key_ptr);
+//     // if (ret != 0 || !key_ptr) return 0;
+//     // bpf_printk("uprobe bitmap: bitmap_ptr=%p, key_ptr=%p\n", bitmap_ptr, key_ptr);
 
-    uint64_t offset = ctx->si;
-    int val = ctx->dx;
+//     uint64_t offset = ctx->si;
+//     int val = ctx->dx;
 
-    struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
-    if (!e) return 0;
+//     struct dirty_key_event *e = bpf_ringbuf_reserve(&rb, sizeof(*e), 0);
+//     if (!e) return 0;
 
-    e->opcode = 0xF0;
-    e->offset = offset;
-    e->val = val;
+//     e->opcode = 0xF0;
+//     e->offset = offset;
+//     e->val = val;
 
-    bpf_probe_read_user_str(&e->key, sizeof(e->key), (char *)bitmap_ptr + 16);
-    // bpf_printk("uprobe bitmap: e->key=%s, e->val=%d, e->offset:%d\n", e->key, e->val, e->offset);
+//     bpf_probe_read_user_str(&e->key, sizeof(e->key), (char *)bitmap_ptr + 16);
+//     // bpf_printk("uprobe bitmap: e->key=%s, e->val=%d, e->offset:%d\n", e->key, e->val, e->offset);
 
-    bpf_ringbuf_submit(e, 0);
-    return 0;
-}
+//     bpf_ringbuf_submit(e, 0);
+//     return 0;
+// }
 
 
 // set

@@ -26,6 +26,7 @@ struct pdb_dump_s{
     pdb_list aof_rewrite_buffer;
 
     pid_t aof_pid;
+    pid_t rdb_pid;
 
     struct io_uring ring;
 

@@ -10,7 +10,7 @@
 #include <signal.h>
 #include <sys/time.h>
 
-#define CLI_CMD_NUM     43
+#define CLI_CMD_NUM     44
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 extern int pdb_testcase_all_data_get(const char* ip, unsigned short port);
@@ -354,49 +354,23 @@ void pdb_test_rdb_persistence(char* ip, int port) {
 #define TEST_COUNT 1000000L
 #define PIPELINE_BATCH 4096
 void pdb_test_rdb_save(char* ip, int port, int count){
-    printf("count: %d\n", count);
-    
+    printf("count: %d, fd: %d\n", count, sockfd);
+
     struct timeval start, end;
     gettimeofday(&start, NULL);
 
-    char batch_buf[8192];
+    char* batch_buf = malloc(256 * 1024);
+    char* recv_buf = malloc(256 * 1024);
     int i = 0;
     int batch_len = 0;
     int k_len = 0;
     int v_len = 0;
     char key[64];
     char val[64];
+    int total_cmd = 0;
     size_t resp_len = strlen("+OK\r\n");
 
     for (i = 0; i < TEST_COUNT; i++){
-        // save
-        if (i % count == 0){
-            batch_len += sprintf(batch_buf + batch_len, "*1\r\n$4\r\nSAVE\r\n");
-        }
-        
-        // send
-        if (i % PIPELINE_BATCH == 0 && batch_len > 0){
-            // send batch
-            ssize_t nsend = send(sockfd, batch_buf, batch_len, 0);
-            if (nsend <= 0) {
-                return;
-            }
-            batch_len = 0;
-
-            // wait response
-            size_t total_recv = 0;
-            size_t expected_total = resp_len * PIPELINE_BATCH;
-            char recv_buf[8192];
-            while (total_recv < expected_total) {
-                ssize_t nrecv = recv(sockfd, recv_buf + total_recv, expected_total - total_recv, 0);
-                if (nrecv <= 0) {
-                    printf("test rdb save test: recv failed\n");
-                    return;
-                }
-                total_recv += nrecv;
-            }
-        }
-
         // prepare set command
         k_len = sprintf(key, "DAI%d", i);  
         v_len = sprintf(val, "%d", i);     
@@ -404,11 +378,48 @@ void pdb_test_rdb_save(char* ip, int port, int count){
         batch_len += sprintf(batch_buf + batch_len, 
             "*3\r\n$4\r\nHSET\r\n$%d\r\n%s\r\n$%d\r\n%s\r\n",  
             k_len, key, v_len, val);
+        total_cmd++;
+        // save
+        if (total_cmd % count == 0 && total_cmd > 0){
+            batch_len += sprintf(batch_buf + batch_len, "*1\r\n$4\r\nSAVE\r\n");
+            total_cmd++;
+        }
+        
+        // send
+        if (i % PIPELINE_BATCH == 0 && batch_len > 0 && i > 0){
+            // send batch
+            ssize_t nsend = send(sockfd, batch_buf, batch_len, 0);
+            if (nsend <= 0) {
+                free(batch_buf);
+                return;
+            }
+            batch_len = 0;
+            
+            // wait response
+            size_t total_recv = 0;
+            size_t expected_total = resp_len * total_cmd;
+            
+            while (total_recv < expected_total) {
+                ssize_t nrecv = recv(sockfd, recv_buf + total_recv, expected_total - total_recv, 0);
+                if (nrecv <= 0) {
+                    free(batch_buf);
+                    printf("test rdb save test: recv failed\n");
+                    return;
+                }
+                total_recv += nrecv;
+            }
+            total_cmd = 0; // reset cmd count
+            // printf("%d\n", i);
+        }
+
+        
     }
     gettimeofday(&end, NULL);
 
     long time_used = TIME_SUB_MS(end, start);
     printf("HASH testcase success --> time_use(ms): %ld, qps: %ld\n", time_used, TEST_COUNT * 1000 / time_used);
+
+    free(batch_buf);
 }
 
 

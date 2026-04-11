@@ -15,6 +15,9 @@ typedef struct server_config_s{
     bool is_replication;
     int master_port;
     char* master_ip;
+    char*master_mac;
+    char* slave_mac;
+
     int is_slave;
     bool is_rdma;
     char* rdma_device;

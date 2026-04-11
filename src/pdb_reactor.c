@@ -105,6 +105,7 @@ int accept_cb(int fd, msg_handler handler) {
 	return 0;
 }
 
+
 void pdb_write_to_slave(int fd, char* msg, int msg_len){
 	if (global_conf.is_slave){
 		return;
@@ -116,7 +117,7 @@ void pdb_write_to_slave(int fd, char* msg, int msg_len){
 		// pdb_log_debug("slave_num: %d fd : %d\n", global_replication->slave_num, slave_fd);
 		if (!conn_list[slave_fd]->is_incre_ready){
 			// pdb_log_debug("fd: %d, is_incre_ready: %d\n", fd, conn_list[fd]->is_incre_ready);
-			return ;
+			continue;
 		}
 		
 		memcpy(conn_list[slave_fd]->write_buffer + conn_list[slave_fd]->write_pos, msg, msg_len);
@@ -163,6 +164,7 @@ static int process_read_buffer(int fd, msg_handler handler){
 			pdb_sds_len_increment(c->write_buffer, response_len);
 		}
 
+		// aof replication
 		if (global_conf.is_replication && response_len > 0){
 			pdb_write_to_slave(fd, c->read_buffer + parsed_offset, package_len);
 		}
@@ -349,8 +351,15 @@ int pdb_reactor_loop(unsigned short port, msg_handler request_handler, msg_handl
 					if (conn_list[tmp_fd]->write_pos != 0){
 						int ret = send(tmp_fd, conn_list[tmp_fd]->write_buffer, conn_list[tmp_fd]->write_pos, 0);
 						if (ret < 0){
-							pdb_log_error("send error\n");
-							return PDB_ERROR;
+							if (errno == EAGAIN || errno == EWOULDBLOCK){
+								// pdb_log_debug("send EAGAIN, fd: %d\n", tmp_fd);
+								continue;
+							}else{
+								pdb_log_error("send error: %s\n", strerror(errno));
+								break;
+								// return PDB_ERROR;
+							}
+							
 						}else if (ret > 0){
 							// pdb_log_info("send success: %d\n", ret);
 							pdb_sds_range(conn_list[tmp_fd]->write_buffer, ret, -1);

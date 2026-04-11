@@ -1395,14 +1395,22 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                 global_dump.is_aof = 1;
                 pdb_init_aof();
                 // pdb_ebpf_init();
-                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "OK\r\n");
+                if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+OK\r\n");
                 break;
             }else{
+                int status;
+                pid_t res = waitpid(global_dump.rdb_pid, &status, WNOHANG);
+                if (res == 0){
+                    // rdb dump is not finished
+                    pdb_log_info("rdb dump is not finished, please wait...\n");
+                    if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+OK\r\n");
+                    break;
+                }
+
                 // RDB dump
                 pid = fork();
                 if (pid == 0){
                     // child thread
-                    pdb_log_info("RDB(child pid: %d) is saving.......\n", pid);
                     int ret = pdb_rdb_dump_raw(global_conf.dump_raw_dir);
                     // int ret = pdb_rdb_dump(global_conf.dump_dir);
                     if (ret == PDB_OK){
@@ -1416,6 +1424,8 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
                     _exit(0);
                 }else if (pid > 0){
                     // father thread
+                    pdb_log_info("RDB(child pid: %d) is saving.......\n", pid);
+                    global_dump.rdb_pid = pid;
                     if (response != NULL && !is_slave_to_master_response(fd))   len = sprintf(response, "+OK\r\n");
                 }else{
                     perror("fork failed");

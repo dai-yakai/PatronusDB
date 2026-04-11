@@ -26,6 +26,8 @@ config_entry conf_table[] = {
     {"rdma_internal_chunks",    CONF_TYPE_INT,  &global_conf.rdma_internal_chunks},
     {"aof_is_ebpf",     CONF_TYPE_BOOL,     &global_conf.aof_is_ebpf},
     {"dump_dir_aof",    CONF_TYPE_STRING,   &global_conf.dump_dir_aof},
+    {"master_mac",      CONF_TYPE_STRING,   &global_conf.master_mac},
+    {"slave_mac",       CONF_TYPE_STRING,   &global_conf.slave_mac},
     {NULL,              0,                  NULL}
 };
 
