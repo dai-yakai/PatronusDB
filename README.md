@@ -289,10 +289,10 @@ is_aof no
 
      * **Valgrind Massif**: 
      
-       |  |  total(B)   | useful-heap(B) | extra-heap(B) |
-     |  :--:  | :--:  |  :--:  |  :--:  |
-     | peak value | 307,218,912 | 207,968,907 | 99,250,005 |
-     | valley value | 41,159,224 |   39,656,975   | 1,502,249 |
+        |  |  total(B)   | useful-heap(B) | extra-heap(B) |
+        |  :--:  | :--:  |  :--:  |  :--:  |
+        | peak value | 307,218,912 | 207,968,907 | 99,250,005 |
+        | valley value | 41,159,224 |   39,656,975   | 1,502,249 |
      
     3. **Test Result**(jemalloc): 
     
