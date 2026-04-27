@@ -22,7 +22,7 @@
 int pipeline_set_send_msg(int connfd, char* msg, int length){
     int total_sent = 0;
     int left = length;
-    char *ptr = msg;
+    char* ptr = msg;
 
     while (left > 0) {
         int res = send(connfd, ptr, left, 0);

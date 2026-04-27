@@ -82,7 +82,8 @@ pdb_value* pdb_create_value(void* value, int type, ...){
     va_start(args, type);
 
     pdb_value* v = (pdb_value*)pdb_malloc(sizeof(pdb_value));
-
+    v->expire_time = 0;
+    
     switch(type){
         case PDB_VALUE_TYPE_SET:
         {

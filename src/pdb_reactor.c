@@ -196,8 +196,6 @@ static int process_read_buffer(int fd, msg_handler handler){
 int send_cb(int fd, msg_handler handler) {
 	// pdb_log_debug("send_cb : %d, write_buffer: %s\n", fd, conn_list[fd]->write_buffer);
 	struct conn_info* c = conn_list[fd];
-	// if (c->write_pos > 3*1024){
-	// }
 
 	int ret = send(fd, c->write_buffer, c->write_pos, 0);
 	if (ret < 0){
@@ -223,17 +221,6 @@ int recv_cb(int fd, msg_handler handler){
 
 	size_t avail_len = pdb_get_sds_avail(c->read_buffer);
 	assert(avail_len >= 0);
-
-	// if (c->is_big_package){
-	// 	read_len = c->bulk_length;
-	// }
-
-	// if (avail_len < read_len + 2){
-	// 	size_t remaining_length = read_len + 2 - avail_len;		// +2:\r\n
-	// 	read_len = remaining_length;
-	// 	// pdb_log_info("read_len: %d\n", read_len);
-	// 	c->read_buffer = pdb_enlarge_sds_greedy(c->read_buffer, read_len);
-	// }
 
 	int nread = 0;
 	while(1){
@@ -423,8 +410,12 @@ int pdb_dpdk_loop(void* arg){
 
 	if (global_dump.is_aof){
 		// pdb_ebpf_poll();
+		pdb_aof_reap_uring();
 	}
-	pdb_is_aof_sqe_complete();
+	// aof begin
+	if (global_dump.is_aof && global_conf.is_aof){
+		pdb_aof_write();
+	}
 
 	int i = 0;
 	for (i = 0; i < nready; i ++) {

@@ -31,7 +31,7 @@ const char* command[] = {
     // rbtree
     "RSET", "RGET", "RDEL", "RMOD", "REXIST", "RMSET", "RMGET", 
     // hash
-    "HSET", "HGET", "HDEL", "HMOD", "HEXIST", "HMSET", "HMGET",
+    "HSET", "HGET", "HDEL", "HMOD", "HEXIST", "HMSET", "HMGET", "setex", "get",
     // bitmap
     "BITSET", "BITGET", "BITCOUNT", "BITPOS", "BITOP",
     // set
@@ -77,6 +77,7 @@ enum{
     PDB_CMD_HEXIST,                 //14
     PDB_CMD_HMSET,
     PDB_CMD_HMGET,
+    PDB_CMD_HSETEX,
 
     // skiptable
     PDB_CMD_SKSET,
@@ -129,6 +130,7 @@ enum{
 
     PDB_CMD_INCRE_SYN,
     PDB_CMD_INCRE_ACK,
+    PDB_CMD_REDIS,
 
     // mem
     PDB_CMD_MEM_USED,
@@ -227,6 +229,14 @@ int pdb_parser_cmd(const char* cmd_str) {
     if (!cmd_str) return -1;
 
     switch (cmd_str[0]) {
+        case 'h':
+            if (strcmp(cmd_str, "hello") == 0) return PDB_CMD_REDIS;
+            break;
+
+        case 'c':
+            if (strcmp(cmd_str, "client") == 0) return PDB_CMD_REDIS;
+            break;
+
         case 'D':
             if (strcmp(cmd_str, "DEL") == 0)    return PDB_CMD_DEL;
             break;
@@ -253,6 +263,15 @@ int pdb_parser_cmd(const char* cmd_str) {
             if (strcmp(cmd_str, "HDEL") == 0)   return PDB_CMD_HDEL;
             if (strcmp(cmd_str, "HMOD") == 0)   return PDB_CMD_HMOD;
             if (strcmp(cmd_str, "HEXIST") == 0) return PDB_CMD_HEXIST;
+            if (strcmp(cmd_str, "HSETEX") == 0) return PDB_CMD_HSETEX;
+            break;
+
+        case 'g':
+            if (strcmp(cmd_str, "get") == 0)        return PDB_CMD_HGET;
+            break;
+        
+        case 's':
+            if (strcmp(cmd_str, "setex") == 0)     return PDB_CMD_HSETEX;
             break;
 
         case 'M':
@@ -307,6 +326,10 @@ int pdb_parser_cmd(const char* cmd_str) {
 
         case 'P':
             if (strcmp(cmd_str, "PING") == 0)        return PDB_CMD_PING;
+            break;
+
+        case 'p':
+            if (strcmp(cmd_str, "ping") == 0)        return PDB_CMD_PING;
             break;
 
         case 'Z':
@@ -476,12 +499,22 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             }
             break;
 
+        case PDB_CMD_REDIS:
+            pdb_log_info("redis cmd: %s\n", tokens[0]);
+            if (response != NULL){
+                len = sprintf(response, "-ERR unknown command 'hello'\r\n");
+            }
+            break;
 
         // array
         case PDB_CMD_SET:
             raw_value = tokens[2];
             value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
-
+            // for (int i = 0; i < 3; i++) {
+            //     if (tokens[i] != NULL) {
+            //         pdb_log_info("tokens[%d] : '%s'\n", i, tokens[i]);
+            //     }
+            // }
             ret = pdb_array_set(&global_array, key, value);         
             if (response != NULL && !is_slave_to_master_response(fd)){
                 if (ret == PDB_DATASTRUCTURE_ERROR){
@@ -799,7 +832,31 @@ int pdb_filter_protocol(int fd, char** tokens, int count, char* response){
             }
             break;  
 
+        case PDB_CMD_HSETEX:
+            pdb_log_info("pdb_cmd_hsexe\n");
+            if (count != 4){
+                len = sprintf(response, "-ERROR: error cmd\r\n");
+                break;
+            }
+            raw_value = tokens[3];
+            value = pdb_create_value(raw_value, PDB_VALUE_TYPE_DEFAULT);
+            value->expire_time = time(NULL) + atoi(tokens[2]);
 
+            pdb_log_info("pdb_cmd_hsexe, key: %s, value: %s\n", key, raw_value);
+            ret = pdb_hash_set(&global_hash, key, value);
+            if (response != NULL && !is_slave_to_master_response(fd)){
+                if (ret == PDB_MALLOC_NULL){
+                    len = sprintf(response, "+MEMORY EXCEEDS MAX_MEMORY\r\n");
+                } else if (ret == PDB_DATASTRUCTURE_ERROR){
+                    len = sprintf(response, "+ERROR\r\n");
+                } else if (ret == PDB_DATASTRUCTURE_OK){
+                    len = sprintf(response, "+OK\r\n");
+                } else if (ret == PDB_DATASTRUCTURE_EXIST){
+                    len = sprintf(response, "+EXIST\r\n");
+                }
+            }
+            pdb_decre_value(value);
+            break;
 
 
         /********************************************** */  

@@ -1,10 +1,10 @@
 #!/bin/bash
 
-HOST="192.168.137.222"
-PORT="8888"
-REQS=100000  # 每个命令测 10 万次
-CLIENTS=1   # 50 个并发连接
-RAND=100000  # 随机键的基数
+HOST=$1
+PORT=$2
+REQS=100000
+CLIENTS=1
+RAND=100000
 BENCH_BIN="/home/redis-8.0.0/src/redis-benchmark"
 # array
 $BENCH_BIN -h $HOST -p $PORT -c $CLIENTS -n 1000 -r $RAND -q SET K:__rand_int__ V:__rand_int__

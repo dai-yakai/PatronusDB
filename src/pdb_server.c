@@ -16,6 +16,7 @@ void dest_pdb_engine(void){
 
 #ifdef ENABLE_DPDK
 int pdb_init_dpdk(){
+    pdb_log_debug("init dpdk env\n");
     int fake_argc = 3;
     char *fake_argv[3];
     int ret_dpdk = 0;
@@ -130,19 +131,20 @@ int main(int argc, char* argv[]){
 
     int port = global_conf.port;
     int mode = global_conf.network_mode;
-
+    int ret = 0;
     if (mode == 1){
         pdb_log_info("newtork mode, %s\n", "reactor");
-        int ret = reactor_entry(port, pdb_protocol, pdb_response_handler);
+        ret = reactor_entry(port, pdb_protocol, pdb_response_handler);
     }else if (mode == 2){
         pdb_log_info("newtork mode: %s\n", "ntyco");
-        int ret = ntyco_entry(port, pdb_protocol, pdb_response_handler);
+        ret = ntyco_entry(port, pdb_protocol, pdb_response_handler);
     }else if (mode == 3){
         pdb_log_info("newtork mode: %s\n", "io_uring");
-        int ret = uring_entry(port, pdb_protocol, pdb_response_handler);
+        ret = uring_entry(port, pdb_protocol, pdb_response_handler);
     }
 
     dest_pdb_engine();
+    pdb_log_info("pdb exit: %d", ret);
 
     return 0;
 }

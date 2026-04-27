@@ -25,7 +25,7 @@
 typedef struct pdb_value{
     uint8_t type;
     // uint32_t lru;
-    // uint64_t expire_time;
+    uint64_t expire_time;
     uint32_t ref_count;
 
     void* ptr;
