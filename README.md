@@ -1,3 +1,5 @@
+[**🇨🇳 中文**](README_CN.md) | [**🇬🇧 English**](README.md)
+
 # Getting started
 
 ## Building PDB from Source
