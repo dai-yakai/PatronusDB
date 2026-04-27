@@ -638,3 +638,88 @@ kernel_sysctlbyname failed: net.inet.tcp.nodelay=1, error:2
 f-stack-0: No addr6 config found.
 f-stack-0: Ethernet address: 00:0c:29:03:ce:1a
 f-stack-0: Successed to register dpdk interface
+
+========================================
+PatronusDB DPDK Engine Startup Log
+Time: 2026-04-27 19:40:26
+========================================
+
+invalid proc_id:-1, use default 0
+[dpdk]: lcore_mask=1
+[dpdk]: channel=4
+[dpdk]: promiscuous=1
+[dpdk]: numa_on=1
+[dpdk]: tx_csum_offoad_skip=0
+[dpdk]: tso=0
+[dpdk]: vlan_strip=1
+[dpdk]: vlan_filter=1,2,4-6
+[dpdk]: idle_sleep=0
+[dpdk]: pkt_tx_delay=100
+[dpdk]: symmetric_rss=0
+[dpdk]: port_list=0
+[dpdk]: nb_vdev=0
+[dpdk]: nb_bond=0
+[pcap]: enable=0
+[pcap]: snaplen=96
+[pcap]: savelen=16777216
+[pcap]: savepath=.
+[port0]: addr=192.168.137.221
+[port0]: netmask=255.255.255.0
+[port0]: broadcast=192.168.137.255
+[port0]: gateway=192.168.137.2
+[rss_check]: enable=0
+[rss_check]: rss_tbl=0 192.168.1.1 192.168.2.1 80;0 192.168.1.1 192.168.2.1 443
+[freebsd.boot]: hz=100
+[freebsd.boot]: fd_reserve=1024
+[freebsd.boot]: kern.ipc.maxsockets=262144
+[freebsd.boot]: net.inet.tcp.syncache.hashsize=4096
+[freebsd.boot]: net.inet.tcp.syncache.bucketlimit=100
+[freebsd.boot]: net.inet.tcp.tcbhashsize=65536
+[freebsd.boot]: kern.ncallout=262144
+[freebsd.boot]: kern.features.inet6=1
+[freebsd.sysctl]: net.inet.tcp.nodelay=1
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=0
+[freebsd.sysctl]: kern.ipc.somaxconn=32768
+[freebsd.sysctl]: kern.ipc.maxsockbuf=16777216
+[freebsd.sysctl]: net.add_addr_allfibs=1
+[freebsd.sysctl]: net.link.ether.inet.maxhold=5
+[freebsd.sysctl]: net.inet.tcp.fast_finwait2_recycle=1
+[freebsd.sysctl]: net.inet.tcp.finwait2_timeout=5000
+[freebsd.sysctl]: net.inet.tcp.maxtcptw=128
+[freebsd.sysctl]: net.inet.tcp.sendspace=16384
+[freebsd.sysctl]: net.inet.tcp.recvspace=8192
+[freebsd.sysctl]: net.inet.tcp.cc.algorithm=cubic
+[freebsd.sysctl]: net.inet.tcp.sendbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.recvbuf_max=16777216
+[freebsd.sysctl]: net.inet.tcp.sendbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.recvbuf_auto=1
+[freebsd.sysctl]: net.inet.tcp.sendbuf_inc=16384
+[freebsd.sysctl]: net.inet.tcp.sack.enable=1
+[freebsd.sysctl]: net.inet.tcp.blackhole=1
+[freebsd.sysctl]: net.inet.tcp.msl=2000
+[freebsd.sysctl]: net.inet.tcp.delayed_ack=1
+[freebsd.sysctl]: net.inet.tcp.rfc1323=1
+[freebsd.sysctl]: net.inet.udp.blackhole=1
+[freebsd.sysctl]: net.inet.ip.redirect=0
+[freebsd.sysctl]: net.inet.ip.forwarding=0
+[freebsd.sysctl]: net.inet.ip.portrange.randomized=1
+[freebsd.sysctl]: net.inet.ip.portrange.randomtime=0
+[freebsd.sysctl]: net.inet6.ip6.auto_linklocal=1
+[freebsd.sysctl]: net.inet6.ip6.accept_rtadv=2
+[freebsd.sysctl]: net.inet6.icmp6.rediraccept=1
+[freebsd.sysctl]: net.inet6.ip6.forwarding=0
+[freebsd.sysctl]: net.inet.tcp.functions_default=freebsd
+[freebsd.sysctl]: net.inet.tcp.hpts.skip_swi=1
+[freebsd.sysctl]: net.inet.tcp.hpts.minsleep=250
+[freebsd.sysctl]: net.inet.tcp.hpts.maxsleep=51200
+f-stack -c1 -n4 --proc-type=auto 
+EAL: Detected CPU lcores: 4
+EAL: Detected NUMA nodes: 1
+EAL: Auto-detected process type: PRIMARY
+EAL: Detected static linkage of DPDK
+EAL: Multi-process socket /var/run/dpdk/rte/mp_socket
+EAL: Selected IOVA mode 'PA'
+EAL: VFIO support initialized
+TELEMETRY: No legacy callbacks, legacy socket not created
+EAL: Error - exiting with code: 1
+  Cause: No probed ethernet devices

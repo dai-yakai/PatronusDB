@@ -5,11 +5,11 @@
 struct pdb_dump_s global_dump;
 
 void pdb_init_dump(){
-    int rdb_dump_fd = open(global_conf.dump_dir, O_RDWR | O_CREAT | O_TRUNC, 0644);
-    if (rdb_dump_fd < 0){
-        pdb_log_error("Failed to open dump file, errno: %d, reason: %s\n", errno, strerror(errno));
-    }
-    global_dump.dump_fd = rdb_dump_fd;
+    // int rdb_dump_fd = open(global_conf.dump_dir, O_RDWR | O_CREAT | O_TRUNC, 0644);
+    // if (rdb_dump_fd < 0){
+    //     pdb_log_error("Failed to open dump file, errno: %d, reason: %s\n", errno, strerror(errno));
+    // }
+    // global_dump.dump_fd = rdb_dump_fd;
 
     if (global_conf.is_aof){
         int aof_dump_fd = open(global_conf.dump_dir_aof, O_RDWR | O_CREAT | O_APPEND, 0644);

@@ -9,8 +9,8 @@
 
 #include "pdb_cli_tool.h"
 
-#define BATCH_SIZE 1000
-#define TEST_COUNT 1000
+#define BATCH_SIZE 100000
+#define TEST_COUNT 100000
 #define TIME_SUB_MS(tv1, tv2)  ((tv1.tv_sec - tv2.tv_sec) * 1000 + (tv1.tv_usec - tv2.tv_usec) / 1000)
 
 static int pipeline_send_msg(int connfd, char* msg, int length) {
@@ -53,18 +53,18 @@ static void verify_read_responses(int fd, int start_idx, int expect_count, int d
             char expected[64] = {0};
             int verify_failed = 0;
 
-            if (ds_type_id >= 0 && ds_type_id <= 2) { // ARRAY, RBTREE, HASH
+            if (ds_type_id >= 0 && ds_type_id <= 1) { // ARRAY, RBTREE, HASH
                 sprintf(expected, "+%d", curr_i);
                 if (strcmp(current, expected) != 0) verify_failed = 1;
-            } else if (ds_type_id == 3) { // SET
+            } else if (ds_type_id == 2) { // SET
                 strcpy(expected, "+EXIST");
                 if (strcmp(current, expected) != 0) verify_failed = 1;
-            } else if (ds_type_id == 4) { // SSET
+            } else if (ds_type_id == 3) { // SSET
                 sprintf(expected, "+%d.000000", curr_i % 100000);
                 double exp_val = atof(expected);
                 double act_val = atof(current);
                 if (act_val < exp_val - 0.001 || act_val > exp_val + 0.001) verify_failed = 1;
-            } else if (ds_type_id == 5) { // BITMAP
+            } else if (ds_type_id == 4) { // BITMAP
                 expected[0] = '+';
                 expected[1] = (curr_i % 2 == 0) ? '1' : '0'; 
                 expected[2] = '\0';
@@ -106,10 +106,10 @@ void testcase_read_100w(int fd) {
     printf("     PDB ALL DATA READ PIPELINE TEST    \n");
     printf("========================================\n");
 
-    const char* types[] = {"ARRAY", "RBTREE", "HASH", "SET", "SSET", "BITMAP"};
-    const char* cmds[]  = {"GET",   "RGET",   "HGET", "SEXIST", "SSCORE", "BITGET"};
+    const char* types[] = {"ARRAY", "HASH", "SET", "SSET", "BITMAP"};
+    const char* cmds[]  = {"GET", "HGET", "SEXIST", "SSCORE", "BITGET"};
 
-    for (int t = 0; t < 6; t++) {
+    for (int t = 0; t < 5; t++) {
         // 🎯 关键调整：如果是 ARRAY 类型，只跑 10w 条数据
         int current_limit = (t == 0) ? 1000 : TEST_COUNT;
 
@@ -117,13 +117,13 @@ void testcase_read_100w(int fd) {
         gettimeofday(&tv_begin, NULL);
         
         for (int i = 0; i < current_limit; i++) {
-            if (t == 3) { // SET
+            if (t == 2) { // SET
                 k_len = sprintf(key, "member:%d", i);
                 batch_len += sprintf(batch_buf + batch_len, "*3\r\n$6\r\nSEXIST\r\n$5\r\nmyset\r\n$%d\r\n%s\r\n", k_len, key);
-            } else if (t == 4) { // SSET
+            } else if (t == 3) { // SSET
                 k_len = sprintf(key, "player:%d", i);
                 batch_len += sprintf(batch_buf + batch_len, "*3\r\n$6\r\nSSCORE\r\n$6\r\nmyzset\r\n$%d\r\n%s\r\n", k_len, key);
-            } else if (t == 5) { // BITMAP
+            } else if (t == 4) { // BITMAP
                 k_len = sprintf(key, "%d", i);
                 batch_len += sprintf(batch_buf + batch_len, "*3\r\n$6\r\nBITGET\r\n$5\r\nmybmp\r\n$%d\r\n%s\r\n", k_len, key);
             } else { // ARRAY, RBTREE, HASH

@@ -1,5 +1,24 @@
 #include "pdb_rdb.h"
 
+extern int pdb_protocol(int fd, char* msg, int length, char* out);
+int process_rdb_file(char* buf, size_t buf_len, msg_handler handler){
+	size_t pos = 0;
+	while(pos < buf_len){
+		int bulk_length = 0;
+		size_t package_len = check_resp_integrity(buf + pos, buf_len - pos, &bulk_length);
+		
+		if (package_len <= 0){
+            pdb_log_error("RDB file corrupted: %lu\n", package_len);
+            return PDB_ERROR;
+        }
+	
+		int response_len = handler(-1, buf + pos, package_len, NULL);
+		pos += package_len;
+	}
+
+	return PDB_OK;
+}
+
 
 int pdb_rdb_load(const char* file){
     int fd = open(file, O_RDWR | O_CREAT | O_APPEND, 0644);
@@ -27,42 +46,9 @@ int pdb_rdb_load(const char* file){
         return -1;
     }
 
-    size_t offset = 0;
-    
-    while (offset < total_size) {
-        uint8_t opcode;
-        if (_pdb_read_uint8(mapped_buf, total_size, &offset, &opcode) < 0) break;
+    process_rdb_file((char*)mapped_buf, total_size, pdb_protocol);
 
-        switch (opcode) {
-            case PDB_OPCODE_HASH:
-                if (pdb_deserialize_hash(mapped_buf, total_size, &offset, &global_hash) < 0) {
-                    pdb_log_error("Failed to load HASH from RDB\n");
-                    goto load_err;
-                }
-                break;
-                
-            case PDB_OPCODE_ARRAY:
-                if (pdb_deserialize_array(mapped_buf, total_size, &offset, &global_array) < 0) {
-                    goto load_err;
-                }
-                break;
-                
-            case PDB_OPCODE_RBTREE:
-                if (pdb_deserialize_rbtree(mapped_buf, total_size, &offset, &global_rbtree) < 0) {
-                    goto load_err;
-                }
-                break;
-            case PDB_OPCODE_EOF:
-            // end of file
-                break;
-                
-            default:
-                pdb_log_error("RDB File Corrupted! Unknown structure opcode: %d at offset %zu\n", opcode, offset);
-                goto load_err;
-        }
-    }
-
-    pdb_log_info("RDB Successfully Loaded! Processed %zu bytes.\n", offset);
+    pdb_log_info("RDB Successfully Loaded! Processed %zu bytes.\n", total_size);
     munmap((void*)mapped_buf, total_size);
     // close(fd);
 

@@ -130,7 +130,7 @@ void pdb_write_to_slave(int fd, char* msg, int msg_len){
 }
 
 
-static int process_read_buffer(int fd, msg_handler handler){
+int process_read_buffer(int fd, msg_handler handler){
 	struct conn_info* c = conn_list[fd];
 	int parsed_offset = 0;
 

@@ -86,10 +86,10 @@ void init_pdb_engine(){
     // Load persistence file
     int ret;
     if (global_conf.is_aof == 0){
-        pdb_log_info("RDB file is loading...\n");
+        pdb_log_info("RDB file(%s) is loading...\n", global_conf.dump_dir);
         ret = pdb_rdb_load(global_conf.dump_dir);
     }else{
-        pdb_log_info("AOF file is loading...\n");     
+        pdb_log_info("AOF file(%s) is loading...\n", global_conf.dump_dir);     
         ret = pdb_aof_load();
     }
     if (ret == PDB_OK){
