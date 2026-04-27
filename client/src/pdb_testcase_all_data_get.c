@@ -54,18 +54,20 @@ static void verify_read_responses(int fd, int start_idx, int expect_count, int d
             int verify_failed = 0;
 
             if (ds_type_id >= 0 && ds_type_id <= 2) { // ARRAY, RBTREE, HASH
-                sprintf(expected, "%d", curr_i);
+                sprintf(expected, "+%d", curr_i);
                 if (strcmp(current, expected) != 0) verify_failed = 1;
             } else if (ds_type_id == 3) { // SET
-                strcpy(expected, "EXIST");
+                strcpy(expected, "+EXIST");
                 if (strcmp(current, expected) != 0) verify_failed = 1;
             } else if (ds_type_id == 4) { // SSET
-                sprintf(expected, "%d.000000", curr_i % 100000);
+                sprintf(expected, "+%d.000000", curr_i % 100000);
                 double exp_val = atof(expected);
                 double act_val = atof(current);
                 if (act_val < exp_val - 0.001 || act_val > exp_val + 0.001) verify_failed = 1;
             } else if (ds_type_id == 5) { // BITMAP
-                expected[0] = (curr_i % 2 == 0) ? '1' : '0'; expected[1] = '\0';
+                expected[0] = '+';
+                expected[1] = (curr_i % 2 == 0) ? '1' : '0'; 
+                expected[2] = '\0';
                 if (strcmp(current, expected) != 0) verify_failed = 1;
             }
 
