@@ -9,7 +9,7 @@ EXTRA_CFLAGS := -D DATA_STRUCTURE_TEST=0
 ifeq ($(USE_DPDK), 1)
     EXTRA_CFLAGS += -D ENABLE_DPDK=1
 
-    FF_PATH ?= /home/dai/PatronusDB/dpdk_tcp/f-stack
+    FF_PATH ?= ./dpdk_tcp/f-stack
     PKGCONF ?= pkg-config
 
     DPDK_CFLAGS := $(shell $(PKGCONF) --cflags libdpdk)

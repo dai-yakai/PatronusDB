@@ -95,14 +95,12 @@ void pipeline_set_verify_responses(int fd, int start_i, int expect_count, const 
                 
                 printf("\n============================================\n");
                 printf("\033[1;31m[FATAL ERROR] Response Verify Failed!\033[0m\n");
-                // 停止瞎猜，直接告诉你是循环里的第几个动作报错
                 printf("Error Location : Loop Index (i) = %d\n", fail_i);
                 printf("Error Command  : The No.%d command in this loop (Index: %d)\n", cmd_idx + 1, cmd_idx);
                 printf("Expected Reply : %s", pattern); 
                 printf("Actual Reply   : %s\n", current);
                 printf("============================================\n");
                 
-                // 提示你怎么找真实命令
                 printf("=> How to fix: Look at your for() loop at i=%d, and check the %d-th sprintf(...) command.\n", fail_i, cmd_idx + 1);
                 exit(-1);
             }
