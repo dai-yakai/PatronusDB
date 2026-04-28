@@ -307,13 +307,13 @@ memtier_benchmark -s 192.168.137.221 -p 8888 -t 8 -c 100 --test-time=60 -d 1 --p
 
   - **使用RDMA方案的CPU使用率**：测试的是master节点CPU使用率。在调用ibv_post_send之前使用gettimeofday，将当前时间戳记录在wall_time_begin，随后调用getrusage，将当前的CPU用户态时间和CPU内核态时间分别记录在user_time_begin和sys_time_begin中。当调用ibv_poll_cq确保数据全部获取成功后，再次调用gettimeofday，将当前时间戳记录在wall_time_end中，调用getrusage，将当前CPU用户态时间和CPU内核态时间分别记录在user_time_end和sys_time_end中，CPU使用率的计算方法为：
 
-    ![markdown1](.\resource\markdown1.png)
+    ![markdown1](resource/markdown1.png)
 
   - **使用sendfile方案的同步时间**：在需要同步的数据开头插入BEGIN_RDB，末尾插入END_RDB，分别记录从节点收到BEGIN_RDB的时间戳和END_RDB的时间戳，两个时间戳相减获得主从同步时间。
 
   - **使用sendfile方案的CPU使用率**：测试的是master节点（发送端）CPU使用率。主节点在调用sendifle之前，调用gettimeofday将当前时间戳记录在wall_time_begin，随后调用getrusage，将当前的CPU用户态时间和CPU内核态时间分别记录在user_time_begin和sys_time_begin中。当sendfile将全部数据发送成功后，再次调用gettimeofday，将当前时间戳记录在wall_time_end中，调用getrusage，将当前CPU用户态时间和CPU内核态时间分别记录在user_time_end和sys_time_end中，CPU使用率的计算方法为：
 
-    ![markdown1](.\resource\markdown1.png)
+    ![markdown1](resource/markdown1.png)
 
   **3. 测试结果**：
 
